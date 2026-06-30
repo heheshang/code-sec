@@ -31,6 +31,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Reports' },
   },
   {
+    path: '/search',
+    name: 'search',
+    component: () => import('@/views/SearchResultsView.vue'),
+    meta: { title: 'Search' },
+  },
+  {
     path: '/settings',
     name: 'settings',
     component: () => import('@/views/SettingsView.vue'),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Row, Col, Card, Typography, Tag, Space } from 'ant-design-vue'
+import { Row, Col, Card, Typography, Tag, Space, Empty } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
@@ -14,8 +14,8 @@ import {
 } from 'echarts/components'
 import { http } from '@/api/client'
 import StatCard from '@/components/common/StatCard.vue'
-import { projects as projectList } from '@/api/mock/data'
 import { useVulnStore } from '@/stores/vuln'
+import type { RepoListItem } from '@/api/types'
 
 use([
   CanvasRenderer,
@@ -34,15 +34,37 @@ interface DashboardStats {
   fixedThisWeek: number
   fixRate: number
   severityCounts: Record<'critical' | 'high' | 'medium' | 'low' | 'info', number>
-  trend: { date: string; opened: number; closed: number }[]
   projectCount: number
+}
+
+interface TrendPoint {
+  date: string
+  opened: number
+  closed: number
+}
+
+interface TrendResponse {
+  trend: TrendPoint[]
+  tookMs: number
 }
 
 const router = useRouter()
 const vulnStore = useVulnStore()
 const stats = ref<DashboardStats | null>(null)
+const trendData = ref<TrendPoint[]>([])
+const projects = ref<RepoListItem[]>([])
 const loading = ref<boolean>(true)
+const error = ref<string | null>(null)
 const queueCount = ref<number>(0)
+
+const hasData = computed(() => stats.value !== null)
+const hasSeverityData = computed(() => {
+  if (stats.value === null) return false
+  const c = stats.value.severityCounts
+  if (c === undefined) return false
+  return c.critical > 0 || c.high > 0 || c.medium > 0 || c.low > 0 || c.info > 0
+})
+const hasTrend = computed(() => Array.isArray(trendData.value) && trendData.value.length > 0)
 
 const fixRatePct = computed<string>(() => {
   if (stats.value === null) return '0%'
@@ -51,7 +73,7 @@ const fixRatePct = computed<string>(() => {
 
 const pieOption = computed(() => {
   if (stats.value === null) return {}
-  const counts = stats.value.severityCounts
+  const counts = stats.value.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0, info: 0 }
   return {
     tooltip: {
       trigger: 'item',
@@ -79,6 +101,7 @@ const pieOption = computed(() => {
           { name: 'High', value: counts.high, itemStyle: { color: '#FA541C' } },
           { name: 'Medium', value: counts.medium, itemStyle: { color: '#FAAD14' } },
           { name: 'Low', value: counts.low, itemStyle: { color: '#1890FF' } },
+          { name: 'Info', value: counts.info, itemStyle: { color: '#8C8C8C' } },
         ],
       },
     ],
@@ -86,8 +109,8 @@ const pieOption = computed(() => {
 })
 
 const lineOption = computed(() => {
-  if (stats.value === null) return {}
-  const dates = stats.value.trend.map((d) => d.date.slice(5))
+  if (trendData.value.length === 0) return {}
+  const dates = trendData.value.map((d) => d.date.slice(5))
   return {
     tooltip: {
       trigger: 'axis',
@@ -134,7 +157,7 @@ const lineOption = computed(() => {
             ],
           },
         },
-        data: stats.value.trend.map((d) => d.opened),
+        data: trendData.value.map((d) => d.opened),
       },
       {
         name: 'Closed',
@@ -154,7 +177,7 @@ const lineOption = computed(() => {
             ],
           },
         },
-        data: stats.value.trend.map((d) => d.closed),
+        data: trendData.value.map((d) => d.closed),
       },
     ],
   }
@@ -162,13 +185,20 @@ const lineOption = computed(() => {
 
 onMounted(async () => {
   loading.value = true
+  error.value = null
   try {
-    const [statsResp, listResp] = await Promise.all([
+    const [statsResp, trendResp, projectsResp, listResp] = await Promise.all([
       http.get<DashboardStats>('/dashboard/stats'),
+      http.get<TrendResponse>('/dashboard/trend?days=14'),
+      http.get<{ items: RepoListItem[] }>('/repos?page=1&size=100'),
       vulnStore.fetchList(),
     ])
     stats.value = statsResp.data
+    trendData.value = trendResp.data.trend
+    projects.value = projectsResp.data.items ?? []
     queueCount.value = listResp === undefined ? 0 : vulnStore.queueCount
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to load dashboard data'
   } finally {
     loading.value = false
   }
@@ -185,10 +215,17 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
 </script>
 
 <template>
-  <div class="cs-dashboard">
+  <div v-if="error && !loading" class="cs-dashboard cs-dashboard__error">
+    <Empty description="Failed to load dashboard data">
+      <template #extra>
+        <a-button type="primary" @click="location.reload()">Retry</a-button>
+      </template>
+    </Empty>
+  </div>
+  <div v-else class="cs-dashboard">
     <div class="cs-dashboard-hero">
       <h1>Security overview</h1>
-      <p>{{ stats?.projectCount ?? 5 }} projects · {{ stats?.total ?? 0 }} total findings · last scan 28 minutes ago</p>
+      <p>{{ stats?.projectCount ?? '—' }} projects · {{ stats?.total ?? '—' }} total findings</p>
     </div>
 
     <Row :gutter="[16, 16]" class="cs-dashboard__stats">
@@ -208,8 +245,6 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
           :loading="loading"
           hint="requires 24h SLA"
           accent="danger"
-          :trend="12.5"
-          :trend-inverse="true"
         />
       </Col>
       <Col :xs="24" :sm="12" :md="6">
@@ -217,9 +252,8 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
           label="Fixed this week"
           :value="stats?.fixedThisWeek ?? '—'"
           :loading="loading"
-          hint="vs 4 last week"
+          hint="in last 7 days"
           accent="success"
-          :trend="33.3"
         />
       </Col>
       <Col :xs="24" :sm="12" :md="6">
@@ -229,7 +263,6 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
           :loading="loading"
           hint="rolling 30 days"
           accent="primary"
-          :trend="2.1"
         />
       </Col>
     </Row>
@@ -241,8 +274,11 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
           :bordered="false"
           class="cs-dashboard__chartCard"
         >
-          <div class="cs-dashboard__pie">
+          <div v-if="hasSeverityData" class="cs-dashboard__pie">
             <VChart :option="pieOption" autoresize />
+          </div>
+          <div v-else-if="!loading" class="cs-dashboard__chartEmpty">
+            <Empty image="simple" description="No severity data" />
           </div>
         </Card>
       </Col>
@@ -252,8 +288,11 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
           :bordered="false"
           class="cs-dashboard__chartCard"
         >
-          <div class="cs-dashboard__line">
+          <div v-if="hasTrend" class="cs-dashboard__line">
             <VChart :option="lineOption" autoresize />
+          </div>
+          <div v-else-if="!loading" class="cs-dashboard__chartEmpty">
+            <Empty image="simple" description="No trend data" />
           </div>
         </Card>
       </Col>
@@ -264,7 +303,7 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
         <Card title="Projects" :bordered="false" class="cs-dashboard__projectCard">
           <div class="cs-dashboard__projectGrid">
             <div
-              v-for="p in projectList"
+              v-for="p in projects"
               :key="p.id"
               class="cs-dashboard__projectTile"
               @click="router.push(`/audit?project=${p.id}`)"
@@ -274,25 +313,14 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
                 <Tag :color="p.status === 'active' ? 'green' : 'default'" bordered>{{ p.status }}</Tag>
               </div>
               <div class="cs-dashboard__projectMeta">
-                <span>{{ p.language }}</span>
-                <span>·</span>
-                <span>{{ p.framework }}</span>
-                <span>·</span>
+                <span>{{ p.platform }}</span>
+                <span v-if="p.businessLine">·</span>
                 <span>{{ p.businessLine }}</span>
               </div>
-              <Space :size="6" class="cs-dashboard__projectCounts">
-                <Tag v-if="p.criticalCount > 0" color="red" bordered>{{ p.criticalCount }} critical</Tag>
-                <Tag v-if="p.highCount > 0" color="orange" bordered>{{ p.highCount }} high</Tag>
-                <Tag v-if="p.mediumCount > 0" color="gold" bordered>{{ p.mediumCount }} medium</Tag>
-                <Tag v-if="p.lowCount > 0" color="blue" bordered>{{ p.lowCount }} low</Tag>
-              </Space>
-              <div class="cs-dashboard__projectBar">
-                <div class="cs-dashboard__projectBarFill" :style="{ width: `${Math.round(p.fixRate * 100)}%` }" />
-              </div>
-              <div class="cs-dashboard__projectBarLabel">
-                Fix rate {{ Math.round(p.fixRate * 100) }}%
-              </div>
             </div>
+          </div>
+          <div v-if="projects.length === 0 && !loading" class="cs-dashboard__projectEmpty">
+            <Empty image="simple" description="No projects found" />
           </div>
         </Card>
       </Col>
@@ -389,5 +417,19 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
   font-size: var(--cs-font-size-xs);
   color: var(--cs-text-tertiary);
   text-align: right;
+}
+.cs-dashboard__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+.cs-dashboard__chartEmpty,
+.cs-dashboard__projectEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
 }
 </style>

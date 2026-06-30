@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:codesec_test;MODE=MYSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  h2:
+    console:
+      enabled: false
+  sql:
+    init:
+      mode: never
+
+codesec:
+  crypto:
+    master-key: "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI="
+  jwt:
+    secret: "Y29kZVNlY1BsYXRmb3JtU2VjcmV0S2V5Rm9ySFMyNTY="
+    expiration: 86400000
+  engine:
+    sandbox: false
+
+logging:
+  level:
+    com.codesec: WARN
+    org.springframework.security: WARN

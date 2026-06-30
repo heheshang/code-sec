@@ -1,0 +1,18 @@
+gitlab:
+  base-url: https://gitlab.example.com
+  private-token: ${GITLAB_TOKEN:}
+  connect-timeout-seconds: 10
+  read-timeout-seconds: 30
+  mode: auto
+  webhook-secret: ${GITLAB_WEBHOOK_SECRET:}
+
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gitlab-integration
+
+logging:
+  level:
+    com.codesec.gitlab: DEBUG

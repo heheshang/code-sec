@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+
+codesec:
+  crypto:
+    master-key: "MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI="
+  jwt:
+    secret: "Y29kZVNlY1BsYXRmb3JtU2VjcmV0S2V5Rm9ySFMyNTY="
+    expiration: 86400000
+  engine:
+    sandbox: false

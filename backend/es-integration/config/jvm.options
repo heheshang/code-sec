@@ -1,0 +1,14 @@
+-Xms2g
+-Xmx4g
+
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=200
+-XX:InitiatingHeapOccupancyPercent=45
+
+-Djava.security.manager=allow
+-Dfile.encoding=UTF-8
+
+-Des.networkaddress.cache.ttl=60
+-Des.networkaddress.cache.negative.ttl=10
+
+9-:-Xlog:gc*,gc+age=trace,safepoint:file=/usr/share/elasticsearch/logs/gc.log:utctime,pid,tags:filecount=32,filesize=64m
