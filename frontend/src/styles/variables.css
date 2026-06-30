@@ -1,0 +1,131 @@
+/* ===================================================
+   Code-sec Design Tokens
+   Anti-AI-slop: every visual decision traces to a token.
+   =================================================== */
+
+:root {
+  /* Brand */
+  --cs-color-primary: #5B47E0;
+  --cs-color-primary-hover: #6E5BE6;
+  --cs-color-primary-active: #4936C7;
+  --cs-color-primary-bg: #EFEBFE;
+  --cs-color-primary-bg-hover: #E3DCFD;
+
+  --cs-color-accent: #00B96B;
+  --cs-color-accent-hover: #00C977;
+  --cs-color-accent-bg: #E6F9F0;
+
+  /* Severity scale (deliberately distinct from AntD default tags) */
+  --cs-severity-critical: #CF1322;
+  --cs-severity-critical-bg: #FFE8EA;
+  --cs-severity-high: #FA541C;
+  --cs-severity-high-bg: #FFECE0;
+  --cs-severity-medium: #FAAD14;
+  --cs-severity-medium-bg: #FFF5D6;
+  --cs-severity-low: #1890FF;
+  --cs-severity-low-bg: #E6F4FF;
+  --cs-severity-info: #8C8C8C;
+  --cs-severity-info-bg: #F0F0F0;
+
+  /* Exploitability (three states: red exploitable / gold needs audit / gray safe) */
+  --cs-exploit-exploitable: #CF1322;
+  --cs-exploit-exploitable-bg: #FFF1F0;
+  --cs-exploit-potential: #FAAD14;
+  --cs-exploit-potential-bg: #FFFBE6;
+  --cs-exploit-safe: #8C8C8C;
+  --cs-exploit-safe-bg: #F5F5F5;
+
+  /* Neutral scale */
+  --cs-text-primary: #1F1F1F;
+  --cs-text-secondary: #4B5563;
+  --cs-text-tertiary: #8C8C8C;
+  --cs-text-disabled: #BFBFBF;
+  --cs-text-inverse: #FFFFFF;
+
+  --cs-bg-base: #F5F6FA;
+  --cs-bg-elevated: #FFFFFF;
+  --cs-bg-sunken: #FAFAFC;
+  --cs-bg-hover: #F0F1F5;
+  --cs-bg-selected: #EFEBFE;
+
+  --cs-border: #E5E7EB;
+  --cs-border-light: #F0F0F0;
+  --cs-border-strong: #D1D5DB;
+
+  /* Status */
+  --cs-status-pending: #8C8C8C;
+  --cs-status-confirmed: #FA541C;
+  --cs-status-fixing: #1890FF;
+  --cs-status-fixed: #00B96B;
+  --cs-status-fp: #8C8C8C;
+  --cs-status-retest: #FAAD14;
+
+  /* Spacing scale (4px base) */
+  --cs-space-1: 4px;
+  --cs-space-2: 8px;
+  --cs-space-3: 12px;
+  --cs-space-4: 16px;
+  --cs-space-5: 20px;
+  --cs-space-6: 24px;
+  --cs-space-8: 32px;
+  --cs-space-10: 40px;
+  --cs-space-12: 48px;
+  --cs-space-16: 64px;
+
+  /* Radius */
+  --cs-radius-sm: 4px;
+  --cs-radius-md: 6px;
+  --cs-radius-lg: 8px;
+  --cs-radius-xl: 12px;
+
+  /* Shadow (low-elevation, not Bootstrap-y) */
+  --cs-shadow-1: 0 1px 2px rgba(15, 17, 35, 0.04), 0 1px 1px rgba(15, 17, 35, 0.02);
+  --cs-shadow-2: 0 4px 12px rgba(15, 17, 35, 0.06), 0 1px 3px rgba(15, 17, 35, 0.04);
+  --cs-shadow-3: 0 12px 32px rgba(15, 17, 35, 0.10), 0 2px 6px rgba(15, 17, 35, 0.05);
+
+  /* Layout */
+  --cs-sider-width: 220px;
+  --cs-sider-collapsed-width: 64px;
+  --cs-header-height: 56px;
+  --cs-footer-height: 40px;
+
+  /* Typography */
+  --cs-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --cs-font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --cs-font-size-xs: 11px;
+  --cs-font-size-sm: 12px;
+  --cs-font-size-base: 14px;
+  --cs-font-size-md: 15px;
+  --cs-font-size-lg: 16px;
+  --cs-font-size-xl: 18px;
+  --cs-font-size-2xl: 22px;
+  --cs-font-size-3xl: 28px;
+  --cs-font-size-4xl: 36px;
+
+  --cs-line-height-tight: 1.25;
+  --cs-line-height-base: 1.5;
+  --cs-line-height-relaxed: 1.7;
+
+  /* Motion */
+  --cs-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --cs-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --cs-duration-fast: 120ms;
+  --cs-duration-base: 200ms;
+  --cs-duration-slow: 320ms;
+}
+
+/* Dark mode tokens — only used by SettingsView toggle, app keeps light default */
+[data-cs-theme='dark'] {
+  --cs-text-primary: #F5F5F5;
+  --cs-text-secondary: #BFBFBF;
+  --cs-text-tertiary: #8C8C8C;
+  --cs-bg-base: #0F1117;
+  --cs-bg-elevated: #181A23;
+  --cs-bg-sunken: #0A0C12;
+  --cs-bg-hover: #1F2230;
+  --cs-border: #2A2D3A;
+  --cs-border-light: #21242F;
+  --cs-border-strong: #3A3E4D;
+}

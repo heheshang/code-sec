@@ -1,0 +1,203 @@
+@import './variables.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--cs-font-family);
+  font-size: var(--cs-font-size-base);
+  line-height: var(--cs-line-height-base);
+  color: var(--cs-text-primary);
+  background: var(--cs-bg-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--cs-color-primary);
+  text-decoration: none;
+  transition: color var(--cs-duration-fast) var(--cs-ease-out);
+}
+a:hover {
+  color: var(--cs-color-primary-hover);
+}
+
+/* Compact, dense feel — this is a tool, not a marketing site */
+.cs-dense .ant-table-tbody > tr > td {
+  padding-block: 10px;
+}
+
+/* Custom scrollbar — modern, not Win98 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 17, 35, 0.16);
+  border-radius: 4px;
+  transition: background var(--cs-duration-fast);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 17, 35, 0.28);
+}
+
+/* AntD overrides — fix the worst generic-template defaults */
+.ant-layout {
+  background: var(--cs-bg-base);
+}
+.ant-layout-sider {
+  background: var(--cs-bg-elevated) !important;
+  border-right: 1px solid var(--cs-border);
+}
+.ant-layout-header {
+  background: var(--cs-bg-elevated);
+  border-bottom: 1px solid var(--cs-border);
+  padding-inline: var(--cs-space-6) !important;
+  height: var(--cs-header-height);
+  line-height: var(--cs-header-height);
+}
+.ant-layout-content {
+  padding: var(--cs-space-6);
+}
+.ant-layout-footer {
+  background: transparent;
+  padding: 0 var(--cs-space-6) var(--cs-space-4) !important;
+  color: var(--cs-text-tertiary);
+  font-size: var(--cs-font-size-sm);
+  text-align: center;
+}
+
+/* Severity tags — pill style, not default AntD rectangles */
+.cs-severity-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--cs-font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+.cs-severity-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Code block background for fix snippets in cards */
+.cs-code-block {
+  font-family: var(--cs-font-mono);
+  font-size: var(--cs-font-size-sm);
+  background: #0F1117;
+  color: #E5E7EB;
+  padding: var(--cs-space-3) var(--cs-space-4);
+  border-radius: var(--cs-radius-md);
+  overflow-x: auto;
+  line-height: var(--cs-line-height-base);
+  white-space: pre;
+}
+
+/* Subtle gradient header band on dashboard */
+.cs-dashboard-hero {
+  background: linear-gradient(120deg, #5B47E0 0%, #7461E8 50%, #00B96B 100%);
+  border-radius: var(--cs-radius-lg);
+  padding: var(--cs-space-6) var(--cs-space-8);
+  color: #fff;
+  margin-bottom: var(--cs-space-6);
+  position: relative;
+  overflow: hidden;
+}
+.cs-dashboard-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(at 10% 90%, rgba(0, 185, 107, 0.18) 0%, transparent 50%);
+  pointer-events: none;
+}
+.cs-dashboard-hero h1 {
+  font-size: var(--cs-font-size-2xl);
+  font-weight: 700;
+  margin: 0 0 4px;
+  position: relative;
+  z-index: 1;
+}
+.cs-dashboard-hero p {
+  font-size: var(--cs-font-size-base);
+  margin: 0;
+  opacity: 0.85;
+  position: relative;
+  z-index: 1;
+}
+
+/* Status pill shared style */
+.cs-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: var(--cs-radius-sm);
+  font-size: var(--cs-font-size-xs);
+  font-weight: 500;
+  background: var(--cs-bg-hover);
+  color: var(--cs-text-secondary);
+  border: 1px solid var(--cs-border-light);
+}
+
+/* Smooth page transitions */
+.cs-page-fade-enter-active,
+.cs-page-fade-leave-active {
+  transition: opacity var(--cs-duration-base) var(--cs-ease-out),
+    transform var(--cs-duration-base) var(--cs-ease-out);
+}
+.cs-page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+.cs-page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* Audit decision radio cards */
+.cs-decision-card {
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-md);
+  padding: var(--cs-space-3) var(--cs-space-4);
+  cursor: pointer;
+  transition: all var(--cs-duration-fast) var(--cs-ease-out);
+  background: var(--cs-bg-elevated);
+}
+.cs-decision-card:hover {
+  border-color: var(--cs-color-primary);
+  background: var(--cs-color-primary-bg);
+}
+.cs-decision-card.is-selected {
+  border-color: var(--cs-color-primary);
+  background: var(--cs-color-primary-bg);
+  box-shadow: 0 0 0 2px rgba(91, 71, 224, 0.12);
+}
+.cs-decision-card .ant-radio-wrapper {
+  width: 100%;
+}

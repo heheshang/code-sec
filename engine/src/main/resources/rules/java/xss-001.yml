@@ -1,0 +1,19 @@
+id: java/xss-001
+name: Cross-Site Scripting (XSS) - Untrusted Input in HTTP Response
+severity: high
+cwe: CWE-79
+languages: [java]
+engine: self_sast
+detection:
+  type: ast
+  pattern: "xss-response-writer-sink"
+fix:
+  description: "HTML-encode user input before writing to HTTP response, or use a templating engine with auto-escaping"
+  example: |
+    String safeOutput = StringEscapeUtils.escapeHtml4(userInput);
+    response.getWriter().println(safeOutput);
+false_positive_scenarios:
+  - framework: spring-mvc
+    reason: "Spring MVC with Thymeleaf auto-escapes HTML by default"
+author: security-team
+enabled: true

@@ -1,0 +1,34 @@
+- name: Spring Security @PreAuthorize
+  type: annotation
+  match:
+    annotation: org.springframework.security.access.prepost.PreAuthorize
+    scope: method
+  reason: Spring Security @PreAuthorize 注解保护
+
+- name: Spring Security @Secured
+  type: annotation
+  match:
+    annotation: org.springframework.security.access.annotation.Secured
+    scope: method
+  reason: Spring Security @Secured 注解保护
+
+- name: Spring Security @RolesAllowed (JSR-250)
+  type: annotation
+  match:
+    annotation: javax.annotation.security.RolesAllowed
+    scope: method
+  reason: JSR-250 @RolesAllowed 注解保护
+
+- name: Spring Security @PreAuthorize (class-level)
+  type: class-annotation
+  match:
+    annotation: org.springframework.security.access.prepost.PreAuthorize
+    scope: class
+  reason: Spring Security @PreAuthorize 类级别保护
+
+- name: Spring Security OncePerRequestFilter
+  type: method-call
+  match:
+    methodName: doFilterInternal
+    className: org.springframework.web.filter.OncePerRequestFilter
+  reason: Spring Security OncePerRequestFilter 过滤器保护

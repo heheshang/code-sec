@@ -1,0 +1,6 @@
+- name: MyBatis #{} Parameter Binding
+  type: method-call
+  match:
+    methodName: selectOne
+    className: org.apache.ibatis.session.SqlSession
+  reason: MyBatis #{} 参数绑定（自动 PreparedStatement 转义）

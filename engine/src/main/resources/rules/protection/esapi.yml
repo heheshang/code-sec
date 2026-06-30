@@ -1,0 +1,13 @@
+- name: ESAPI SQL Encoder
+  type: method-call
+  match:
+    methodName: encodeForSQL
+    className: org.owasp.esapi.Encoder
+  reason: ESAPI encoder.encodeForSQL() 保护
+
+- name: ESAPI HTML Encoder
+  type: method-call
+  match:
+    methodName: encodeForHTML
+    className: org.owasp.esapi.Encoder
+  reason: ESAPI encoder.encodeForHTML() 保护

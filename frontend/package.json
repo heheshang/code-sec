@@ -1,0 +1,48 @@
+{
+  "name": "code-sec-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Code-sec audit workbench frontend — human-in-the-loop security audit platform",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "lint": "eslint . --ext .ts,.vue --max-warnings 0"
+  },
+  "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@guolao/vue-monaco-editor": "^1.5.0",
+    "ant-design-vue": "^4.1.0",
+    "axios": "^1.7.2",
+    "dayjs": "^1.11.11",
+    "echarts": "^5.5.0",
+    "monaco-editor": "^0.49.0",
+    "pinia": "^2.1.7",
+    "pinia-plugin-persistedstate": "^3.2.1",
+    "vue": "^3.4.27",
+    "vue-echarts": "^7.0.3",
+    "vue-router": "^4.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/server-renderer": "^3.5.39",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.5.1",
+    "jsdom": "^24.0.0",
+    "msw": "^2.3.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vitest": "^1.6.0",
+    "vue-tsc": "^2.0.19"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}

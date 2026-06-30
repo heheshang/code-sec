@@ -1,0 +1,19 @@
+id: java/sql-injection-001
+name: SQL Injection - String Concatenation
+severity: high
+cwe: CWE-89
+languages: [java]
+engine: self_sast
+detection:
+  type: ast
+  pattern: "sql-injection-string-concat"
+fix:
+  description: "Use PreparedStatement with parameterized query instead of string concatenation"
+  example: |
+    PreparedStatement ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?");
+    ps.setString(1, userId);
+false_positive_scenarios:
+  - framework: spring-jdbc
+    reason: "NamedParameterJdbcTemplate auto-escapes parameters"
+author: security-team
+enabled: true

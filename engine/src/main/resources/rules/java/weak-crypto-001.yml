@@ -1,0 +1,19 @@
+id: java/weak-crypto-001
+name: Use of Weak Cryptographic Algorithm
+severity: medium
+cwe: CWE-327
+languages: [java]
+engine: self_sast
+detection:
+  type: regex
+  pattern: '(?:MessageDigest|Cipher)\s*\.\s*getInstance\s*\(\s*"(MD5|SHA-?1|SHA1|DES)"'
+fix:
+  description: "Use strong cryptographic algorithms: SHA-256 or SHA-3 for hashing, AES-256-GCM for encryption"
+  example: |
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
+    Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+false_positive_scenarios:
+  - scenario: checksum-only
+    reason: "Using MD5 for non-security checksums (file integrity, cache keys) is acceptable"
+author: security-team
+enabled: true

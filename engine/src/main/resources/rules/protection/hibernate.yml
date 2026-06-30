@@ -1,0 +1,6 @@
+- name: Hibernate Parameter Binding
+  type: method-call
+  match:
+    methodName: setParameter
+    className: org.hibernate.engine.spi.TypedValue
+  reason: Hibernate 参数绑定（自动转义）

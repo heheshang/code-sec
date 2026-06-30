@@ -1,0 +1,107 @@
+[
+  {
+    "engine": "self_sast",
+    "rule_id": "java/hardcoded-password-001",
+    "title": "Hardcoded Password or Secret",
+    "severity": "high",
+    "file_path": "examples/sample-code/Config.java",
+    "line_start": 8,
+    "cwe": "CWE-798",
+    "exploitability": "potentially_exploitable"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/hardcoded-password-001",
+    "title": "Hardcoded Password or Secret",
+    "severity": "high",
+    "file_path": "examples/sample-code/Config.java",
+    "line_start": 11,
+    "cwe": "CWE-798",
+    "exploitability": "potentially_exploitable"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/weak-crypto-001",
+    "title": "Use of Weak Cryptographic Algorithm",
+    "severity": "medium",
+    "file_path": "examples/sample-code/CipherUtil.java",
+    "line_start": 11,
+    "cwe": "CWE-327",
+    "exploitability": "potentially_exploitable"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/sql-injection-001",
+    "title": "SQL Injection - String Concatenation",
+    "severity": "high",
+    "file_path": "examples/sample-code/UserDao.java",
+    "line_start": 17,
+    "cwe": "CWE-89",
+    "exploitability": "potentially_exploitable"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/xss-001",
+    "title": "Cross-Site Scripting (XSS) - Untrusted Input in HTTP Response",
+    "severity": "high",
+    "file_path": "examples/sample-code/WebController.java",
+    "line_start": 14,
+    "cwe": "CWE-79",
+    "exploitability": "potentially_exploitable"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/sql-injection-001",
+    "title": "SQL Injection - String Concatenation",
+    "severity": "high",
+    "file_path": "examples/sample-code/judge/src/main/java/com/example/exploitable/ExploitableController.java",
+    "line_start": 30,
+    "cwe": "CWE-89",
+    "exploitability": "exploitable",
+    "exploitReason": "参数 userId 来自 @RequestParam"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/hardcoded-password-001",
+    "title": "Hardcoded Password or Secret",
+    "severity": "high",
+    "file_path": "examples/sample-code/judge/src/main/java/com/example/deadcode/DeadCodeUtil.java",
+    "line_start": 15,
+    "cwe": "CWE-798",
+    "exploitability": "not_exploitable",
+    "exploitReason": "未被任何 HTTP 入口调用"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/sql-injection-001",
+    "title": "SQL Injection - String Concatenation",
+    "severity": "high",
+    "file_path": "examples/sample-code/judge/src/main/java/com/example/protection/ProtectedController.java",
+    "line_start": 34,
+    "cwe": "CWE-89",
+    "exploitability": "not_exploitable",
+    "exploitReason": "Spring Security @PreAuthorize 注解保护"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/sql-injection-001",
+    "title": "SQL Injection - String Concatenation",
+    "severity": "high",
+    "file_path": "examples/sample-code/judge/src/main/java/com/example/indirect/IndirectDao.java",
+    "line_start": 29,
+    "cwe": "CWE-89",
+    "exploitability": "exploitable",
+    "exploitReason": "可达路径: findUser() → process() → findById()"
+  },
+  {
+    "engine": "self_sast",
+    "rule_id": "java/hardcoded-password-001",
+    "title": "Hardcoded Password or Secret",
+    "severity": "high",
+    "file_path": "examples/sample-code/judge/src/main/java/com/example/library/UntouchedLibrary.java",
+    "line_start": 16,
+    "cwe": "CWE-798",
+    "exploitability": "potentially_exploitable",
+    "exploitReason": "项目无 HTTP 入口"
+  }
+]
