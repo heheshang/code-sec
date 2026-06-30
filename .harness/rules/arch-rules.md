@@ -80,3 +80,79 @@ app → core → integration
 - 用户侧展示信息必须走国际化资源文件
 - 错误码配置对应的国际化消息
 - 新增功能必须同步检查国际化的影响范围
+
+---
+
+## code-sec 项目架构规则
+
+### 模块依赖方向（严格单向）
+
+```
+common ← es-integration
+common ← api ← worker
+common ← engine-adapter ← api
+common ← engine-adapter ← worker
+common ← engine-adapter ← gitlab-integration
+```
+
+**规则**：
+1. `common` 是基础模块，可被任何模块依赖，但不可依赖其他内部模块
+2. `api` 不可依赖 `worker`、`gitlab-integration`、`es-integration`
+3. `worker` 可依赖 `api`（暂允许，M2 需解耦为事件驱动），但不可依赖 `gitlab-integration`、`es-integration`
+4. `gitlab-integration` 和 `es-integration` 只能依赖 `common` 和 `engine-adapter`
+5. `engine-adapter` 只能依赖 `common`（无业务知识）
+
+### api 模块包命名规则
+
+```
+com.codesec.api/
+├── domain/               # 领域层 — 纯业务概念，零框架依赖
+│   ├── entity/           # JPA @Entity
+│   ├── enums/            # 业务枚举
+│   ├── repository/       # Repository 接口（Spring Data JPA）
+│   └── mapper/           # 实体转换
+├── application/          # 应用层 — 用例编排
+│   └── event/            # 应用事件（如同步索引触发）
+├── module/               # 业务模块（按业务领域分包）
+│   ├── {domain}/
+│   │   ├── controller/   # REST 控制器
+│   │   ├── service/      # 应用服务
+│   │   └── dto/          # 模块内 DTO
+│   └── ...
+├── interfaces/           # 接口层 — 跨模块共享的 DTO/适配器
+│   └── dto/              # 通用 DTO（如 PaginatedResult）
+├── infrastructure/       # 基础设施层 — 技术实现
+│   └── queue/            # 队列实现（如 InMemoryScanQueue）
+├── security/             # 安全横切关注点
+└── config/               # Spring 配置、全局异常处理
+```
+
+### 包依赖方向（稳定依赖原则）
+
+```
+security/  config/  (横切，可依赖任何层)
+     ↕          ↕
+infrastructure/ → application/ → domain/
+     ↕                          ↕
+     interface/dto (可被任意层使用)
+     ↕
+module/*/controller/ → module/*/service/ → domain/
+```
+
+**规则**：
+1. `domain/` → 零外部依赖，不可依赖 `module/`、`infrastructure/`、`interfaces/`
+2. `application/` → 可依赖 `domain/`，不可依赖 `module/`、`infrastructure/`
+3. `infrastructure/` → 可依赖 `domain/`，不可依赖 `application/`、`module/`
+4. `module/*/controller/` → 可依赖 `module/*/service/`，不可直接依赖 `domain/repository/`
+5. `module/*/service/` → 可依赖 `domain/`、`interfaces/dto/`
+6. `interfaces/dto/` → 纯 POJO，零内部依赖
+7. `security/` → 可依赖 `domain/` 和 `interfaces/dto/`，不可依赖 `module/`
+
+### 禁止模式
+
+1. **Mock 在生产代码中**：临时开发桩（stub）必须放在 `dev` 包下，标注 `@Deprecated(forRemoval = true)`，并附带替换计划注释
+2. **双向模块依赖**：禁止两个内部模块互相依赖。若出现，抽取共享接口到 `common`
+3. **Controller 在 `controller/` 顶层**：所有 Controller 必须放在 `module/{domain}/controller/` 下
+4. **DTO 在 `domain/dto/`**：DTO 是接口层概念，必须放在 `interfaces/dto/` 或 `module/*/dto/`
+5. **基础设施代码在 `module/` 下**：队列、缓存、外部客户端等基础设施实现必须放在 `infrastructure/` 下
+6. **事件在顶层 `event/`**：应用事件必须放在 `application/event/` 下

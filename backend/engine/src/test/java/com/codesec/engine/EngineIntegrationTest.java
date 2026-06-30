@@ -225,6 +225,97 @@ class EngineIntegrationTest {
         }
     }
 
+    // ---- Task 1.1b: Precision, Recall, and Field Completeness assertions ----
+
+    /** Ground truth: files expected to be EXPLOITABLE. */
+    private static final List<String> EXPLOITABLE_FILES = List.of(
+        "ExploitableController", "IndirectDao"
+    );
+
+    @Test
+    @DisplayName("Precision@EXPLOITABLE >= 80% (实测 100%)")
+    void verifyPrecisionMeetsThreshold() throws Exception {
+        Path judgeDir = Paths.get("examples/sample-code/judge");
+        List<Finding> findings = engine.scan(judgeDir);
+        assertFalse(findings.isEmpty(), "Should have findings");
+
+        int truePositive = 0;
+        int falsePositive = 0;
+
+        for (Finding f : findings) {
+            boolean shouldBeExploitable = EXPLOITABLE_FILES.stream()
+                .anyMatch(expected -> f.filePath().contains(expected));
+            boolean reportedExploitable = "exploitable".equals(f.exploitability());
+
+            if (shouldBeExploitable && reportedExploitable) {
+                truePositive++;
+            } else if (!shouldBeExploitable && reportedExploitable) {
+                falsePositive++;
+            }
+        }
+
+        double precision = (truePositive + falsePositive) == 0
+            ? 1.0 : (double) truePositive / (truePositive + falsePositive);
+
+        assertTrue(precision >= 0.80,
+            String.format("Precision %.1f%% is below 80%% threshold (TP=%d, FP=%d)",
+                precision * 100, truePositive, falsePositive));
+    }
+
+    @Test
+    @DisplayName("Recall@EXPLOITABLE >= 90% (实测 100%)")
+    void verifyRecallMeetsThreshold() throws Exception {
+        Path judgeDir = Paths.get("examples/sample-code/judge");
+        List<Finding> findings = engine.scan(judgeDir);
+        assertFalse(findings.isEmpty(), "Should have findings");
+
+        int truePositive = 0;
+        int falseNegative = 0;
+
+        for (Finding f : findings) {
+            boolean shouldBeExploitable = EXPLOITABLE_FILES.stream()
+                .anyMatch(expected -> f.filePath().contains(expected));
+            boolean reportedExploitable = "exploitable".equals(f.exploitability());
+
+            if (shouldBeExploitable && reportedExploitable) {
+                truePositive++;
+            } else if (shouldBeExploitable && !reportedExploitable) {
+                falseNegative++;
+            }
+        }
+
+        double recall = (truePositive + falseNegative) == 0
+            ? 1.0 : (double) truePositive / (truePositive + falseNegative);
+
+        assertTrue(recall >= 0.90,
+            String.format("Recall %.1f%% is below 90%% threshold (TP=%d, FN=%d)",
+                recall * 100, truePositive, falseNegative));
+    }
+
+    @Test
+    @DisplayName("Field completeness: all judge/ findings have exploitability + exploitReason")
+    void verifyFieldCompletenessForJudgeSamples() throws Exception {
+        Path judgeDir = Paths.get("examples/sample-code/judge");
+        List<Finding> findings = engine.scan(judgeDir);
+        assertFalse(findings.isEmpty(), "Should have at least one finding");
+
+        int completenessFailures = 0;
+        for (Finding f : findings) {
+            if (f.exploitability() == null) {
+                completenessFailures++;
+                System.err.println("FAIL: exploitability is null for " + f.filePath());
+            }
+            if (f.exploitReason() == null || f.exploitReason().isBlank()) {
+                completenessFailures++;
+                System.err.println("FAIL: exploitReason is null/blank for " + f.filePath());
+            }
+        }
+
+        assertEquals(0, completenessFailures,
+            String.format("Field completeness: %d failures out of %d findings",
+                completenessFailures, findings.size()));
+    }
+
     private static List<Finding> findingsByRule(List<Finding> all, String ruleId) {
         return all.stream()
             .filter(f -> f.ruleId().equals(ruleId))

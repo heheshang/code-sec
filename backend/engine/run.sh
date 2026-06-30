@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-ENGINE_JAR="$SCRIPT_DIR/target/code-sec-engine-1.0.0-SNAPSHOT-jar-with-dependencies.jar"
+ENGINE_JAR="$SCRIPT_DIR/target/code-sec-backend-engine-1.0.0-SNAPSHOT-jar-with-dependencies.jar"
 
 # Build if JAR doesn't exist
 if [ ! -f "$ENGINE_JAR" ]; then

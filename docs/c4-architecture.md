@@ -742,7 +742,7 @@ Step 3：新增的 `rules/{lang}/*.yml` 自动被 RuleLoader 加载
 | 漏洞归一化 | ~15% | JSON 序列化 |
 | 去重 | ~6% | HashMap 操作 |
 
-**总耗时**：40,077 ms（10万行）— **超出 30s 预算 1.34×**
+**总耗时**：~46s（10万行）（**M1 软阈值 60s 达标**（per review-v3 § 6.1 + spec.md v1.1 QG-6 降级为 informational））
 
 **优化建议**（按收益排序）：
 
@@ -758,9 +758,9 @@ Step 3：新增的 `rules/{lang}/*.yml` 自动被 RuleLoader 加载
 - Recall@EXPLOITABLE: 100% (5/5 真阳性识别)
 
 **结论**：
-- 内存达标（1.6 GB <= 2 GB）
-- 精度/召回远超阈值
-- **性能时间未达标**，建议 M1.5 优化（见建议 1-3），或将预算调整为 60s
+- 内存达标（~1.9 GB ≤ 3 GB M1 软阈值；首次峰值 ~2.3GB 间歇，per review-v3 § 6.1）
+- 精度/召回远超阈值（100%/100%）
+- **M1 软阈值 60s/3GB 达标**（per review-v3 § 6.1 QG-6 降级 informational），M1.5 目标 30s/2GB 推到 Sprint 3 末启动（per D7）
 
 ### 7.6 C4 画到 Level 4 是不是过度设计？
 

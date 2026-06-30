@@ -349,7 +349,7 @@ flowchart LR
 - 只支持 Java（多语言扩展见 § M2）
 - 不做传递数据流追踪（v1 只看直接污染源）
 - 类级注解检测需要源文件（要求 ParsedFile 完整传递）
-- 性能：100K LOC 扫描约 40s（目标 30s，BENCHMARK.md 记录了 6 条优化建议）
+- 性能：100K LOC 扫描约 46s / ~1.9GB（**M1 软阈值 60s / 3GB**（per review-v3 § 6.1 QG-6 降级为 informational），**M1.5 目标 30s / 2GB**（per D7 推 Sprint 3 末启动））
 
 **M2+ 待扩展**：
 - 多语言支持（Go / Python / PHP）
