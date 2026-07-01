@@ -31,6 +31,7 @@
         <testcontainers.version>1.19.8</testcontainers.version>
         <wiremock.version>3.9.2</wiremock.version>
         <lombok.version>1.18.40</lombok.version>
+        <openpdf.version>1.3.40</openpdf.version>
     </properties>
 
     <modules>
@@ -147,6 +148,13 @@
                 <groupId>org.wiremock</groupId>
                 <artifactId>wiremock-standalone</artifactId>
                 <version>${wiremock.version}</version>
+            </dependency>
+
+            <!-- OpenPDF -->
+            <dependency>
+                <groupId>com.github.librepdf</groupId>
+                <artifactId>openpdf</artifactId>
+                <version>${openpdf.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -124,6 +124,13 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- OpenPDF for PDF export -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+
+        </dependency>
     </dependencies>
 
     <build>
