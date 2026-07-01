@@ -51,6 +51,26 @@ public final class RuleLoader {
 
     @SuppressWarnings("unchecked")
     public static List<Rule> loadFromClasspathDirectory(String classpathPrefix) throws IOException {
+        List<Rule> rules = loadFromClasspathDirectory(classpathPrefix, true);
+        log.info("Loaded {} rules from classpath:{}", rules.size(), classpathPrefix);
+        return rules;
+    }
+
+    /**
+     * Load rules from multiple classpath language directories (e.g. "rules/java", "rules/go", "rules/python").
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Rule> loadFromClasspathDirectories(String... classpathPrefixes) throws IOException {
+        List<Rule> rules = new ArrayList<>();
+        for (String prefix : classpathPrefixes) {
+            rules.addAll(loadFromClasspathDirectory(prefix));
+        }
+        log.info("Loaded {} rules from classpath:{}", rules.size(), String.join(", ", classpathPrefixes));
+        return rules;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Rule> loadFromClasspathDirectory(String classpathPrefix, boolean isInternal) throws IOException {
         List<Rule> rules = new ArrayList<>();
         ClassLoader cl = RuleLoader.class.getClassLoader();
 
@@ -58,7 +78,9 @@ public final class RuleLoader {
             "sql-injection-001.yml",
             "hardcoded-password-001.yml",
             "xss-001.yml",
-            "weak-crypto-001.yml"
+            "weak-crypto-001.yml",
+            "command-injection-001.yml",
+            "unsafe-eval-001.yml"
         };
         for (String name : ruleNames) {
             String resourcePath = classpathPrefix + "/" + name;
@@ -69,7 +91,6 @@ public final class RuleLoader {
                 }
             }
         }
-        log.info("Loaded {} rules from classpath:{}", rules.size(), classpathPrefix);
         return rules;
     }
 

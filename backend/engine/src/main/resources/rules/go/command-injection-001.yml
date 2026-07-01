@@ -1,0 +1,21 @@
+id: go/command-injection-001
+name: Go Command Injection
+severity: high
+cwe: CWE-78
+languages: [go]
+engine: self_sast
+detection:
+  type: ast
+  pattern: "go-command-injection"
+fix:
+  description: "Avoid passing user input directly to exec.Command. Use parameterized execution or input validation."
+  example: |
+    // Instead of:
+    // out, _ := exec.Command("bash", "-c", userInput).Output()
+    // Use:
+    out, _ := exec.Command("ls", "-l", filepath.Clean(userInput)).Output()
+false_positive_scenarios:
+  - framework: standard-lib
+    reason: "Controlled arguments with hardcoded commands and safe arguments"
+author: security-team
+enabled: true

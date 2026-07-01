@@ -3,6 +3,9 @@ package com.codesec.engine;
 import com.codesec.engine.config.JudgeConfig;
 import com.codesec.engine.detector.Detector;
 import com.codesec.engine.detector.impl.HardcodedPasswordDetector;
+import com.codesec.engine.detector.impl.GoCommandInjectionDetector;
+import com.codesec.engine.detector.impl.PythonSqlInjectionDetector;
+import com.codesec.engine.detector.impl.PythonUnsafeEvalDetector;
 import com.codesec.engine.detector.impl.SqlInjectionDetector;
 import com.codesec.engine.detector.impl.WeakCryptoDetector;
 import com.codesec.engine.detector.impl.XssDetector;
@@ -14,6 +17,8 @@ import com.codesec.engine.model.Finding;
 import com.codesec.engine.parser.AstParser;
 import com.codesec.engine.parser.ParsedFile;
 import com.codesec.engine.parser.languages.JavaLanguage;
+import com.codesec.engine.parser.languages.GoLanguage;
+import com.codesec.engine.parser.languages.PythonLanguage;
 import com.codesec.engine.rule.Rule;
 import com.codesec.engine.rule.RuleRegistry;
 import com.codesec.engine.util.PathMatcher;
@@ -54,7 +59,11 @@ public final class Engine {
     }
 
     public static Engine create(RuleRegistry ruleRegistry) {
-        Map<String, AstParser> parsers = Map.of("java", new JavaLanguage());
+        Map<String, AstParser> parsers = Map.of(
+            "java", new JavaLanguage(),
+            "go", new GoLanguage(),
+            "python", new PythonLanguage()
+        );
         List<String> excludes = List.of(
             "**/test/**",
             "**/*Test.java",
@@ -70,6 +79,12 @@ public final class Engine {
         detectorsByRuleId.put("java/hardcoded-password-001", new HardcodedPasswordDetector());
         detectorsByRuleId.put("java/xss-001", new XssDetector());
         detectorsByRuleId.put("java/weak-crypto-001", new WeakCryptoDetector());
+        // Go detectors
+        detectorsByRuleId.put("go/hardcoded-password-001", new HardcodedPasswordDetector());
+        detectorsByRuleId.put("go/command-injection-001", new GoCommandInjectionDetector());
+        // Python detectors
+        detectorsByRuleId.put("python/sql-injection-001", new PythonSqlInjectionDetector());
+        detectorsByRuleId.put("python/unsafe-eval-001", new PythonUnsafeEvalDetector());
     }
 
     public void registerDetector(String ruleId, Detector detector) {

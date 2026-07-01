@@ -70,7 +70,7 @@ public final class CliRunner implements Callable<Integer> {
                 RuleRegistry registry = new RuleRegistry();
 
                 if (rulesDir.isEmpty()) {
-                    registry.loadFromClasspath("rules/java");
+                    registry.loadFromClasspath("rules/java", "rules/go", "rules/python");
                 } else {
                     registry.loadFromDirectory(Path.of(rulesDir));
                 }

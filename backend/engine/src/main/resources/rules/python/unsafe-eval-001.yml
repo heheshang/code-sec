@@ -1,0 +1,19 @@
+id: python/unsafe-eval-001
+name: Unsafe eval() Usage
+severity: medium
+cwe: CWE-95
+languages: [python]
+engine: self_sast
+detection:
+  type: ast
+  pattern: "python-unsafe-eval"
+fix:
+  description: "Avoid eval() with untrusted input. Use ast.literal_eval() for safe evaluation of literals."
+  example: |
+    import ast
+    result = ast.literal_eval(user_input)
+false_positive_scenarios:
+  - framework: standard-lib
+    reason: "eval() with hardcoded input or inside a restricted sandbox"
+author: security-team
+enabled: true

@@ -1,0 +1,46 @@
+package com.codesec.engine.parser.languages;
+
+import com.codesec.engine.parser.AstParser;
+import com.codesec.engine.parser.ParsedFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/**
+ * Python source-code parser implementing {@link AstParser}.
+ * <p>
+ * When the tree-sitter native library is available, parsing is delegated
+ * to JNI-based CST construction. Otherwise, a simple text-based parse is
+ * performed — sufficient for the regex and source-level detectors to operate.
+ * </p>
+ */
+public final class PythonLanguage extends TreeSitterAdapter {
+    private static final Logger log = LoggerFactory.getLogger(PythonLanguage.class);
+
+    private static final String LANGUAGE = "python";
+
+    public PythonLanguage() {
+        super(TreeSitterLibraryLoader.isAvailable());
+    }
+
+    @Override
+    public boolean supports(Path filePath) {
+        return filePath.getFileName().toString().endsWith(".py");
+    }
+
+    @Override
+    public String languageName() {
+        return LANGUAGE;
+    }
+
+    @Override
+    protected Object parseWithTreeSitter(Path filePath, String sourceCode) {
+        // TODO: replace with actual tree-sitter grammar parse when JNI binding is deployed
+        // try (Language pyLang = Language.load("/path/to/tree-sitter-python.wasm")) { ... }
+        log.debug("tree-sitter JNI would parse Python file: {}", filePath);
+        return null;
+    }
+}

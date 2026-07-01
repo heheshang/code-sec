@@ -49,7 +49,7 @@ class AccuracyBenchmarkTest {
     @BeforeAll
     static void setUp() throws Exception {
         RuleRegistry registry = new RuleRegistry();
-        registry.loadFromClasspath("rules/java");
+        registry.loadFromClasspath("rules/java", "rules/go", "rules/python");
         engine = Engine.create(registry);
     }
 

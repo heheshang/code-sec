@@ -1,0 +1,18 @@
+[
+  {
+    "rule_id": "python/sql-injection-001",
+    "file_path_contains": "sql_injection.py"
+  },
+  {
+    "rule_id": "python/sql-injection-001",
+    "file_path_contains": "sql_injection.py"
+  },
+  {
+    "rule_id": "python/unsafe-eval-001",
+    "file_path_contains": "unsafe_eval.py"
+  },
+  {
+    "rule_id": "python/unsafe-eval-001",
+    "file_path_contains": "unsafe_eval.py"
+  }
+]

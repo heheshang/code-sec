@@ -1,0 +1,14 @@
+[
+  {
+    "rule_id": "go/hardcoded-password-001",
+    "file_path_contains": "hardcoded_password.go"
+  },
+  {
+    "rule_id": "go/hardcoded-password-001",
+    "file_path_contains": "hardcoded_password.go"
+  },
+  {
+    "rule_id": "go/command-injection-001",
+    "file_path_contains": "command_injection.go"
+  }
+]

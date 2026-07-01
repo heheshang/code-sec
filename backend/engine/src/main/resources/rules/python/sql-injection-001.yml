@@ -1,0 +1,18 @@
+id: python/sql-injection-001
+name: Python SQL Injection - String Concatenation
+severity: high
+cwe: CWE-89
+languages: [python]
+engine: self_sast
+detection:
+  type: ast
+  pattern: "python-sql-injection"
+fix:
+  description: "Use parameterized queries (e.g. ? placeholders with DB-API params) instead of string concatenation"
+  example: |
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+false_positive_scenarios:
+  - framework: sqlalchemy
+    reason: "SQLAlchemy ORM auto-escapes parameters when using text() with bindparams"
+author: security-team
+enabled: true

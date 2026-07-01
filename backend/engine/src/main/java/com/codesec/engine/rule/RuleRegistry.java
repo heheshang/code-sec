@@ -22,7 +22,14 @@ public final class RuleRegistry {
     }
 
     public void loadFromClasspath(String classpathPrefix) throws IOException {
-        List<Rule> loaded = RuleLoader.loadFromClasspathDirectory(classpathPrefix);
+        addAll(RuleLoader.loadFromClasspathDirectory(classpathPrefix));
+    }
+
+    /**
+     * Load rules from one or more classpath language directories (e.g. "rules/java", "rules/go").
+     */
+    public void loadFromClasspath(String... classpathPrefixes) throws IOException {
+        List<Rule> loaded = RuleLoader.loadFromClasspathDirectories(classpathPrefixes);
         addAll(loaded);
     }
 
