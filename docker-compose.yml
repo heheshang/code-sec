@@ -1,15 +1,16 @@
 services:
-  mysql:
-    image: mysql:8.0
+  postgres:
+    image: postgres:16
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-codesec}
+      POSTGRES_DB: ${POSTGRES_DB:-codesec}
+      POSTGRES_USER: ${POSTGRES_USER:-codesec}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codesec123}
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - mysql-data:/var/lib/mysql
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codesec} -d ${POSTGRES_DB:-codesec}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -46,13 +47,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-codesec}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-codesec}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-codesec}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-codesec123}
       JWT_SECRET: ${JWT_SECRET:-codesec-demo-secret-key-2026}
       ES_HOST: elasticsearch:9200
     depends_on:
-      mysql: { condition: service_healthy }
+      postgres: { condition: service_healthy }
       elasticsearch: { condition: service_healthy }
 
   backend-worker:
@@ -62,13 +63,13 @@ services:
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-codesec}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-codesec}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-codesec}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-codesec123}
       JWT_SECRET: ${JWT_SECRET:-codesec-demo-secret-key-2026}
       ES_HOST: elasticsearch:9200
     depends_on:
-      mysql: { condition: service_healthy }
+      postgres: { condition: service_healthy }
 
   frontend:
     build:
@@ -80,5 +81,5 @@ services:
       - backend-api
 
 volumes:
-  mysql-data:
+  postgres-data:
   es-data:
