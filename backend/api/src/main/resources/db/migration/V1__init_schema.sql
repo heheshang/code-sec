@@ -60,11 +60,12 @@ CREATE TABLE permission (
 -- 4. user_role join table
 -- ============================================
 CREATE TABLE user_role (
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
     granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     granted_by BIGINT,
-    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT uk_user_role UNIQUE (user_id, role_id),
     FOREIGN KEY (user_id) REFERENCES "user" (id) ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
 );
@@ -73,9 +74,10 @@ CREATE TABLE user_role (
 -- 5. role_permission join table
 -- ============================================
 CREATE TABLE role_permission (
+    id BIGSERIAL PRIMARY KEY,
     role_id BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
-    PRIMARY KEY (role_id, permission_id),
+    CONSTRAINT uk_role_permission UNIQUE (role_id, permission_id),
     FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
 );
