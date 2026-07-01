@@ -60,10 +60,8 @@ export const useVulnStore = defineStore('vuln', () => {
     }
     const sp = new URLSearchParams()
     sp.set('page', String(merged.page))
-    sp.set('pageSize', String(merged.pageSize))
-    sp.set('sortBy', String(merged.sortBy))
-    sp.set('sortOrder', String(merged.sortOrder))
-    if (merged.projectId) sp.set('projectId', merged.projectId)
+    sp.set('size', String(merged.pageSize))
+    if (merged.projectId) sp.set('projectId', String(merged.projectId))
     if (merged.severity && merged.severity.length > 0) sp.set('severity', merged.severity.join(','))
     if (merged.status && merged.status.length > 0) sp.set('status', merged.status.join(','))
     if (merged.exploitability && merged.exploitability.length > 0) {

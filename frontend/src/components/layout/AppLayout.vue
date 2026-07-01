@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { Layout } from 'ant-design-vue'
 import { useUiStore } from '@/stores/ui'
 import SidebarNav from './SidebarNav.vue'
 import TopBar from './TopBar.vue'
 
 const { Sider, Header, Content, Footer } = Layout
+const route = useRoute()
 const ui = useUiStore()
+
+const isLoginPage = computed(() => route.name === 'login')
 
 const siderWidth = computed<number>(() =>
   ui.sidebarCollapsed ? 64 : 220,
@@ -14,7 +18,12 @@ const siderWidth = computed<number>(() =>
 </script>
 
 <template>
-  <Layout class="cs-app">
+  <Layout v-if="isLoginPage" class="cs-app cs-app--blank">
+    <Content class="cs-app__content">
+      <router-view />
+    </Content>
+  </Layout>
+  <Layout v-else class="cs-app">
     <Sider
       :width="siderWidth"
       :collapsed-width="64"
@@ -38,7 +47,7 @@ const siderWidth = computed<number>(() =>
         </router-view>
       </Content>
       <Footer class="cs-app__footer">
-        code-sec audit workbench · prototype build · data served by MSW
+        code-sec audit workbench · prototype build
       </Footer>
     </Layout>
   </Layout>

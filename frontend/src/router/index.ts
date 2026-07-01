@@ -6,6 +6,12 @@ const routes: RouteRecordRaw[] = [
     redirect: '/dashboard',
   },
   {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: { title: 'Login' },
+  },
+  {
     path: '/dashboard',
     name: 'dashboard',
     component: () => import('@/views/DashboardView.vue'),
@@ -53,6 +59,19 @@ const routes: RouteRecordRaw[] = [
     redirect: '/dashboard',
   },
 ]
+
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('token')
+  if (to.name === 'login') {
+    next()
+    return
+  }
+  if (!token) {
+    next({ name: 'login', query: { redirect: to.fullPath } })
+    return
+  }
+  next()
+})
 
 export const router = createRouter({
   history: createWebHistory(),
