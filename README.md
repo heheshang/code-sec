@@ -65,7 +65,7 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
 
 - Java 17+
 - Maven 3.8+
-- MySQL 8.0
+- PostgreSQL 16
 - Elasticsearch 8.x (optional, for search features)
 - Node.js 18+ (for frontend)
 
@@ -73,7 +73,7 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
 
 ```bash
 # Start infrastructure
-docker compose up -d mysql
+docker compose up -d postgres
 
 # Build all modules
 mvn clean install -f backend/pom.xml
@@ -103,9 +103,9 @@ docker compose up --build
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SPRING_DATASOURCE_URL` | `jdbc:mysql://localhost:3306/codesec` | MySQL JDBC URL |
-| `SPRING_DATASOURCE_USERNAME` | `root` | DB user |
-| `SPRING_DATASOURCE_PASSWORD` | `root123` | DB password |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/codesec` | PostgreSQL JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | `codesec` | DB user |
+| `SPRING_DATASOURCE_PASSWORD` | `codesec123` | DB password |
 | `JWT_SECRET` | *(auto-generated)* | JWT signing key |
 | `ES_HOST` | `localhost:9200` | Elasticsearch host |
 
