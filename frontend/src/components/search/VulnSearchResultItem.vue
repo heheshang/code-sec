@@ -54,7 +54,7 @@ function goToDetail(): void {
       </Tag>
     </div>
     <h4 class="cs-vuln-result__title">
-      <HighlightedSnippet :html="titleHtml" :max-length="200" />
+      <HighlightedSnippet :html="titleHtml ?? ''" :max-length="200" />
     </h4>
     <p v-if="descHtml" class="cs-vuln-result__desc">
       <HighlightedSnippet :html="descHtml" :max-length="300" />

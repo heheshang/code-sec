@@ -48,7 +48,7 @@ watch([() => store.severityFilter, () => store.exploitabilityFilter, () => store
   () => store.search(), { deep: true }
 )
 
-function onTabChange(key: string): void {
+function onTabChange(key: string | number): void {
   store.setTab(key as SearchTab)
 }
 

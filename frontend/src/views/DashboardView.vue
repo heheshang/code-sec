@@ -212,13 +212,17 @@ function goToQueue(filter?: 'critical' | 'pending'): void {
   }
   router.push('/audit')
 }
+
+function reloadPage() {
+  window.location.reload()
+}
 </script>
 
 <template>
   <div v-if="error && !loading" class="cs-dashboard cs-dashboard__error">
     <Empty description="Failed to load dashboard data">
       <template #extra>
-        <a-button type="primary" @click="location.reload()">Retry</a-button>
+        <a-button type="primary" @click="reloadPage">Retry</a-button>
       </template>
     </Empty>
   </div>

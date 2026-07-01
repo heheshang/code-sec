@@ -18,7 +18,7 @@ function open(): void {
   visible.value = true
   // Focus input after modal animation
   setTimeout(() => {
-    inputRef.value?.focus()
+    (inputRef.value as unknown as { focus(): void })?.focus()
   }, 100)
 }
 

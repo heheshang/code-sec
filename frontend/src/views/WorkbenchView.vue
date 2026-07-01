@@ -16,7 +16,7 @@ import {
   message,
   Empty,
 } from 'ant-design-vue'
-import { LeftOutlined, SaveOutlined, CodeOutlined, FileSearchOutlined } from '@ant-design/icons-vue'
+import { LeftOutlined, SaveOutlined, CodeOutlined, FileSearchOutlined, DownloadOutlined } from '@ant-design/icons-vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import VulnLineMarker from '@/components/code/VulnLineMarker.vue'
 import CodeViewer from '@/components/code/CodeViewer.vue'
@@ -33,8 +33,8 @@ import { http } from '@/api/client'
 import type { Vuln } from '@/types/vuln'
 import { STATUS_LABEL, LANGUAGE_TO_MONACO } from '@/types/vuln'
 import type { AuditAction, PocAttachment, AuditRecord } from '@/types/audit'
-import { projects as projectList } from '@/api/mock/data'
 import dayjs from 'dayjs'
+import type { RepoListItem } from '@/api/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,10 +45,7 @@ const vuln = ref<Vuln | null>(null)
 const history = ref<AuditRecord[]>([])
 const historyLoading = ref<boolean>(false)
 
-const project = computed(() => {
-  if (vuln.value === null) return null
-  return projectList.find((p) => p.id === vuln.value!.projectId) ?? null
-})
+const projectName = ref<string>('')
 
 const action = ref<AuditAction>('confirm')
 const exploitCondition = ref<string>('')
@@ -64,6 +61,13 @@ async function loadVuln(vulnId: string): Promise<void> {
     const resp = await http.get<Vuln>(`/vulns/${vulnId}`)
     vuln.value = resp.data
     vulnStore.patchVuln(resp.data)
+    // Fetch project name from API (removes mock data dependency)
+    try {
+      const repoResp = await http.get<RepoListItem>(`/repos/${resp.data.projectId}`)
+      projectName.value = repoResp.data.name
+    } catch {
+      projectName.value = resp.data.projectId
+    }
     // Prefill fix code from the static suggestion so auditors can start typing
     fixCodeSnippet.value = resp.data.fixCodeSnippet
     fixSuggestion.value = resp.data.fixSuggestion
@@ -152,6 +156,24 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
+async function downloadPdf(): Promise<void> {
+  if (vuln.value === null) return
+  try {
+    const resp = await http.get(`/vulns/${vuln.value.id}/export`, { responseType: 'blob' })
+    const blob = new Blob([resp.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `vuln-${vuln.value.id}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    message.error(e instanceof Error ? e.message : 'Failed to download PDF')
+  }
+}
+
 function goBack(): void {
   router.push('/audit')
 }
@@ -166,6 +188,7 @@ function goBack(): void {
       <template #extra>
         <Space :size="8">
           <Button @click="goBack"><LeftOutlined /> Queue</Button>
+          <Button @click="downloadPdf"><DownloadOutlined /> PDF</Button>
           <Button type="primary" :loading="auditStore.submitting" :disabled="!formValid" @click="handleSubmit">
             <SaveOutlined /> Submit audit
           </Button>
@@ -199,7 +222,7 @@ function goBack(): void {
             <Space :size="6">
               <CodeOutlined />
               <span>Source</span>
-              <Tag bordered color="purple">{{ project?.name ?? '—' }}</Tag>
+              <Tag bordered color="purple">{{ projectName }}</Tag>
             </Space>
           </template>
           <template #extra>
@@ -229,7 +252,7 @@ function goBack(): void {
               <ExploitabilityBadge :exploitability="vuln.exploitability" :reason="vuln.exploitReason" />
             </Space>
             <Typography.Text type="secondary" class="cs-workbench__meta">
-              {{ project?.name }} · {{ vuln.discoveredBy }} · {{ dayjs(vuln.discoveredAt).format('MMM D, HH:mm') }}
+              {{ projectName }} · {{ vuln.discoveredBy }} · {{ dayjs(vuln.discoveredAt).format('MMM D, HH:mm') }}
             </Typography.Text>
           </div>
 
