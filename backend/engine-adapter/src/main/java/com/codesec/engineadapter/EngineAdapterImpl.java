@@ -13,10 +13,12 @@ import java.util.*;
 public class EngineAdapterImpl implements EngineAdapter {
     private static final Logger log = LoggerFactory.getLogger(EngineAdapterImpl.class);
     private final RuleRegistry ruleRegistry;
+    private final ExemptionFilter exemptionFilter;
     private long scanCount = 0;
 
-    public EngineAdapterImpl(RuleRegistry ruleRegistry) {
+    public EngineAdapterImpl(RuleRegistry ruleRegistry, ExemptionFilter exemptionFilter) {
         this.ruleRegistry = ruleRegistry;
+        this.exemptionFilter = exemptionFilter;
     }
 
     @Override
@@ -25,6 +27,10 @@ public class EngineAdapterImpl implements EngineAdapter {
         try {
             Engine engine = Engine.create(ruleRegistry);
             List<Finding> findings = engine.scan(request.sourceRoot());
+            // Apply project-level exemption filter
+            if (request.repoId() != null && exemptionFilter != null) {
+                findings = exemptionFilter.filterExempted(findings, request.repoId());
+            }
             long duration = System.currentTimeMillis() - start;
             scanCount++;
             log.info("Full scan complete: {} findings in {}ms", findings.size(), duration);
