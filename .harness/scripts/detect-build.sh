@@ -18,7 +18,7 @@
 detect_build_tool() {
   # Priority order: build file presence
 
-  # Maven
+  # Maven (root pom.xml | backend/pom.xml | subdirectory pom.xml)
   if [ -f "pom.xml" ]; then
     export BUILD_TOOL="maven"
     export BUILD_CMD="mvn compile"
@@ -28,6 +28,26 @@ detect_build_tool() {
     export LINT_CMD="mvn checkstyle:check 2>/dev/null || echo 'checkstyle not configured'"
     return 0
   fi
+  if [ -f "backend/pom.xml" ]; then
+    export BUILD_TOOL="maven"
+    export BUILD_CMD="mvn -f backend/pom.xml compile"
+    export BUILD_CHECK_CMD="mvn -f backend/pom.xml compile -q"
+    export TEST_CMD="mvn -f backend/pom.xml test"
+    export TEST_DIRS="backend/src/test/**/*Test.java backend/src/test/**/*Test.ts"
+    export LINT_CMD="mvn -f backend/pom.xml checkstyle:check 2>/dev/null || echo 'checkstyle not configured'"
+    return 0
+  fi
+  # Check for pom.xml in any first-level subdirectory
+  for _f in */pom.xml; do
+    if [ -f "$_f" ]; then
+      export BUILD_TOOL="maven"
+      export BUILD_CMD="mvn -f $_f compile"
+      export BUILD_CHECK_CMD="mvn -f $_f compile -q"
+      export TEST_CMD="mvn -f $_f test"
+      export TEST_DIRS="*/src/test/**/*Test.java"
+      return 0
+    fi
+  done
 
   # Gradle
   if [ -f "build.gradle" ] || [ -f "build.gradle.kts" ] || [ -f "gradlew" ]; then
