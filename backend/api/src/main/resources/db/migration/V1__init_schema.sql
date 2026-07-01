@@ -347,7 +347,7 @@ INSERT INTO role_permission (role_id, permission_id) VALUES
 
 -- seed default admin user (password: admin123, BCrypt encoded)
 INSERT INTO "user" (id, username, email, password_hash, status) VALUES
-(1, 'admin', 'admin@codesec.io', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'active');
+(1, 'admin', 'admin@codesec.io', '$2a$10$AfgLuTxCSwM8OE6HXDD4Lu.vyT6wvtmj/ohcIVXpTJ8kBcK.29VDq', 'active');
 
 -- admin gets SUPER_ADMIN role
 INSERT INTO user_role (user_id, role_id, granted_by) VALUES (1, 1, NULL);
