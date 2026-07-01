@@ -5,22 +5,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = ApiApplication.class)
+/**
+ * Base class for all API E2E tests.
+ *
+ * Uses MOCK web environment (no embedded Tomcat) to avoid
+ * SocketException: Operation not permitted in sandbox environments.
+ * MockMvc provides full request/response simulation without a real server.
+ *
+ * All test methods access endpoints via mockMvc, not baseUrl().
+ * No test subclasses currently use baseUrl() or @LocalServerPort.
+ */
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK, classes = ApiApplication.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 public abstract class BaseE2ETest {
-    @LocalServerPort
-    protected int port;
 
     @Autowired
     protected MockMvc mockMvc;
-
-    protected String baseUrl() { return "http://localhost:" + port; }
 
     protected String getAdminToken() throws Exception {
         var result = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders

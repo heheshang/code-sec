@@ -23,9 +23,17 @@ public class TicketService {
         var p = (status != null && !status.isEmpty())
             ? ticketRepo.findByStatus(status, PageRequest.of(page - 1, size))
             : ticketRepo.findAll(PageRequest.of(page - 1, size));
+
+        // Batch-resolve assignee names: collect unique assignee IDs, query once
+        java.util.Set<Long> assigneeIds = p.getContent().stream()
+            .map(VulnTicketEntity::getAssigneeId)
+            .filter(java.util.Objects::nonNull)
+            .collect(java.util.stream.Collectors.toSet());
+        java.util.Map<Long, String> userNameMap = userRepo.findAllById(assigneeIds).stream()
+            .collect(java.util.stream.Collectors.toMap(UserEntity::getId, UserEntity::getUsername));
+
         var items = p.getContent().stream().map(t -> {
-            String name = t.getAssigneeId() != null
-                ? userRepo.findById(t.getAssigneeId()).map(UserEntity::getUsername).orElse(null) : null;
+            String name = t.getAssigneeId() != null ? userNameMap.get(t.getAssigneeId()) : null;
             return toResponse(t, name);
         }).toList();
         return PaginatedResult.of(items, p.getTotalElements(), page, size);

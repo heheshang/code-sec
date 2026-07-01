@@ -19,4 +19,7 @@ public interface VulnFindingRepository extends JpaRepository<VulnFindingEntity, 
 
     @Query("SELECT COUNT(v) FROM VulnFindingEntity v WHERE v.severity = ?1")
     long countBySeverity(String severity);
+
+    @Query("SELECT v.severity, COUNT(v) FROM VulnFindingEntity v GROUP BY v.severity")
+    List<Object[]> countBySeverityGrouped();
 }

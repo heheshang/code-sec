@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.Map;
 
@@ -25,12 +26,19 @@ public class DashboardService {
     public Map<String, Object> stats() {
         long start = System.currentTimeMillis();
 
-        long total = vulnRepo.countAll();
-        long critical = vulnRepo.countBySeverity("critical");
-        long high = vulnRepo.countBySeverity("high");
-        long medium = vulnRepo.countBySeverity("medium");
-        long low = vulnRepo.countBySeverity("low");
-        long info = vulnRepo.countBySeverity("info");
+        // Single GROUP BY query replaces 6+1 independent COUNT queries
+        java.util.Map<String, Long> severityCounts = vulnRepo.countBySeverityGrouped()
+            .stream()
+            .collect(java.util.stream.Collectors.toMap(
+                row -> (String) row[0],
+                row -> (Long) row[1]
+            ));
+        long total = severityCounts.values().stream().mapToLong(Long::longValue).sum();
+        long critical = severityCounts.getOrDefault("critical", 0L);
+        long high = severityCounts.getOrDefault("high", 0L);
+        long medium = severityCounts.getOrDefault("medium", 0L);
+        long low = severityCounts.getOrDefault("low", 0L);
+        long info = severityCounts.getOrDefault("info", 0L);
 
         long open = ticketRepo.countByStatus("pending_audit")
                   + ticketRepo.countByStatus("confirmed")
