@@ -1,14 +1,21 @@
 package com.codesec.api.security;
 
+import com.codesec.api.domain.entity.PermissionEntity;
+import com.codesec.api.domain.entity.RoleEntity;
 import com.codesec.api.domain.entity.UserEntity;
+import com.codesec.api.domain.entity.UserRoleEntity;
 import com.codesec.api.domain.repository.PermissionRepository;
+import com.codesec.api.domain.repository.RolePermissionRepository;
+import com.codesec.api.domain.repository.RoleRepository;
 import com.codesec.api.domain.repository.UserRepository;
+import com.codesec.api.domain.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -17,6 +24,9 @@ public class AuthController {
     private final UserRepository userRepo;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
+    private final UserRoleRepository userRoleRepo;
+    private final RoleRepository roleRepo;
+    private final RolePermissionRepository rolePermissionRepo;
     private final PermissionRepository permRepo;
 
     @PostMapping("/login")
@@ -30,17 +40,38 @@ public class AuthController {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // Default all permissions for authenticated users
-        List<String> permissions = List.of(
-            "repo:create","repo:read","repo:update","repo:delete",
-            "scan:create","scan:read","scan:cancel",
-            "vuln:read","vuln:audit","vuln:confirm","vuln:false_positive","vuln:need_retest",
-            "ticket:read","ticket:assign","ticket:fix","ticket:close","ticket:retest","ticket:waive",
-            "rule:read","rule:create","rule:update","rule:delete","rule:gray_release",
-            "report:read","webhook:receive","internal:vuln-index"
-        );
+        // --- Dynamic permission resolution ---
+        // 1. Find user's role assignments
+        List<UserRoleEntity> userRoles = userRoleRepo.findByUserId(user.getId());
 
-        String token = jwtService.issue(user.getId(), user.getUsername(), "SUPER_ADMIN", permissions);
+        // 2. Collect unique role IDs
+        List<Long> roleIds = userRoles.stream()
+            .map(UserRoleEntity::getRoleId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 3. Collect unique permission IDs for those roles
+        List<Long> permissionIds = rolePermissionRepo.findByRoleIdIn(roleIds)
+            .stream()
+            .map(rp -> rp.getPermissionId())
+            .distinct()
+            .collect(Collectors.toList());
+
+        // 4. Resolve permission names
+        List<String> permissions = permRepo.findAllById(permissionIds)
+            .stream()
+            .map(PermissionEntity::getName)
+            .collect(Collectors.toList());
+
+        // 5. Determine role name (use first role's name, fallback to empty)
+        String roleName = "";
+        if (!roleIds.isEmpty()) {
+            roleName = roleRepo.findById(roleIds.get(0))
+                .map(RoleEntity::getName)
+                .orElse("");
+        }
+
+        String token = jwtService.issue(user.getId(), user.getUsername(), roleName, permissions);
 
         return Map.of(
             "token", token,
@@ -48,7 +79,7 @@ public class AuthController {
                 "id", user.getId(),
                 "username", user.getUsername(),
                 "email", user.getEmail(),
-                "role", "SUPER_ADMIN",
+                "role", roleName.isEmpty() ? "READONLY_VIEWER" : roleName,
                 "permissions", permissions
             )
         );

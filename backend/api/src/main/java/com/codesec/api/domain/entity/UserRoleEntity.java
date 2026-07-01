@@ -1,6 +1,8 @@
 package com.codesec.api.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.*;
 import java.time.LocalDateTime;
 
@@ -12,6 +14,9 @@ import java.time.LocalDateTime;
 @Builder
 public class UserRoleEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(name = "user_id")
     private Long userId;
 
