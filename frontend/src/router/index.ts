@@ -60,6 +60,14 @@ const routes: RouteRecordRaw[] = [
   },
 ]
 
+export const router = createRouter({
+  history: createWebHistory(),
+  routes,
+  scrollBehavior(_to, _from, saved) {
+    return saved ?? { top: 0 }
+  },
+})
+
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
   if (to.name === 'login') {
@@ -71,14 +79,6 @@ router.beforeEach((to, _from, next) => {
     return
   }
   next()
-})
-
-export const router = createRouter({
-  history: createWebHistory(),
-  routes,
-  scrollBehavior(_to, _from, saved) {
-    return saved ?? { top: 0 }
-  },
 })
 
 router.afterEach((to) => {
