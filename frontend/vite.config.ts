@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'node:path'
+import process from 'node:process'
+
+process.setMaxListeners(20)
 
 // https://vitejs.dev/config/
 export default defineConfig({

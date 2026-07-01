@@ -9,6 +9,10 @@ import {
   FileTextOutlined,
   SettingOutlined,
   SafetyCertificateOutlined,
+  CodeOutlined,
+  ScanOutlined,
+  BarsOutlined,
+  SearchOutlined,
 } from '@ant-design/icons-vue'
 import { useUiStore } from '@/stores/ui'
 
@@ -26,13 +30,15 @@ interface MenuItem {
 const items = computed<MenuItem[]>(() => [
   { key: 'dashboard', label: 'Dashboard', icon: DashboardOutlined, to: '/dashboard' },
   { key: 'audit', label: 'Audit queue', icon: AuditOutlined, to: '/audit' },
+  { key: 'repos', label: 'Repositories', icon: CodeOutlined, to: '/repos' },
+  { key: 'scans', label: 'Scans', icon: ScanOutlined, to: '/scans' },
+  { key: 'tickets', label: 'Tickets', icon: BarsOutlined, to: '/tickets' },
   { key: 'reports', label: 'Reports', icon: FileTextOutlined, to: '/reports' },
+  { key: 'rules', label: 'Rules', icon: SafetyCertificateOutlined, to: '/rules' },
+  { key: 'search', label: 'Search', icon: SearchOutlined, to: '/search' },
   { key: 'settings', label: 'Settings', icon: SettingOutlined, to: '/settings' },
 ])
 
-// AntD's MenuItemType.icon expects a VNode; we wrap the component with h() so
-// the runtime receives a real VNode. The wrapper function preserves the type
-// signature accepted by AntD's runtime.
 const menuItems = computed(() =>
   items.value.map((i) => ({
     key: i.key,
@@ -74,7 +80,6 @@ function handleClick(e: { key: string | number }): void {
   />
   <div v-if="!ui.sidebarCollapsed" class="cs-sidebar-footer">
     <div class="cs-sidebar-footer__line">v0.1.0 · M1 prototype</div>
-    <div class="cs-sidebar-footer__line">5 projects · 25 open findings</div>
   </div>
 </template>
 

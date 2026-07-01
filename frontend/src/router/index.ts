@@ -43,6 +43,24 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Search' },
   },
   {
+    path: '/repos',
+    name: 'repos',
+    component: () => import('@/views/ReposView.vue'),
+    meta: { title: 'Repositories' },
+  },
+  {
+    path: '/scans',
+    name: 'scans',
+    component: () => import('@/views/ScansView.vue'),
+    meta: { title: 'Scans' },
+  },
+  {
+    path: '/tickets',
+    name: 'tickets',
+    component: () => import('@/views/TicketsView.vue'),
+    meta: { title: 'Tickets' },
+  },
+  {
     path: '/rules',
     name: 'rules',
     component: () => import('@/views/RulesView.vue'),
