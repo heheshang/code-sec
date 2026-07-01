@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, h } from 'vue'
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Form, Input, Button, Card, message } from 'ant-design-vue'
 import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
@@ -46,18 +46,20 @@ async function handleLogin() {
             v-model:value="username"
             placeholder="Enter username"
             size="large"
-            :prefix="() => h(UserOutlined)"
             autocomplete="username"
-          />
+          >
+            <template #prefix><UserOutlined /></template>
+          </Input>
         </Form.Item>
         <Form.Item label="Password" name="password">
           <Input.Password
             v-model:value="password"
             placeholder="Enter password"
             size="large"
-            :prefix="() => h(LockOutlined)"
             autocomplete="current-password"
-          />
+          >
+            <template #prefix><LockOutlined /></template>
+          </Input.Password>
         </Form.Item>
         <Form.Item>
           <Button

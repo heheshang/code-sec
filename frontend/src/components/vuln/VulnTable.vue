@@ -6,7 +6,6 @@ import type { TableColumnsType, TablePaginationConfig } from 'ant-design-vue'
 import { useVulnStore } from '@/stores/vuln'
 import { STATUS_LABEL } from '@/types/vuln'
 import type { Vuln, VulnStatus, Severity } from '@/types/vuln'
-import { projects as projectList } from '@/api/mock/data'
 import dayjs from 'dayjs'
 import SeverityTagComp from './SeverityTag.vue'
 import ExploitabilityBadgeComp from './ExploitabilityBadge.vue'
@@ -15,11 +14,8 @@ const router = useRouter()
 const vulnStore = useVulnStore()
 
 const projectNameMap = computed<Record<string, string>>(() => {
-  const map: Record<string, string> = {}
-  projectList.forEach((p) => {
-    map[p.id] = p.name
-  })
-  return map
+  // TODO: fetch project names from API when project management endpoint is available
+  return {}
 })
 
 const statusColorMap: Record<VulnStatus, string> = {

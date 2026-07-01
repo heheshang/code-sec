@@ -5,7 +5,6 @@ import { ReloadOutlined, FilterOutlined } from '@ant-design/icons-vue'
 import { useVulnStore } from '@/stores/vuln'
 import type { Severity, VulnStatus, Exploitability } from '@/types/vuln'
 import { SEVERITY_LABEL, STATUS_LABEL, EXPLOITABILITY_LABEL } from '@/types/vuln'
-import { projects as projectList } from '@/api/mock/data'
 
 const vulnStore = useVulnStore()
 
@@ -24,7 +23,6 @@ const exploitOptions = (
 
 const projectOptions = computed(() => [
   { label: 'All projects', value: '' },
-  ...projectList.map((p) => ({ label: p.name, value: p.id })),
 ])
 
 const activeCount = computed<number>(() => {
