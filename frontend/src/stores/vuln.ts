@@ -79,7 +79,7 @@ export const useVulnStore = defineStore('vuln', () => {
       items.value = resp.data.items
       total.value = resp.data.total
       page.value = resp.data.page
-      pageSize.value = resp.data.pageSize
+      pageSize.value = resp.data.size ?? resp.data.pageSize ?? 20
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to load vulnerabilities'
     } finally {

@@ -62,7 +62,8 @@ export interface VulnListQuery {
 export interface PaginatedResult<T> {
   total: number
   page: number
-  pageSize: number
+  pageSize?: number
+  size?: number
   items: T[]
 }
 
