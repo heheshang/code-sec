@@ -1,9 +1,9 @@
 import axios from 'axios'
 
 /**
- * Single shared Axios instance. When MSW is active (dev mode), the worker
- * intercepts all /api/v1/* requests and returns mock data. When MSW is
- * disabled (VITE_MOCK_API=false), requests go to the real backend.
+ * Single shared Axios instance for the CodeSec backend API.
+ * All requests go to the real backend via Vite proxy.
+ * Mock data (MSW) has been fully removed.
  */
 export const http = axios.create({
   baseURL: '/api/v1',
