@@ -2,9 +2,10 @@ package com.codesec.gitlab;
 
 import com.codesec.gitlab.model.GitLabApiException;
 import com.codesec.gitlab.model.MrChangesResponse;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +33,9 @@ public class GitLabClient {
         this.properties = properties;
         this.baseApiUrl = properties.baseUrl().replaceAll("/+$", "") + "/api/v4";
 
-        this.objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper = JsonMapper.builder()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .build();
 
         this.httpClient = new OkHttpClient.Builder()
             .connectTimeout(Duration.ofSeconds(properties.connectTimeoutSeconds()))
@@ -110,7 +111,7 @@ public class GitLabClient {
             jsonBody = objectMapper.writeValueAsString(Map.of("body", body));
             requestBody = RequestBody.create(
                 jsonBody, MediaType.parse("application/json; charset=utf-8"));
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new GitLabApiException(0, "Failed to serialize note body", e);
         }
 
@@ -136,7 +137,7 @@ public class GitLabClient {
                 response.close();
                 try {
                     return objectMapper.readValue(body, responseType);
-                } catch (IOException e) {
+                } catch (JacksonException e) {
                     // For void-ish responses, return null
                     if (responseType == Map.class && body.contains("\"id\"")) {
                         @SuppressWarnings("unchecked")

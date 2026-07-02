@@ -4,7 +4,7 @@ import com.codesec.gitlab.model.MrChange;
 import com.codesec.gitlab.model.MrChangesResponse;
 import com.codesec.gitlab.scan.DiffExtractor;
 import com.codesec.gitlab.scan.MrDiffResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
