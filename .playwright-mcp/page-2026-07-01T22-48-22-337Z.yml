@@ -1,0 +1,25 @@
+- main [ref=e4]:
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - heading "code-sec" [level=1] [ref=e9]
+      - paragraph [ref=e10]: Code Security Audit Platform
+    - generic [ref=e11]:
+      - generic [ref=e13]:
+        - generic "Username" [ref=e15]
+        - generic [ref=e19]:
+          - img "user" [ref=e21]:
+            - img [ref=e22]
+          - textbox "Username" [ref=e24]:
+            - /placeholder: Enter username
+      - generic [ref=e26]:
+        - generic "Password" [ref=e28]
+        - generic [ref=e32]:
+          - img "lock" [ref=e34]:
+            - img [ref=e35]
+          - textbox "Password" [ref=e37]:
+            - /placeholder: Enter password
+          - img "eye-invisible" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+      - button "Sign in" [ref=e48] [cursor=pointer]:
+        - generic [ref=e49]: Sign in
+    - generic [ref=e50]: "Demo: admin / admin123"
