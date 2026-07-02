@@ -20,7 +20,6 @@
         <javaparser.version>3.26.2</javaparser.version>
         <snakeyaml.version>2.3</snakeyaml.version>
         <picocli.version>4.7.6</picocli.version>
-        <jackson.version>2.18.2</jackson.version>
     </properties>
 
     <dependencies>
@@ -45,17 +44,12 @@
             <version>${picocli.version}</version>
         </dependency>
 
-        <!-- Jackson: JSON serialization -->
+        <!-- Jackson 3: JSON serialization (version managed by Spring Boot 4 BOM) -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
+        <!-- jackson-datatype-jsr310 not needed: JavaTimeModule is built into JsonMapper -->
 
 
         <!-- Caffeine: High-performance caching -->

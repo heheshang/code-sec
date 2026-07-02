@@ -3,9 +3,8 @@ package com.codesec.engine.cli;
 import com.codesec.engine.Engine;
 import com.codesec.engine.model.Finding;
 import com.codesec.engine.rule.RuleRegistry;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -34,10 +33,9 @@ public final class CliRunner implements Callable<Integer> {
 
     @Command(name = "scan", description = "Scan a directory for security vulnerabilities")
     static final class ScanCommand implements Callable<Integer> {
-        private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
+        private static final JsonMapper MAPPER = JsonMapper.builder()
             .enable(SerializationFeature.INDENT_OUTPUT)
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            .build();
 
         @Option(
             names = {"-i", "--input"},
