@@ -17,7 +17,7 @@
     <description>Elasticsearch integration: vuln search, snippet search, event-driven indexing</description>
 
     <properties>
-        <elasticsearch.version>8.13.4</elasticsearch.version>
+        <elasticsearch.version>9.4.2</elasticsearch.version>
         <spring-retry.version>2.0.6</spring-retry.version>
     </properties>
 
@@ -60,15 +60,7 @@
             <version>${elasticsearch.version}</version>
         </dependency>
 
-        <!-- Jackson (ES client dependency) -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
+        <!-- Jackson 2 (brought transitively by ES Java client 8.x; version dictated by ES client) -->
 
         <!-- SLF4J -->
         <dependency>

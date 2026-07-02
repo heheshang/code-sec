@@ -4,15 +4,14 @@ import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.elasticsearch.core.search.HighlighterType;
+import co.elastic.clients.util.NamedValue;
 import com.codesec.search.dto.SearchRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Constructs ES Query DSL from SearchRequest.
@@ -81,30 +80,30 @@ public class SearchQueryBuilder {
     /**
      * Build highlight configuration for vuln search.
      */
-    public Map<String, HighlightField> buildVulnHighlight() {
-        Map<String, HighlightField> highlights = new HashMap<>();
-        highlights.put("title", HighlightField.of(h -> h
-                .type(HighlighterType.Unified)
-                .numberOfFragments(1)
-                .fragmentSize(150)
-                .preTags("<em>")
-                .postTags("</em>")
-        ));
-        highlights.put("description", HighlightField.of(h -> h
-                .type(HighlighterType.Unified)
-                .numberOfFragments(2)
-                .fragmentSize(200)
-                .preTags("<em>")
-                .postTags("</em>")
-        ));
-        highlights.put("code_snippet", HighlightField.of(h -> h
-                .type(HighlighterType.Unified)
-                .numberOfFragments(1)
-                .fragmentSize(300)
-                .preTags("<em>")
-                .postTags("</em>")
-        ));
-        return highlights;
+    public List<NamedValue<HighlightField>> buildVulnHighlight() {
+        return List.of(
+                NamedValue.of("title", HighlightField.of(h -> h
+                        .type(HighlighterType.Unified)
+                        .numberOfFragments(1)
+                        .fragmentSize(150)
+                        .preTags("<em>")
+                        .postTags("</em>")
+                )),
+                NamedValue.of("description", HighlightField.of(h -> h
+                        .type(HighlighterType.Unified)
+                        .numberOfFragments(2)
+                        .fragmentSize(200)
+                        .preTags("<em>")
+                        .postTags("</em>")
+                )),
+                NamedValue.of("code_snippet", HighlightField.of(h -> h
+                        .type(HighlighterType.Unified)
+                        .numberOfFragments(1)
+                        .fragmentSize(300)
+                        .preTags("<em>")
+                        .postTags("</em>")
+                ))
+        );
     }
 
     /**
@@ -149,16 +148,15 @@ public class SearchQueryBuilder {
     }
 
     private Query buildDateRangeFilter(String from, String to) {
-        return RangeQuery.of(r -> {
-            RangeQuery.Builder builder = r.field("discovered_at");
+        return RangeQuery.of(r -> r.date(d -> {
             if (from != null && !from.isBlank()) {
-                builder.gte(co.elastic.clients.json.JsonData.of(from));
+                d.gte(from);
             }
             if (to != null && !to.isBlank()) {
-                builder.lte(co.elastic.clients.json.JsonData.of(to));
+                d.lte(to);
             }
-            return builder;
-        })._toQuery();
+            return d.field("discovered_at");
+        }))._toQuery();
     }
 
     /**

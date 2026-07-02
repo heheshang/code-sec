@@ -4,10 +4,10 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import jakarta.annotation.PostConstruct;
-import org.apache.http.HttpHost;
-import org.elasticsearch.client.RestClient;
+import org.apache.hc.core5.http.HttpHost;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +19,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * ES Java Client 8.x configuration + index auto-initialization.
+ * ES Java Client 9.x configuration + index auto-initialization.
  * Reads vuln.json / file_snippet.json mapping files and creates indices on startup if they don't exist.
  */
 @Configuration
@@ -38,11 +38,11 @@ public class EsClientConfig {
 
     @Bean
     public ElasticsearchClient elasticsearchClient() {
-        RestClient restClient = RestClient.builder(
-                new HttpHost(esHost, esPort, "http")
+        Rest5Client restClient = Rest5Client.builder(
+                new HttpHost("http", esHost, esPort)
         ).build();
 
-        RestClientTransport transport = new RestClientTransport(
+        Rest5ClientTransport transport = new Rest5ClientTransport(
                 restClient,
                 new JacksonJsonpMapper()
         );
