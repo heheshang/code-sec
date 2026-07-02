@@ -1,31 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import {
-  Card, Table, Button, Modal, Form, Input, Select, Space,
-  Typography, Tag, message, Popconfirm,
-} from 'ant-design-vue'
-import {
-  PlusOutlined, LinkOutlined, ApiOutlined, DeleteOutlined, EditOutlined, CheckCircleOutlined, CloseCircleOutlined,
-} from '@ant-design/icons-vue'
+import { Plus, Link, Connection, Delete, Edit } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { useRepoStore } from '@/stores/repo'
-import type { RepoCreateRequest, RepoUpdateRequest, RepoPlatform, RepoStatus } from '@/types/repo'
+import type { RepoCreateRequest, RepoUpdateRequest } from '@/types/repo'
 
 const repoStore = useRepoStore()
 
-const columns = [
-  { title: 'Name', dataIndex: 'name', key: 'name' },
-  { title: 'Platform', dataIndex: 'platform', key: 'platform' },
-  { title: 'URL', dataIndex: 'url', key: 'url', ellipsis: true },
-  { title: 'Business Line', dataIndex: 'businessLine', key: 'businessLine' },
-  { title: 'Status', dataIndex: 'status', key: 'status' },
-  { title: 'Created', dataIndex: 'createdAt', key: 'createdAt' },
-  { title: 'Actions', key: 'actions', width: 200 },
-]
-
 const showModal = ref(false)
 const editingId = ref<number | null>(null)
-const formRef = ref<InstanceType<typeof Form> | null>(null)
+const formRef = ref()
 const form = ref<RepoCreateRequest>({
   name: '',
   platform: 'gitlab',
@@ -59,7 +44,7 @@ async function openEdit(id: number): Promise<void> {
 
 async function handleSubmit(): Promise<void> {
   try {
-    await (formRef.value as unknown as { validate: () => Promise<void> })?.validate()
+    await formRef.value?.validate()
     if (editingId.value !== null) {
       const payload: RepoUpdateRequest = {
         name: form.value.name,
@@ -69,10 +54,10 @@ async function handleSubmit(): Promise<void> {
         ...(form.value.accessToken ? { accessToken: form.value.accessToken } : {}),
       }
       await repoStore.update(editingId.value, payload)
-      message.success('Repository updated')
+      ElMessage.success('Repository updated')
     } else {
       await repoStore.create(form.value)
-      message.success('Repository created')
+      ElMessage.success('Repository created')
     }
     showModal.value = false
   } catch {
@@ -83,9 +68,9 @@ async function handleSubmit(): Promise<void> {
 async function handleDelete(id: number): Promise<void> {
   try {
     await repoStore.remove(id)
-    message.success('Repository deleted')
+    ElMessage.success('Repository deleted')
   } catch {
-    message.error('Failed to delete repository')
+    ElMessage.error('Failed to delete repository')
   }
 }
 
@@ -94,19 +79,20 @@ async function handleTestConnection(id: number): Promise<void> {
     const result = await repoStore.testConnection(id)
     if (result.ok) {
       const branchInfo = result.branches?.length ? ` (${result.branches.length} branches)` : ''
-      message.success(`Connection OK${branchInfo}`)
+      ElMessage.success(`Connection OK${branchInfo}`)
     } else {
-      message.error(`Connection failed: ${result.error ?? 'Unknown error'}`)
+      ElMessage.error(`Connection failed: ${result.error ?? 'Unknown error'}`)
     }
   } catch {
-    message.error('Connection test failed')
+    ElMessage.error('Connection test failed')
   }
 }
 
-const statusColor: Record<string, string> = {
-  active: 'green',
-  inactive: 'default',
-  error: 'red',
+type StatusType = '' | 'primary' | 'success' | 'danger' | 'warning' | 'info'
+const statusType: Record<string, StatusType> = {
+  active: 'success',
+  inactive: '',
+  error: 'danger',
 }
 
 onMounted(() => repoStore.fetchList())
@@ -116,102 +102,111 @@ onMounted(() => repoStore.fetchList())
   <div class="cs-page">
     <PageHeader title="Repositories" subtitle="Manage source code repositories">
       <template #extra>
-        <Button type="primary" @click="openCreate">
-          <template #icon><PlusOutlined /></template>
-          New Repository
-        </Button>
+        <el-button type="primary" @click="openCreate">
+          <el-icon><Plus /></el-icon> New Repository
+        </el-button>
       </template>
     </PageHeader>
 
-    <Card :loading="repoStore.loading">
-      <Table
-        :data-source="repoStore.items"
-        :columns="columns"
-        :pagination="{
-          total: repoStore.total,
-          current: repoStore.page,
-          pageSize: repoStore.pageSize,
-          showSizeChanger: true,
-          showTotal: (t: number) => `Total ${t} items`,
-          onChange: (p: number) => { repoStore.setPage(p); repoStore.fetchList() },
-        }"
+    <el-card v-loading="repoStore.loading">
+      <el-table
+        :data="repoStore.items"
         row-key="id"
-        size="middle"
       >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'platform'">
-            <Tag>{{ record.platform }}</Tag>
+        <el-table-column label="Name" prop="name" />
+        <el-table-column label="Platform" prop="platform">
+          <template #default="{ row }">
+            <el-tag>{{ row.platform }}</el-tag>
           </template>
-          <template v-if="column.key === 'url'">
-            <a :href="record.url" target="_blank">
-              <LinkOutlined /> {{ record.url }}
+        </el-table-column>
+        <el-table-column label="URL" prop="url" show-overflow-tooltip>
+          <template #default="{ row }">
+            <a :href="row.url" target="_blank">
+              <el-icon><Link /></el-icon> {{ row.url }}
             </a>
           </template>
-          <template v-if="column.key === 'status'">
-            <Tag :color="statusColor[record.status] ?? 'default'">{{ record.status }}</Tag>
+        </el-table-column>
+        <el-table-column label="Business Line" prop="businessLine" />
+        <el-table-column label="Status" prop="status">
+          <template #default="{ row }">
+            <el-tag :type="statusType[row.status] ?? ''">{{ row.status }}</el-tag>
           </template>
-          <template v-if="column.key === 'createdAt'">
-            {{ new Date(record.createdAt).toLocaleDateString() }}
+        </el-table-column>
+        <el-table-column label="Created" prop="createdAt">
+          <template #default="{ row }">
+            {{ new Date(row.createdAt).toLocaleDateString() }}
           </template>
-          <template v-if="column.key === 'actions'">
-            <Space>
-              <Button size="small" @click="openEdit(record.id)">
-                <template #icon><EditOutlined /></template>
-              </Button>
-              <Button size="small" @click="handleTestConnection(record.id)">
-                <template #icon><ApiOutlined /></template>
-              </Button>
-              <Popconfirm title="Delete this repository?" @confirm="handleDelete(record.id)">
-                <Button size="small" danger>
-                  <template #icon><DeleteOutlined /></template>
-                </Button>
-              </Popconfirm>
-            </Space>
+        </el-table-column>
+        <el-table-column label="Actions" width="200">
+          <template #default="{ row }">
+            <el-button size="small" @click="openEdit(row.id)">
+              <el-icon><Edit /></el-icon>
+            </el-button>
+            <el-button size="small" @click="handleTestConnection(row.id)">
+              <el-icon><Connection /></el-icon>
+            </el-button>
+            <el-popconfirm title="Delete this repository?" @confirm="handleDelete(row.id)">
+              <template #reference>
+                <el-button size="small" type="danger">
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </template>
+            </el-popconfirm>
           </template>
-        </template>
-      </Table>
-    </Card>
+        </el-table-column>
+      </el-table>
+      <div style="display: flex; justify-content: flex-end; margin-top: 12px">
+        <el-pagination
+          v-model:current-page="repoStore.page"
+          v-model:page-size="repoStore.pageSize"
+          :total="repoStore.total"
+          layout="total, sizes, prev, pager, next"
+          @current-change="() => repoStore.fetchList()"
+          @size-change="() => repoStore.fetchList()"
+        />
+      </div>
+    </el-card>
 
-    <Modal
-      v-model:open="showModal"
+    <el-dialog
+      v-model="showModal"
       :title="editingId ? 'Edit Repository' : 'New Repository'"
-      @ok="handleSubmit"
-      ok-text="Save"
-      :mask-closable="false"
+      @confirm="handleSubmit"
+      :close-on-click-modal="false"
     >
-      <Form ref="formRef" :model="form" layout="vertical">
-        <Form.Item label="Name" name="name" :rules="[{ required: true, message: 'Name is required' }]">
-          <Input v-model:value="form.name" placeholder="e.g. my-service" />
-        </Form.Item>
-        <Form.Item label="URL" name="url" :rules="[{ required: true, message: 'URL is required' }]">
-          <Input v-model:value="form.url" placeholder="https://gitlab.com/org/repo" />
-        </Form.Item>
-        <Form.Item label="Platform" name="platform">
-          <Select v-model:value="form.platform">
-            <Select.Option value="gitlab">GitLab</Select.Option>
-            <Select.Option value="github">GitHub</Select.Option>
-            <Select.Option value="gitee">Gitee</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item label="Default Branch" name="defaultBranch">
-          <Input v-model:value="form.defaultBranch" placeholder="main" />
-        </Form.Item>
-        <Form.Item label="Business Line" name="businessLine">
-          <Input v-model:value="form.businessLine" placeholder="e.g. Platform Security" />
-        </Form.Item>
-        <Form.Item label="Access Token" name="accessToken">
-          <Input.Password v-model:value="form.accessToken" placeholder="GitLab personal access token" />
-        </Form.Item>
-        <Form.Item label="Webhook Secret" name="webhookSecret">
-          <Input.Password v-model:value="form.webhookSecret" placeholder="Optional webhook token" />
-        </Form.Item>
-      </Form>
-    </Modal>
+      <el-form ref="formRef" :model="form" label-position="top">
+        <el-form-item label="Name" prop="name" :rules="[{ required: true, message: 'Name is required' }]">
+          <el-input v-model="form.name" placeholder="e.g. my-service" />
+        </el-form-item>
+        <el-form-item label="URL" prop="url" :rules="[{ required: true, message: 'URL is required' }]">
+          <el-input v-model="form.url" placeholder="https://gitlab.com/org/repo" />
+        </el-form-item>
+        <el-form-item label="Platform" prop="platform">
+          <el-select v-model="form.platform">
+            <el-option value="gitlab" label="GitLab" />
+            <el-option value="github" label="GitHub" />
+            <el-option value="gitee" label="Gitee" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Default Branch" prop="defaultBranch">
+          <el-input v-model="form.defaultBranch" placeholder="main" />
+        </el-form-item>
+        <el-form-item label="Business Line" prop="businessLine">
+          <el-input v-model="form.businessLine" placeholder="e.g. Platform Security" />
+        </el-form-item>
+        <el-form-item label="Access Token" prop="accessToken">
+          <el-input v-model="form.accessToken" type="password" placeholder="GitLab personal access token" show-password />
+        </el-form-item>
+        <el-form-item label="Webhook Secret" prop="webhookSecret">
+          <el-input v-model="form.webhookSecret" type="password" placeholder="Optional webhook token" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showModal = false">Cancel</el-button>
+        <el-button type="primary" @click="handleSubmit">Save</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.cs-page {
-  padding: var(--cs-space-6);
-}
 </style>

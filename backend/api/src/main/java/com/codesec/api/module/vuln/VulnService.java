@@ -64,6 +64,7 @@ public class VulnService {
                 .lineStart(f.lineStart())
                 .lineEnd(f.lineEnd())
                 .cwe(f.cwe())
+                .cve(f.cve())
                 .engine(f.engine() != null ? f.engine() : "self_sast")
                 .discoveredAt(f.discoveredAt() != null ?
                     LocalDateTime.ofInstant(f.discoveredAt(), ZoneOffset.UTC) : LocalDateTime.now())
@@ -112,7 +113,7 @@ public class VulnService {
             .ruleId(e.getRuleId()).severity(e.getSeverity()).exploitability(e.getExploitability())
             .title(e.getTitle()).description(e.getDescription()).codeSnippet(e.getCodeSnippet())
             .filePath(e.getFilePath()).lineStart(e.getLineStart()).lineEnd(e.getLineEnd())
-            .cwe(e.getCwe()).engine(e.getEngine()).discoveredAt(e.getDiscoveredAt())
+            .cwe(e.getCwe()).cve(e.getCve()).engine(e.getEngine()).discoveredAt(e.getDiscoveredAt())
             .build();
     }
 

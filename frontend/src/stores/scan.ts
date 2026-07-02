@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { http } from '@/api/client'
+import { ElMessage } from 'element-plus'
+import { errMsg } from '@/utils/error'
 import type { ScanListItem, ScanTaskResponse, ScanCreateRequest } from '@/types/scan'
 
 export const useScanStore = defineStore('scan', () => {
@@ -24,8 +26,8 @@ export const useScanStore = defineStore('scan', () => {
       total.value = resp.data.total
       page.value = resp.data.page
       pageSize.value = resp.data.size ?? resp.data.pageSize ?? 20
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load scans'
+    } catch (e: unknown) {
+      error.value = errMsg(e)
     } finally {
       loading.value = false
     }
@@ -38,12 +40,19 @@ export const useScanStore = defineStore('scan', () => {
 
   async function create(req: ScanCreateRequest): Promise<{ scanId: number }> {
     const resp = await http.post<{ scanId: number }>('/scans', req)
+    ElMessage.success('Scan created successfully')
+    await fetchList()
     return resp.data
   }
 
   async function cancel(id: number): Promise<void> {
-    await http.delete(`/scans/${id}`)
-    await fetchList()
+    try {
+      await http.delete(`/scans/${id}`)
+      ElMessage.success('Scan cancelled')
+      await fetchList()
+    } catch (e: unknown) {
+      ElMessage.error(errMsg(e))
+    }
   }
 
   function setPage(p: number): void {

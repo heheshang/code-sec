@@ -2,36 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import Antd from 'ant-design-vue'
+import ElementPlus from 'element-plus'
 import WorkbenchView from '@/views/WorkbenchView.vue'
 import type { Vuln } from '@/types/vuln'
 import { http } from '@/api/client'
-
-// Stub the @guolao/vue-monaco-editor wrapper to avoid loading Monaco in jsdom.
-vi.mock('@guolao/vue-monaco-editor', () => ({
-  Editor: {
-    name: 'AMonacoEditor',
-    props: ['value', 'modelValue', 'language', 'theme', 'height', 'options'],
-    template: '<div class="monaco-stub" />',
-  },
-  loader: { config: vi.fn() },
-}))
-
-vi.mock('monaco-editor', () => ({
-  editor: { setModelLanguage: (): void => undefined },
-  Range: class {
-    public startLineNumber: number
-    public startColumn: number
-    public endLineNumber: number
-    public endColumn: number
-    constructor(sl: number, sc: number, el: number, ec: number) {
-      this.startLineNumber = sl
-      this.startColumn = sc
-      this.endLineNumber = el
-      this.endColumn = ec
-    }
-  },
-}))
 
 function makeVuln(overrides: Partial<Vuln> = {}): Vuln {
   return {
@@ -41,8 +15,7 @@ function makeVuln(overrides: Partial<Vuln> = {}): Vuln {
     title: 'SQL injection',
     severity: 'critical',
     status: 'pending_audit',
-    exploitability: 'EXPLOITABLE',
-    exploitReason: '参数 userId 来自 @RequestParam',
+    exploitability: 'exploitable',
     filePath: 'src/main/java/Foo.java',
     lineStart: 42,
     lineEnd: 49,
@@ -98,7 +71,7 @@ async function mountWorkbench(vuln: Vuln) {
   await router.isReady()
 
   const wrapper = mount(WorkbenchView, {
-    global: { plugins: [pinia, router, Antd] },
+    global: { plugins: [pinia, router, ElementPlus] },
   })
   await flushPromises()
   await flushPromises()
@@ -110,10 +83,11 @@ describe('WorkbenchView — exploitability display', () => {
     vi.clearAllMocks()
   })
 
-  it('displays the prominent exploitability badge and reason text', async () => {
+  it('displays the prominent exploitability badge and fallback when reason is missing', async () => {
     const { wrapper } = await mountWorkbench(makeVuln())
     expect(wrapper.text()).toContain('可利用')
-    expect(wrapper.text()).toContain('参数 userId 来自 @RequestParam')
+    // API does not return exploitReason — component shows fallback
+    expect(wrapper.text()).toContain('未提供判定理由')
   })
 
   it('shows a muted empty-state hint when exploitReason is missing', async () => {
@@ -126,17 +100,15 @@ describe('WorkbenchView — exploitability display', () => {
 
   it('renders the gold "需审计" label for POTENTIALLY_EXPLOITABLE', async () => {
     const { wrapper } = await mountWorkbench(
-      makeVuln({ exploitability: 'POTENTIALLY_EXPLOITABLE', exploitReason: '需人工审计' }),
+      makeVuln({ exploitability: 'potentially_exploitable' }),
     )
     expect(wrapper.text()).toContain('需审计')
-    expect(wrapper.text()).toContain('需人工审计')
   })
 
   it('renders the gray "不可利用" label for NOT_EXPLOITABLE', async () => {
     const { wrapper } = await mountWorkbench(
-      makeVuln({ exploitability: 'NOT_EXPLOITABLE', exploitReason: '未被任何 HTTP 入口调用' }),
+      makeVuln({ exploitability: 'not_exploitable' }),
     )
     expect(wrapper.text()).toContain('不可利用')
-    expect(wrapper.text()).toContain('未被任何 HTTP 入口调用')
   })
 })

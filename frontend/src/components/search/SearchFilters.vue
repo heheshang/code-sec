@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Select, Space } from 'ant-design-vue'
 import { useSearchStore } from '@/stores/search'
 
 const store = useSearchStore()
@@ -13,9 +12,9 @@ const severityOptions = [
 ]
 
 const exploitabilityOptions = [
-  { value: 'EXPLOITABLE', label: 'Exploitable' },
-  { value: 'POTENTIALLY_EXPLOITABLE', label: 'Potentially Exploitable' },
-  { value: 'NOT_EXPLOITABLE', label: 'Not Exploitable' },
+  { value: 'exploitable', label: 'Exploitable' },
+  { value: 'potentially_exploitable', label: 'Potentially Exploitable' },
+  { value: 'not_exploitable', label: 'Not Exploitable' },
 ]
 
 const sortOptions = [
@@ -28,12 +27,12 @@ const sortOptions = [
   <div class="cs-search-filters">
     <div class="cs-search-filters__group">
       <label class="cs-search-filters__label">Severity</label>
-      <Select
-        v-model:value="store.severityFilter"
-        mode="multiple"
+      <el-select
+        v-model="store.severityFilter"
+        multiple
         :options="severityOptions"
         placeholder="All severities"
-        allow-clear
+        clearable
         style="width: 100%"
         size="small"
       />
@@ -41,12 +40,12 @@ const sortOptions = [
 
     <div class="cs-search-filters__group">
       <label class="cs-search-filters__label">Exploitability</label>
-      <Select
-        v-model:value="store.exploitabilityFilter"
-        mode="multiple"
+      <el-select
+        v-model="store.exploitabilityFilter"
+        multiple
         :options="exploitabilityOptions"
         placeholder="All"
-        allow-clear
+        clearable
         style="width: 100%"
         size="small"
       />
@@ -54,8 +53,8 @@ const sortOptions = [
 
     <div class="cs-search-filters__group">
       <label class="cs-search-filters__label">Sort by</label>
-      <Select
-        v-model:value="store.sortBy"
+      <el-select
+        v-model="store.sortBy"
         :options="sortOptions"
         style="width: 100%"
         size="small"
@@ -64,8 +63,8 @@ const sortOptions = [
 
     <div class="cs-search-filters__group">
       <label class="cs-search-filters__label">Order</label>
-      <Select
-        v-model:value="store.sortOrder"
+      <el-select
+        v-model="store.sortOrder"
         :options="[
           { value: 'desc', label: 'Descending' },
           { value: 'asc', label: 'Ascending' },
@@ -75,14 +74,14 @@ const sortOptions = [
       />
     </div>
 
-    <a-button
- v-if="store.hasActiveFilters"
- type="link"
- size="small"
- @click="store.clearFilters()"
+    <el-button
+      v-if="store.hasActiveFilters"
+      link
+      size="small"
+      @click="store.clearFilters()"
     >
       Clear all filters
-    </a-button>
+    </el-button>
   </div>
 </template>
 

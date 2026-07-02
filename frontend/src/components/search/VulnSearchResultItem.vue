@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Tag } from 'ant-design-vue'
 import type { VulnSearchResult } from '@/api/search'
-import { SEVERITY_LABEL } from '@/types/vuln'
 import SeverityTag from '@/components/vuln/SeverityTag.vue'
 import HighlightedSnippet from './HighlightedSnippet.vue'
 
@@ -27,7 +25,6 @@ const descHtml = computed(() => {
   if (props.highlightFields?.[key]?.length) {
     return props.highlightFields[key].join(' … ')
   }
-  // Show first 200 chars of description
   return props.item.description?.substring(0, 200) ?? ''
 })
 
@@ -49,9 +46,9 @@ function goToDetail(): void {
     <div class="cs-vuln-result__header">
       <SeverityTag :severity="item.severity" />
       <span class="cs-vuln-result__cwe">{{ item.cwe }}</span>
-      <Tag v-if="item.exploitability === 'EXPLOITABLE'" color="error" class="cs-vuln-result__exploit">
-        EXPLOITABLE
-      </Tag>
+      <el-tag v-if="item.exploitability === 'EXPLOITABLE'" type="danger" size="small" class="cs-vuln-result__exploit">
+        Exploitable
+      </el-tag>
     </div>
     <h4 class="cs-vuln-result__title">
       <HighlightedSnippet :html="titleHtml ?? ''" :max-length="200" />

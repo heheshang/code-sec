@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Skeleton } from 'ant-design-vue'
 
 interface Props {
   label: string
@@ -38,7 +37,11 @@ const trendText = computed(() => {
 <template>
   <div class="cs-stat-card" :class="`cs-stat-card--${accent}`">
     <div class="cs-stat-card__label">{{ label }}</div>
-    <Skeleton v-if="loading" :paragraph="false" active />
+    <el-skeleton v-if="loading" :loading="loading" :paragraph="false">
+      <template #default>
+        <div class="cs-stat-card__value">{{ value }}</div>
+      </template>
+    </el-skeleton>
     <div v-else class="cs-stat-card__value">{{ value }}</div>
     <div v-if="hint || trend !== undefined" class="cs-stat-card__meta">
       <span v-if="trend !== undefined" class="cs-stat-card__trend" :class="trendClass">

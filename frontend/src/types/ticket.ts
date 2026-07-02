@@ -1,11 +1,12 @@
 export type TicketStatus =
-  | 'open'
-  | 'in_progress'
-  | 'fixed'
+  | 'pending_scan'
+  | 'pending_audit'
+  | 'confirmed'
+  | 'false_positive'
+  | 'pending_fix'
+  | 'pending_retest'
+  | 'fixing'
   | 'closed'
-  | 'waived'
-  | 'rejected'
-  | 'retest'
 
 export interface TicketResponse {
   id: number
@@ -36,11 +37,12 @@ export interface TicketTransitionRequest {
 }
 
 export const TICKET_STATUS_LABEL: Record<TicketStatus, string> = {
-  open: 'Open',
-  in_progress: 'In Progress',
-  fixed: 'Fixed',
+  pending_scan: 'Pending scan',
+  pending_audit: 'Pending audit',
+  confirmed: 'Confirmed',
+  false_positive: 'False positive',
+  pending_fix: 'Pending fix',
+  pending_retest: 'Pending retest',
+  fixing: 'Fixing',
   closed: 'Closed',
-  waived: 'Waived',
-  rejected: 'Rejected',
-  retest: 'Retest',
 }

@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { computed, h, ref } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Input, Badge, Dropdown, Avatar, Tooltip } from 'ant-design-vue'
 import {
-  SearchOutlined,
-  BellOutlined,
-  BulbOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-  LogoutOutlined,
-  CheckCircleOutlined,
-} from '@ant-design/icons-vue'
+  Search,
+  Bell,
+  Moon,
+  Sunny,
+  Fold,
+  Expand,
+  User,
+  SwitchButton,
+  CircleCheck,
+} from '@element-plus/icons-vue'
 import { useUiStore } from '@/stores/ui'
 import { useGlobalShortcut } from '@/composables/useGlobalShortcut'
 import GlobalSearch from '@/components/search/GlobalSearch.vue'
@@ -23,116 +23,72 @@ const route = useRoute()
 const globalSearchRef = ref<InstanceType<typeof GlobalSearch> | null>(null)
 const searchShortcutActive = ref(true)
 
-// ⌘K / Ctrl+K → open global search modal
 useGlobalShortcut(
   { key: 'k', metaKey: true },
   () => globalSearchRef.value?.open(),
   searchShortcutActive,
 )
-// Also support Ctrl+K for Windows/Linux
 useGlobalShortcut(
   { key: 'k', ctrlKey: true },
   () => globalSearchRef.value?.open(),
   searchShortcutActive,
 )
 
-const pageTitle = computed<string>(() => {
-  const name = String(route.name ?? 'dashboard')
-  switch (name) {
-    case 'dashboard': return 'Security overview'
-    case 'audit': return 'Audit queue'
-    case 'workbench': return 'Audit workbench'
-    case 'reports': return 'Reports'
-    case 'settings': return 'Settings'
-    default: return 'code-sec'
-  }
-})
-
-interface Notification {
-  id: string
-  title: string
-}
-
-const notifications: Notification[] = [
-  { id: 'n1', title: 'New critical finding' },
-  { id: 'n2', title: 'Retest ready' },
-  { id: 'n3', title: 'Scan complete' },
-]
-
-interface UserMenuItem {
-  key: string
-  label: string
-  icon: typeof UserOutlined
-}
-
-const userMenuItems: UserMenuItem[] = [
-  { key: 'profile', label: 'Profile', icon: UserOutlined },
-  { key: 'logout', label: 'Sign out', icon: LogoutOutlined },
-]
-
-// AntD's MenuItemType.icon expects a VNode; we wrap each icon component with
-// h() so the runtime gets a real VNode.
-const userMenuNode = computed(() =>
-  userMenuItems.map((m) => ({
-    key: m.key,
-    label: m.label,
-    icon: () => h(m.icon),
-  })),
-)
-
-const notificationItems = computed(() =>
-  notifications.map((n) => ({ key: n.id, label: n.title })),
-)
-
-function handleUserClick(e: { key: string | number }): void {
-  if (String(e.key) === 'profile') router.push('/settings')
+function handleUserCommand(command: string): void {
+  if (command === 'profile') router.push('/settings')
 }
 </script>
 
 <template>
   <div class="cs-topbar">
     <div class="cs-topbar__left">
-      <a-button
-        type="text"
-        class="cs-topbar__collapse"
-        @click="ui.toggleSidebar()"
-      >
-        <MenuFoldOutlined v-if="!ui.sidebarCollapsed" />
-        <MenuUnfoldOutlined v-else />
-      </a-button>
-      <div class="cs-topbar__title">{{ pageTitle }}</div>
+      <el-button text class="cs-topbar__collapse" @click="ui.toggleSidebar()">
+        <el-icon><Fold v-if="!ui.sidebarCollapsed" /><Expand v-else /></el-icon>
+      </el-button>
+      <div class="cs-topbar__title">{{ route.meta.title ?? 'code-sec' }}</div>
     </div>
     <div class="cs-topbar__center">
       <div class="cs-topbar__search-trigger" @click="globalSearchRef?.open()">
-        <SearchOutlined class="cs-topbar__search-icon" />
+        <el-icon class="cs-topbar__search-icon"><Search /></el-icon>
         <span class="cs-topbar__search-placeholder">Search vulnerabilities…</span>
         <kbd class="cs-topbar__search-kbd">⌘K</kbd>
       </div>
     </div>
     <div class="cs-topbar__right">
-      <Tooltip :title="ui.theme === 'dark' ? 'Switch to light' : 'Switch to dark'">
-        <a-button type="text" @click="ui.toggleTheme()">
-          <BulbOutlined />
-        </a-button>
-      </Tooltip>
-      <Dropdown :menu="{ items: notificationItems }" placement="bottomRight" trigger="click">
-        <Badge :count="3" :offset="[-4, 4]" class="cs-topbar__badge">
-          <a-button type="text"><BellOutlined /></a-button>
-        </Badge>
-      </Dropdown>
-      <Dropdown
-        :menu="{ items: userMenuNode, onClick: handleUserClick }"
-        placement="bottomRight"
-        trigger="click"
-      >
+      <el-tooltip :content="ui.theme === 'dark' ? 'Switch to light' : 'Switch to dark'">
+        <el-button text @click="ui.toggleTheme()">
+          <el-icon><Moon v-if="ui.theme === 'dark'" /><Sunny v-else /></el-icon>
+        </el-button>
+      </el-tooltip>
+
+      <el-dropdown trigger="click" placement="bottom-end">
+        <el-badge :value="3" class="cs-topbar__badge">
+          <el-button text><el-icon><Bell /></el-icon></el-button>
+        </el-badge>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item>New critical finding</el-dropdown-item>
+            <el-dropdown-item>Retest ready</el-dropdown-item>
+            <el-dropdown-item>Scan complete</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+
+      <el-dropdown trigger="click" placement="bottom-end" @command="handleUserCommand">
         <div class="cs-topbar__user">
-          <Avatar :size="28" class="cs-topbar__avatar">Y</Avatar>
+          <el-avatar :size="28" class="cs-topbar__avatar">Y</el-avatar>
           <div class="cs-topbar__userMeta">
             <div class="cs-topbar__userName">You</div>
-            <div class="cs-topbar__userRole"><CheckCircleOutlined /> Security auditor</div>
+            <div class="cs-topbar__userRole"><el-icon :size="12"><CircleCheck /></el-icon> Security auditor</div>
           </div>
         </div>
-      </Dropdown>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="profile"><el-icon><User /></el-icon> Profile</el-dropdown-item>
+            <el-dropdown-item command="logout"><el-icon><SwitchButton /></el-icon> Sign out</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
 
     <GlobalSearch ref="globalSearchRef" />
@@ -187,12 +143,11 @@ function handleUserClick(e: { key: string | number }): void {
   transition: border-color var(--cs-duration-fast), box-shadow var(--cs-duration-fast);
 }
 .cs-topbar__search-trigger:hover {
-  border-color: var(--cs-color-primary);
+  border-color: var(--el-color-primary);
   box-shadow: 0 0 0 2px rgba(91, 71, 224, 0.12);
 }
 .cs-topbar__search-icon {
   font-size: 14px;
-  color: var(--cs-text-tertiary);
   flex-shrink: 0;
 }
 .cs-topbar__search-placeholder {
@@ -224,8 +179,8 @@ function handleUserClick(e: { key: string | number }): void {
   gap: var(--cs-space-1);
   flex: 0 0 auto;
 }
-.cs-topbar__badge :deep(.ant-badge-count) {
-  box-shadow: 0 0 0 2px var(--cs-bg-elevated);
+.cs-topbar__badge :deep(.el-badge__content) {
+  box-shadow: 0 0 0 2px var(--el-bg-color-overlay);
 }
 .cs-topbar__user {
   display: flex;
@@ -239,8 +194,8 @@ function handleUserClick(e: { key: string | number }): void {
 .cs-topbar__user:hover {
   background: var(--cs-bg-hover);
 }
-.cs-topbar__avatar {
-  background: linear-gradient(135deg, var(--cs-color-primary) 0%, var(--cs-color-accent) 100%) !important;
+.cs-topbar__avatar :deep(.el-avatar) {
+  background: linear-gradient(135deg, var(--el-color-primary) 0%, #7D6BE8 100%) !important;
   font-weight: 600;
 }
 .cs-topbar__userMeta {

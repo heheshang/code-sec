@@ -20,6 +20,7 @@ public class VulnFindingResponse {
     private int lineStart;
     private int lineEnd;
     private String cwe;
+    private String cve;
     private String engine;
     private LocalDateTime discoveredAt;
 }

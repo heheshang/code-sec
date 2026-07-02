@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Card, Form, Input, Switch, Row, Col, Avatar, Divider, Tag, Space, Typography, Button } from 'ant-design-vue'
-import { UserOutlined, BulbOutlined, BellOutlined, SafetyCertificateOutlined } from '@ant-design/icons-vue'
+import { User, Bell, Sunny } from '@element-plus/icons-vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { useUiStore } from '@/stores/ui'
 
@@ -25,140 +24,140 @@ const isDark = computed<boolean>(() => ui.theme === 'dark')
       subtitle="Profile, appearance, and notification preferences"
     />
 
-    <Row :gutter="[16, 16]">
-      <Col :xs="24" :lg="14">
-        <Card :bordered="false" class="cs-settings__card">
-          <template #title>
-            <Space :size="6">
-              <UserOutlined />
+    <el-row :gutter="16">
+      <el-col :xs="24" :lg="14">
+        <el-card shadow="never" class="cs-settings__card">
+          <template #header>
+            <el-space :size="6">
+              <el-icon><User /></el-icon>
               <span>Profile</span>
-            </Space>
+            </el-space>
           </template>
           <div class="cs-settings__profile">
-            <Avatar :size="64" class="cs-settings__avatar">Y</Avatar>
+            <el-avatar :size="64" class="cs-settings__avatar">Y</el-avatar>
             <div class="cs-settings__profileText">
-              <Typography.Title :level="4" style="margin: 0">{{ profile.name }}</Typography.Title>
-              <Space :size="6" class="cs-settings__tags">
-                <Tag color="purple" bordered>{{ profile.role }}</Tag>
-                <Tag bordered>{{ profile.team }}</Tag>
-                <Tag color="green" bordered>
-                  <SafetyCertificateOutlined /> SSO active
-                </Tag>
-              </Space>
+              <h4 style="margin: 0">{{ profile.name }}</h4>
+              <el-space :size="6" class="cs-settings__tags">
+                <el-tag type="info" effect="plain">{{ profile.role }}</el-tag>
+                <el-tag effect="plain">{{ profile.team }}</el-tag>
+                <el-tag type="success" effect="plain">
+                  SSO active
+                </el-tag>
+              </el-space>
             </div>
           </div>
-          <Divider />
-          <Form layout="vertical" :disabled="true" class="cs-settings__form">
-            <Row :gutter="16">
-              <Col :span="12">
-                <Form.Item label="Display name">
-                  <Input :value="profile.name" />
-                </Form.Item>
-              </Col>
-              <Col :span="12">
-                <Form.Item label="Email">
-                  <Input :value="profile.email" />
-                </Form.Item>
-              </Col>
-              <Col :span="12">
-                <Form.Item label="Role">
-                  <Input :value="profile.role" />
-                </Form.Item>
-              </Col>
-              <Col :span="12">
-                <Form.Item label="Joined">
-                  <Input :value="profile.joined" />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Typography.Text type="secondary" class="cs-settings__hint">
+          <el-divider />
+          <el-form label-position="top" disabled class="cs-settings__form">
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="Display name">
+                  <el-input :model-value="profile.name" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="Email">
+                  <el-input :model-value="profile.email" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="Role">
+                  <el-input :model-value="profile.role" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="Joined">
+                  <el-input :model-value="profile.joined" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <span class="cs-settings__hint">
               Profile fields are read-only in this prototype.
-            </Typography.Text>
-          </Form>
-        </Card>
-      </Col>
+            </span>
+          </el-form>
+        </el-card>
+      </el-col>
 
-      <Col :xs="24" :lg="10">
-        <Card :bordered="false" class="cs-settings__card">
-          <template #title>
-            <Space :size="6">
-              <BulbOutlined />
+      <el-col :xs="24" :lg="10">
+        <el-card shadow="never" class="cs-settings__card">
+          <template #header>
+            <el-space :size="6">
+              <el-icon><Sunny /></el-icon>
               <span>Appearance</span>
-            </Space>
+            </el-space>
           </template>
           <div class="cs-settings__row">
             <div>
-              <Typography.Text strong>Dark mode</Typography.Text>
+              <strong>Dark mode</strong>
               <div class="cs-settings__rowHint">Use a low-light palette for late shifts.</div>
             </div>
-            <Switch :checked="isDark" @change="ui.toggleTheme" />
+            <el-switch :model-value="isDark" @change="ui.toggleTheme" />
           </div>
-          <Divider />
+          <el-divider />
           <div class="cs-settings__row">
             <div>
-              <Typography.Text strong>Compact tables</Typography.Text>
+              <strong>Compact tables</strong>
               <div class="cs-settings__rowHint">Reduce row height in the queue and history views.</div>
             </div>
-            <Switch :checked="true" disabled />
+            <el-switch :model-value="true" disabled />
           </div>
-        </Card>
+        </el-card>
 
-        <Card :bordered="false" class="cs-settings__card" style="margin-top: 16px">
-          <template #title>
-            <Space :size="6">
-              <BellOutlined />
+        <el-card shadow="never" class="cs-settings__card" style="margin-top: var(--cs-space-4)">
+          <template #header>
+            <el-space :size="6">
+              <el-icon><Bell /></el-icon>
               <span>Notifications</span>
-            </Space>
+            </el-space>
           </template>
           <div class="cs-settings__row">
             <div>
-              <Typography.Text strong>Critical findings</Typography.Text>
+              <strong>Critical findings</strong>
               <div class="cs-settings__rowHint">Real-time toast + email when a critical lands in your queue.</div>
             </div>
-            <Switch
-              :checked="ui.prefs.notifyOnCritical"
-              @change="(v: unknown) => ui.setPref('notifyOnCritical', Boolean(v))"
+            <el-switch
+              :model-value="ui.prefs.notifyOnCritical"
+              @change="(v: boolean) => ui.setPref('notifyOnCritical', v)"
             />
           </div>
-          <Divider />
+          <el-divider />
           <div class="cs-settings__row">
             <div>
-              <Typography.Text strong>Retest requested</Typography.Text>
+              <strong>Retest requested</strong>
               <div class="cs-settings__rowHint">When a fix you confirmed needs another look.</div>
             </div>
-            <Switch
-              :checked="ui.prefs.notifyOnRetest"
-              @change="(v: unknown) => ui.setPref('notifyOnRetest', Boolean(v))"
+            <el-switch
+              :model-value="ui.prefs.notifyOnRetest"
+              @change="(v: boolean) => ui.setPref('notifyOnRetest', v)"
             />
           </div>
-          <Divider />
+          <el-divider />
           <div class="cs-settings__row">
             <div>
-              <Typography.Text strong>Daily digest</Typography.Text>
-              <div class="cs-settings__rowHint">Morning email with yesterday\u2019s audit numbers.</div>
+              <strong>Daily digest</strong>
+              <div class="cs-settings__rowHint">Morning email with yesterday's audit numbers.</div>
             </div>
-            <Switch
-              :checked="ui.prefs.dailyDigest"
-              @change="(v: unknown) => ui.setPref('dailyDigest', Boolean(v))"
+            <el-switch
+              :model-value="ui.prefs.dailyDigest"
+              @change="(v: boolean) => ui.setPref('dailyDigest', v)"
             />
           </div>
-          <Divider />
+          <el-divider />
           <div class="cs-settings__row">
             <div>
-              <Typography.Text strong>Scan completion toast</Typography.Text>
+              <strong>Scan completion toast</strong>
               <div class="cs-settings__rowHint">Show a one-off toast when a watched project finishes a scan.</div>
             </div>
-            <Switch
-              :checked="ui.prefs.scanCompletionToast"
-              @change="(v: unknown) => ui.setPref('scanCompletionToast', Boolean(v))"
+            <el-switch
+              :model-value="ui.prefs.scanCompletionToast"
+              @change="(v: boolean) => ui.setPref('scanCompletionToast', v)"
             />
           </div>
-        </Card>
-      </Col>
-    </Row>
+        </el-card>
+      </el-col>
+    </el-row>
 
     <div class="cs-settings__foot">
-      <Button type="link" @click="$router.push('/dashboard')">← Back to dashboard</Button>
+      <el-button text @click="$router.push('/dashboard')">← Back to dashboard</el-button>
     </div>
   </div>
 </template>
@@ -168,6 +167,7 @@ const isDark = computed<boolean>(() => ui.theme === 'dark')
   background: var(--cs-bg-elevated);
   border: 1px solid var(--cs-border-light);
   border-radius: var(--cs-radius-lg);
+  margin-bottom: 16px;
 }
 .cs-settings__profile {
   display: flex;

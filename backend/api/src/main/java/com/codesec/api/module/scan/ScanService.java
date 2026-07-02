@@ -3,7 +3,6 @@ package com.codesec.api.module.scan;
 import com.codesec.api.domain.entity.*;
 import com.codesec.api.domain.repository.*;
 import com.codesec.api.module.scan.dto.*;
-import com.codesec.api.infrastructure.queue.InMemoryScanQueue;
 import com.codesec.api.interfaces.dto.PaginatedResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +16,6 @@ import java.util.*;
 public class ScanService {
     private final ScanTaskRepository scanRepo;
     private final VulnFindingRepository vulnRepo;
-    private final InMemoryScanQueue scanQueue;
 
     @Transactional
     public ScanResponse create(ScanCreateRequest req, Long createdBy) {
@@ -44,7 +42,6 @@ public class ScanService {
             .build();
 
         task = scanRepo.save(task);
-        scanQueue.enqueue(task);
 
         return ScanResponse.builder()
             .scanId(task.getId()).status("queued")
@@ -66,6 +63,9 @@ public class ScanService {
     }
 
     public PaginatedResult<ScanListItem> list(Long repoId, int page, int size) {
+        if (repoId == null) {
+            return PaginatedResult.of(List.of(), 0, page, size);
+        }
         var p = scanRepo.findByRepoIdOrderByCreatedAtDesc(repoId, PageRequest.of(page - 1, size));
         var items = p.getContent().stream().map(t -> ScanListItem.builder()
             .id(t.getId()).repoId(t.getRepoId()).branch(t.getBranch())

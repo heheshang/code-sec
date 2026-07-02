@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { http } from '@/api/client'
-import type { Vuln, VulnListQuery, PaginatedResult } from '@/types/vuln'
-import { SEVERITY_ORDER } from '@/types/vuln'
+import type { Vuln, VulnApiResponse, VulnListQuery, PaginatedResult } from '@/types/vuln'
+import { SEVERITY_ORDER, vulnFromApi } from '@/types/vuln'
 
 interface Filters {
   projectId: string | null
   severity: Vuln['severity'][]
-  status: Vuln['status'][]
+  status: NonNullable<Vuln['status']>[]
   exploitability: Vuln['exploitability'][]
   keyword: string
   sortBy: 'severity' | 'discoveredAt' | 'projectId'
@@ -75,8 +75,8 @@ export const useVulnStore = defineStore('vuln', () => {
     loading.value = true
     error.value = null
     try {
-      const resp = await http.get<PaginatedResult<Vuln>>(`/vulns?${buildQueryString()}`)
-      items.value = resp.data.items
+      const resp = await http.get<PaginatedResult<VulnApiResponse>>(`/vulns?${buildQueryString()}`)
+      items.value = resp.data.items.map(vulnFromApi)
       total.value = resp.data.total
       page.value = resp.data.page
       pageSize.value = resp.data.size ?? resp.data.pageSize ?? 20
@@ -88,13 +88,14 @@ export const useVulnStore = defineStore('vuln', () => {
   }
 
   async function fetchOne(vulnId: string): Promise<Vuln> {
-    const resp = await http.get<Vuln>(`/vulns/${vulnId}`)
+    const resp = await http.get<VulnApiResponse>(`/vulns/${vulnId}`)
+    const vuln = vulnFromApi(resp.data)
     // Patch into the cache so the table updates without a refetch
-    const idx = items.value.findIndex((v) => v.id === resp.data.id)
+    const idx = items.value.findIndex((v) => v.id === vuln.id)
     if (idx >= 0) {
-      items.value.splice(idx, 1, resp.data)
+      items.value.splice(idx, 1, vuln)
     }
-    return resp.data
+    return vuln
   }
 
   function setFilters(patch: Partial<Filters>): void {
@@ -161,7 +162,3 @@ export const useVulnStore = defineStore('vuln', () => {
     getById,
   }
 })
-
-// Suppress unused-import warning for SEVERITY_ORDER (kept for callers that
-// need the same order constant as the store uses internally).
-void SEVERITY_ORDER

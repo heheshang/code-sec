@@ -1,24 +1,23 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Input, Modal } from 'ant-design-vue'
-import { SearchOutlined } from '@ant-design/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 import { useSearchStore } from '@/stores/search'
 
 const router = useRouter()
 const searchStore = useSearchStore()
 
 const visible = ref(false)
-const inputRef = ref<InstanceType<typeof Input> | null>(null)
+const inputRef = ref<HTMLInputElement | null>(null)
 
 // Recent searches (v1: in-memory only; Saved Searches pushed to Sprint 3 per L3 fix)
 const recentSearches = ref<string[]>(['sql injection', 'xss reflected', 'deserialization'])
 
 function open(): void {
   visible.value = true
-  // Focus input after modal animation
+  // Focus input after dialog animation
   setTimeout(() => {
-    (inputRef.value as unknown as { focus(): void })?.focus()
+    inputRef.value?.focus()
   }, 100)
 }
 
@@ -47,7 +46,6 @@ function selectRecent(q: string): void {
 
 function onSaveSearch(): void {
   // UI Hook reserved — Saved Searches pushed to Sprint 3 (per L3 fix)
-  // Toast: "保存搜索将在 Sprint 3 提供"
   close()
 }
 
@@ -56,30 +54,30 @@ defineExpose({ open, close })
 </script>
 
 <template>
-  <Modal
-    :open="visible"
-    :footer="null"
-    :closable="true"
+  <el-dialog
+    v-model="visible"
+    :close-on-click-modal="true"
     width="680px"
     class="cs-global-search-modal"
-    @cancel="close"
+    @close="close"
   >
     <div class="cs-global-search">
       <div class="cs-global-search__input-wrapper">
-        <Input
+        <el-input
           ref="inputRef"
-          v-model:value="searchStore.query"
-          size="large"
+          v-model="searchStore.query"
           placeholder="Search vulnerabilities, code snippets, CWE…"
-          :prefix="SearchOutlined"
-          allow-clear
+          clearable
           class="cs-global-search__input"
-          @press-enter="doSearch"
+          @keyup.enter="doSearch"
         >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
           <template #suffix>
             <kbd class="cs-global-search__kbd">⌘K</kbd>
           </template>
-        </Input>
+        </el-input>
       </div>
 
       <div v-if="recentSearches.length > 0" class="cs-global-search__recent">
@@ -90,18 +88,18 @@ defineExpose({ open, close })
           class="cs-global-search__recent-item"
           @click="selectRecent(item)"
         >
-          <SearchOutlined class="cs-global-search__recent-icon" />
+          <el-icon class="cs-global-search__recent-icon"><Search /></el-icon>
           <span>{{ item }}</span>
         </div>
       </div>
 
       <div class="cs-global-search__actions">
-        <a-button type="text" size="small" @click="onSaveSearch">
+        <el-button plain size="small" @click="onSaveSearch">
           Save search (Sprint 3)
-        </a-button>
+        </el-button>
       </div>
     </div>
-  </Modal>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -111,7 +109,7 @@ defineExpose({ open, close })
 .cs-global-search__input-wrapper {
   margin-bottom: 16px;
 }
-.cs-global-search__input :deep(.ant-input) {
+.cs-global-search__input :deep(.el-input__inner) {
   font-size: 15px;
 }
 .cs-global-search__kbd {

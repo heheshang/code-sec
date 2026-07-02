@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Button, Space, Tag, Typography, Drawer } from 'ant-design-vue'
-import { FilterOutlined, ExportOutlined, ThunderboltOutlined } from '@ant-design/icons-vue'
+import { Filter, Download, Refresh } from '@element-plus/icons-vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import VulnFilters from '@/components/vuln/VulnFilters.vue'
 import VulnTable from '@/components/vuln/VulnTable.vue'
@@ -13,10 +12,7 @@ const route = useRoute()
 
 const selectedCount = computed<number>(() => vulnStore.selectedIds.size)
 
-const showBulkDrawer = computed({
-  get: () => false,
-  set: () => undefined,
-})
+const showBulkDrawer = ref(false)
 
 onMounted(async () => {
   const projectId = route.query.project
@@ -25,6 +21,8 @@ onMounted(async () => {
   }
   await vulnStore.fetchList()
 })
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 watch(
   () => [
@@ -37,7 +35,10 @@ watch(
     vulnStore.pageSize,
   ],
   () => {
-    void vulnStore.fetchList()
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+      void vulnStore.fetchList()
+    }, 300)
   },
 )
 </script>
@@ -48,37 +49,36 @@ watch(
       title="Audit queue"
       :subtitle="`${vulnStore.total} findings waiting for human review across all projects`"
     >
-      <Tag color="purple" bordered>vuln store</Tag>
+      <el-tag type="info" effect="plain">vuln store</el-tag>
     </PageHeader>
 
     <VulnFilters />
 
     <div class="cs-audit-queue__bar">
-      <Space :size="8">
-        <Typography.Text class="cs-audit-queue__barLabel">
-          <FilterOutlined /> {{ vulnStore.total }} matching
-        </Typography.Text>
-        <Typography.Text v-if="selectedCount > 0" type="secondary">
-          · {{ selectedCount }} selected
-        </Typography.Text>
-      </Space>
-      <Space :size="8">
-        <Button :disabled="selectedCount === 0">
-          <ThunderboltOutlined /> Bulk retest
-        </Button>
-        <Button :disabled="selectedCount === 0">
-          <ExportOutlined /> Export selected
-        </Button>
-      </Space>
+      <span class="cs-audit-queue__barLabel">
+        <el-icon><Filter /></el-icon> {{ vulnStore.total }} matching
+        <span v-if="selectedCount > 0" class="cs-audit-queue__barSelected"> · {{ selectedCount }} selected</span>
+      </span>
+      <el-space :size="8">
+        <el-button :disabled="selectedCount === 0">
+          <el-icon><Refresh /></el-icon> Bulk retest
+        </el-button>
+        <el-button :disabled="selectedCount === 0">
+          <el-icon><Download /></el-icon> Export selected
+        </el-button>
+      </el-space>
     </div>
 
     <VulnTable />
 
-    <Drawer v-model:open="showBulkDrawer" title="Bulk action" :width="420" />
+    <el-drawer v-model="showBulkDrawer" title="Bulk action" :size="420" />
   </div>
 </template>
 
 <style scoped>
+.cs-audit-queue {
+  max-width: 1400px;
+}
 .cs-audit-queue__bar {
   display: flex;
   align-items: center;
@@ -89,5 +89,8 @@ watch(
 .cs-audit-queue__barLabel {
   font-size: var(--cs-font-size-sm);
   color: var(--cs-text-secondary);
+}
+.cs-audit-queue__barSelected {
+  color: var(--cs-text-tertiary);
 }
 </style>

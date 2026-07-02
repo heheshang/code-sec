@@ -10,14 +10,15 @@ export const useAuditStore = defineStore('audit', () => {
 
   async function fetchHistory(vulnId: string): Promise<AuditRecord[]> {
     try {
-      const resp = await http.get<{ items: AuditRecord[]; total: number }>(
+      const resp = await http.get<AuditRecord[]>(
         `/vulns/${vulnId}/audits`,
       )
+      const items = Array.isArray(resp.data) ? resp.data : []
       recordsByVuln.value = {
         ...recordsByVuln.value,
-        [vulnId]: resp.data.items,
+        [vulnId]: items,
       }
-      return resp.data.items
+      return items
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to load audit history'
       return []

@@ -1,31 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Row, Col, Card, Typography, Tag, Space, Empty } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
+import '@/echarts-setup'
 import VChart from 'vue-echarts'
-import { use } from 'echarts/core'
-import { CanvasRenderer } from 'echarts/renderers'
-import { PieChart, LineChart } from 'echarts/charts'
-import {
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent,
-} from 'echarts/components'
 import { http } from '@/api/client'
 import StatCard from '@/components/common/StatCard.vue'
 import { useVulnStore } from '@/stores/vuln'
 import type { RepoListItem } from '@/api/types'
-
-use([
-  CanvasRenderer,
-  PieChart,
-  LineChart,
-  TitleComponent,
-  TooltipComponent,
-  LegendComponent,
-  GridComponent,
-])
 
 interface DashboardStats {
   total: number
@@ -220,11 +201,11 @@ function reloadPage() {
 
 <template>
   <div v-if="error && !loading" class="cs-dashboard cs-dashboard__error">
-    <Empty description="Failed to load dashboard data">
-      <template #extra>
-        <a-button type="primary" @click="reloadPage">Retry</a-button>
+    <el-empty description="Failed to load dashboard data">
+      <template #default>
+        <el-button type="primary" @click="reloadPage">Retry</el-button>
       </template>
-    </Empty>
+    </el-empty>
   </div>
   <div v-else class="cs-dashboard">
     <div class="cs-dashboard-hero">
@@ -232,8 +213,8 @@ function reloadPage() {
       <p>{{ stats?.projectCount ?? '—' }} projects · {{ stats?.total ?? '—' }} total findings</p>
     </div>
 
-    <Row :gutter="[16, 16]" class="cs-dashboard__stats">
-      <Col :xs="24" :sm="12" :md="6">
+    <el-row :gutter="16" class="cs-dashboard__stats">
+      <el-col :xs="24" :sm="12" :md="6">
         <StatCard
           label="Total findings"
           :value="stats?.total ?? '—'"
@@ -241,8 +222,8 @@ function reloadPage() {
           hint="across 5 projects"
           accent="primary"
         />
-      </Col>
-      <Col :xs="24" :sm="12" :md="6">
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
         <StatCard
           label="Critical"
           :value="stats?.critical ?? '—'"
@@ -250,8 +231,8 @@ function reloadPage() {
           hint="requires 24h SLA"
           accent="danger"
         />
-      </Col>
-      <Col :xs="24" :sm="12" :md="6">
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
         <StatCard
           label="Fixed this week"
           :value="stats?.fixedThisWeek ?? '—'"
@@ -259,8 +240,8 @@ function reloadPage() {
           hint="in last 7 days"
           accent="success"
         />
-      </Col>
-      <Col :xs="24" :sm="12" :md="6">
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
         <StatCard
           label="Fix rate"
           :value="fixRatePct"
@@ -268,43 +249,38 @@ function reloadPage() {
           hint="rolling 30 days"
           accent="primary"
         />
-      </Col>
-    </Row>
+      </el-col>
+    </el-row>
 
-    <Row :gutter="[16, 16]" class="cs-dashboard__charts">
-      <Col :xs="24" :lg="10">
-        <Card
-          title="Findings by severity"
-          :bordered="false"
-          class="cs-dashboard__chartCard"
-        >
+    <el-row :gutter="16" class="cs-dashboard__charts">
+      <el-col :xs="24" :lg="10">
+        <el-card shadow="never" class="cs-dashboard__chartCard">
+          <template #header>Findings by severity</template>
           <div v-if="hasSeverityData" class="cs-dashboard__pie">
             <VChart :option="pieOption" autoresize />
           </div>
           <div v-else-if="!loading" class="cs-dashboard__chartEmpty">
-            <Empty image="simple" description="No severity data" />
+            <el-empty :image-size="80" description="No severity data" />
           </div>
-        </Card>
-      </Col>
-      <Col :xs="24" :lg="14">
-        <Card
-          title="Opened vs closed · last 14 days"
-          :bordered="false"
-          class="cs-dashboard__chartCard"
-        >
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :lg="14">
+        <el-card shadow="never" class="cs-dashboard__chartCard">
+          <template #header>Opened vs closed · last 14 days</template>
           <div v-if="hasTrend" class="cs-dashboard__line">
             <VChart :option="lineOption" autoresize />
           </div>
           <div v-else-if="!loading" class="cs-dashboard__chartEmpty">
-            <Empty image="simple" description="No trend data" />
+            <el-empty :image-size="80" description="No trend data" />
           </div>
-        </Card>
-      </Col>
-    </Row>
+        </el-card>
+      </el-col>
+    </el-row>
 
-    <Row :gutter="[16, 16]" class="cs-dashboard__projects">
-      <Col :span="24">
-        <Card title="Projects" :bordered="false" class="cs-dashboard__projectCard">
+    <el-row :gutter="16" class="cs-dashboard__projects">
+      <el-col :span="24">
+        <el-card shadow="never" class="cs-dashboard__projectCard">
+          <template #header>Projects</template>
           <div class="cs-dashboard__projectGrid">
             <div
               v-for="p in projects"
@@ -313,8 +289,8 @@ function reloadPage() {
               @click="router.push(`/audit?project=${p.id}`)"
             >
               <div class="cs-dashboard__projectHead">
-                <Typography.Text class="cs-dashboard__projectName">{{ p.name }}</Typography.Text>
-                <Tag :color="p.status === 'active' ? 'green' : 'default'" bordered>{{ p.status }}</Tag>
+                <span class="cs-dashboard__projectName">{{ p.name }}</span>
+                <el-tag :type="p.status === 'active' ? 'success' : 'info'" effect="plain" size="small">{{ p.status }}</el-tag>
               </div>
               <div class="cs-dashboard__projectMeta">
                 <span>{{ p.platform }}</span>
@@ -324,11 +300,11 @@ function reloadPage() {
             </div>
           </div>
           <div v-if="projects.length === 0 && !loading" class="cs-dashboard__projectEmpty">
-            <Empty image="simple" description="No projects found" />
+            <el-empty :image-size="80" description="No projects found" />
           </div>
-        </Card>
-      </Col>
-    </Row>
+        </el-card>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
@@ -344,8 +320,9 @@ function reloadPage() {
   border: 1px solid var(--cs-border-light);
   border-radius: var(--cs-radius-lg);
   height: 320px;
+  margin-bottom: 16px;
 }
-.cs-dashboard__chartCard :deep(.ant-card-body) {
+.cs-dashboard__chartCard :deep(.el-card__body) {
   height: calc(100% - 56px);
   padding: var(--cs-space-2) var(--cs-space-3);
 }
@@ -398,29 +375,6 @@ function reloadPage() {
   gap: 4px;
   margin-bottom: var(--cs-space-2);
   text-transform: capitalize;
-}
-.cs-dashboard__projectCounts {
-  margin-bottom: var(--cs-space-2);
-  display: flex;
-  flex-wrap: wrap;
-}
-.cs-dashboard__projectBar {
-  height: 4px;
-  background: var(--cs-bg-hover);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-.cs-dashboard__projectBarFill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--cs-color-accent) 0%, var(--cs-color-primary) 100%);
-  border-radius: 2px;
-  transition: width var(--cs-duration-slow) var(--cs-ease-out);
-}
-.cs-dashboard__projectBarLabel {
-  font-size: var(--cs-font-size-xs);
-  color: var(--cs-text-tertiary);
-  text-align: right;
 }
 .cs-dashboard__error {
   display: flex;

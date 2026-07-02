@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Tabs, Pagination, Spin, Alert, Empty } from 'ant-design-vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import VulnSearchResultItem from '@/components/search/VulnSearchResultItem.vue'
 import SnippetSearchResultItem from '@/components/search/SnippetSearchResultItem.vue'
@@ -28,7 +27,6 @@ const resultCountLabel = computed(() => {
 })
 
 onMounted(() => {
-  // Restore query from URL params
   const q = route.query.q as string | undefined
   if (q) {
     store.setQuery(q)
@@ -40,7 +38,6 @@ onMounted(() => {
   store.search()
 })
 
-// Re-search when tab or page changes
 watch(() => store.activeTab, () => store.search())
 watch(() => store.page, () => store.search())
 watch(() => store.pageSize, () => store.search())
@@ -57,6 +54,15 @@ function onPageChange(p: number, ps: number): void {
   store.setPage(p)
   store.search()
 }
+
+const currentTabKey = computed(() => store.activeTab)
+
+const tabItems = computed(() =>
+  tabs.map(t => ({
+    key: t.key,
+    label: `${t.label} (${t.key === 'vulns' ? store.vulnTotal : store.snippetTotal})`,
+  }))
+)
 </script>
 
 <template>
@@ -72,24 +78,31 @@ function onPageChange(p: number, ps: number): void {
       </aside>
 
       <main class="cs-search-page__main">
-        <Tabs
-          :active-key="store.activeTab"
-          :items="tabs.map(t => ({ key: t.key, label: `${t.label} (${t.key === 'vulns' ? store.vulnTotal : store.snippetTotal})` }))"
-          @change="onTabChange"
-        />
+        <el-tabs
+          :model-value="currentTabKey"
+          @tab-change="onTabChange"
+        >
+          <el-tab-pane
+            v-for="t in tabItems"
+            :key="t.key"
+            :label="t.label"
+            :name="t.key"
+          />
+        </el-tabs>
 
-        <Spin :spinning="store.loading" tip="Searching…">
-          <Alert
+        <div v-loading="store.loading" element-loading-text="Searching…">
+          <el-alert
             v-if="store.error"
             type="error"
-            :message="store.error"
+            :title="store.error"
             show-icon
+            closable
             class="cs-search-page__error"
           />
 
           <!-- Vuln results -->
           <div v-if="store.activeTab === 'vulns' && !store.loading" class="cs-search-page__results">
-            <Empty
+            <el-empty
               v-if="store.vulnResults.length === 0"
               description="No vulnerabilities found. Try different keywords or clear filters."
             />
@@ -103,7 +116,7 @@ function onPageChange(p: number, ps: number): void {
 
           <!-- Snippet results -->
           <div v-if="store.activeTab === 'snippets' && !store.loading" class="cs-search-page__results">
-            <Empty
+            <el-empty
               v-if="store.snippetResults.length === 0"
               description="No snippets found. v1 supports file_path prefix search only."
             />
@@ -116,17 +129,17 @@ function onPageChange(p: number, ps: number): void {
 
           <!-- Pagination -->
           <div v-if="totalResults > 0" class="cs-search-page__pagination">
-            <Pagination
-              :current="store.page"
+            <el-pagination
+              :current-page="store.page"
               :page-size="store.pageSize"
               :total="totalResults"
-              :page-size-options="['20', '50', '100']"
-              show-size-changer
-              show-quick-jumper
-              @change="onPageChange"
+              :page-sizes="[20, 50, 100]"
+              layout="total, sizes, prev, pager, next, jumper"
+              @current-change="(p: number) => onPageChange(p, store.pageSize)"
+              @size-change="(ps: number) => onPageChange(store.page, ps)"
             />
           </div>
-        </Spin>
+        </div>
       </main>
     </div>
   </div>

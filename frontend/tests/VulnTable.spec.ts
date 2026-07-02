@@ -2,55 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import Antd from 'ant-design-vue'
+import ElementPlus from 'element-plus'
 import VulnTable from '@/components/vuln/VulnTable.vue'
 import { useVulnStore } from '@/stores/vuln'
 import type { Vuln } from '@/types/vuln'
-
-// Stub the ant-design-vue Table to a simple list to keep the test fast
-// and to assert against our own component logic, not AntD internals.
-vi.mock('ant-design-vue', async () => {
-  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
-  const { h } = await import('vue')
-  const ATable = {
-    name: 'ATable',
-    props: ['columns', 'dataSource', 'loading', 'pagination', 'rowSelection', 'rowKey', 'scroll', 'size'],
-    setup(props: { columns: unknown[]; dataSource: unknown[]; loading: boolean; rowKey: ((r: unknown) => unknown) | string | undefined }) {
-      return () => {
-        const cols = (props.columns ?? []) as Array<{ key?: string; dataIndex?: string; customRender?: (args: { record: unknown; text: unknown; index: number }) => ReturnType<typeof h> }>
-        const rows = (props.dataSource ?? []) as unknown[]
-        const getKey = (r: unknown): unknown => {
-          if (typeof props.rowKey === 'function') return props.rowKey(r)
-          if (typeof props.rowKey === 'string' && r !== null && typeof r === 'object') {
-            return (r as Record<string, unknown>)[props.rowKey]
-          }
-          return (r as { id: unknown })?.id
-        }
-        return h('div', { class: 'stub-table', 'data-loading': String(props.loading) },
-          rows.map((row) =>
-            h('div', { key: String(getKey(row)), class: 'stub-row' },
-              cols.map((col) => {
-                const cellKey = col.key ?? col.dataIndex ?? ''
-                const text = col.dataIndex !== undefined && row !== null && typeof row === 'object'
-                  ? (row as Record<string, unknown>)[col.dataIndex]
-                  : undefined
-                if (typeof col.customRender === 'function') {
-                  return h('div', { key: cellKey, class: 'stub-cell', 'data-col': cellKey },
-                    [col.customRender({ record: row, text, index: 0 })])
-                }
-                return h('div', { key: cellKey, class: 'stub-cell', 'data-col': cellKey }, [h('span', {}, String(text ?? ''))])
-              }),
-            ),
-          ),
-        )
-      }
-    },
-  }
-  return {
-    ...actual,
-    Table: ATable,
-  }
-})
 
 function makeVuln(overrides: Partial<Vuln> = {}): Vuln {
   return {
@@ -60,7 +15,7 @@ function makeVuln(overrides: Partial<Vuln> = {}): Vuln {
     title: 'SQL injection',
     severity: 'critical',
     status: 'pending_audit',
-    exploitability: 'EXPLOITABLE',
+    exploitability: 'exploitable',
     exploitReason: 'r',
     filePath: 'src/main/java/Foo.java',
     lineStart: 42,
@@ -101,7 +56,7 @@ async function mountTable() {
   })
 
   const wrapper = mount(VulnTable, {
-    global: { plugins: [pinia, router, Antd] },
+    global: { plugins: [pinia, router, ElementPlus] },
   })
   await flushPromises()
   return { wrapper, store, router }
@@ -114,7 +69,7 @@ describe('VulnTable', () => {
 
   it('renders one row per vuln in the store', async () => {
     const { wrapper } = await mountTable()
-    const rows = wrapper.findAll('.stub-row')
+    const rows = wrapper.findAll('.el-table__row')
     expect(rows).toHaveLength(2)
   })
 
@@ -125,8 +80,8 @@ describe('VulnTable', () => {
 
   it('updates the store page when pagination changes', async () => {
     const { wrapper, store } = await mountTable()
-    const table = wrapper.findComponent({ name: 'ATable' })
-    await table.vm.$emit('change', { current: 2, pageSize: 20 })
+    const pagination = wrapper.findComponent({ name: 'ElPagination' })
+    await pagination.vm.$emit('current-change', 2)
     expect(store.page).toBe(2)
   })
 
@@ -141,28 +96,26 @@ describe('VulnTable', () => {
   it('renders exploitability column with badge for each row', async () => {
     const { wrapper, store } = await mountTable()
     store.items = [
-      makeVuln({ id: 'a', exploitability: 'EXPLOITABLE', exploitReason: 'r1' }),
-      makeVuln({ id: 'b', exploitability: 'POTENTIALLY_EXPLOITABLE', exploitReason: 'r2' }),
-      makeVuln({ id: 'c', exploitability: 'NOT_EXPLOITABLE', exploitReason: 'r3' }),
+      makeVuln({ id: 'a', exploitability: 'exploitable', exploitReason: 'r1' }),
+      makeVuln({ id: 'b', exploitability: 'potentially_exploitable', exploitReason: 'r2' }),
+      makeVuln({ id: 'c', exploitability: 'not_exploitable', exploitReason: 'r3' }),
     ]
     await flushPromises()
-    const cells = wrapper.findAll('[data-col="exploitability"]')
-    expect(cells).toHaveLength(3)
-    const labels = cells.map((c) => c.text())
-    expect(labels).toContain('可利用')
-    expect(labels).toContain('需审计')
-    expect(labels).toContain('不可利用')
+    const text = wrapper.text()
+    expect(text).toContain('可利用')
+    expect(text).toContain('需审计')
+    expect(text).toContain('不可利用')
   })
 
   it('filters by exploitability state when store filter is set', async () => {
     const { store } = await mountTable()
     store.items = [
-      makeVuln({ id: 'a', exploitability: 'EXPLOITABLE' }),
-      makeVuln({ id: 'b', exploitability: 'POTENTIALLY_EXPLOITABLE' }),
-      makeVuln({ id: 'c', exploitability: 'NOT_EXPLOITABLE' }),
+      makeVuln({ id: 'a', exploitability: 'exploitable' }),
+      makeVuln({ id: 'b', exploitability: 'potentially_exploitable' }),
+      makeVuln({ id: 'c', exploitability: 'not_exploitable' }),
     ]
-    store.setFilters({ exploitability: ['EXPLOITABLE', 'NOT_EXPLOITABLE'] })
-    expect(store.filters.exploitability).toEqual(['EXPLOITABLE', 'NOT_EXPLOITABLE'])
-    expect(store.filters.exploitability).not.toContain('POTENTIALLY_EXPLOITABLE')
+    store.setFilters({ exploitability: ['exploitable', 'not_exploitable'] })
+    expect(store.filters.exploitability).toEqual(['exploitable', 'not_exploitable'])
+    expect(store.filters.exploitability).not.toContain('potentially_exploitable')
   })
 })

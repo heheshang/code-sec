@@ -56,6 +56,9 @@ public class VulnFindingEntity {
     @Column(length = 16)
     private String cwe;
 
+    @Column(length = 64)
+    private String cve;
+
     @Column(nullable = false, length = 32)
     private String engine = "self_sast";
 

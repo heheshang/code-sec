@@ -11,8 +11,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      // In test runs the editor api is not needed; the wrapper is stubbed.
-      'monaco-editor': path.resolve(__dirname, 'tests/stubs/monaco.ts'),
     },
   },
   server: {
@@ -33,25 +31,16 @@ export default defineConfig({
       output: {
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          'antd-vendor': ['ant-design-vue', '@ant-design/icons-vue'],
-          'monaco-vendor': ['monaco-editor', '@guolao/vue-monaco-editor'],
+          'el-vendor': ['element-plus', '@element-plus/icons-vue'],
           'echarts-vendor': ['echarts', 'vue-echarts'],
         },
       },
     },
-  },
-  optimizeDeps: {
-    include: ['monaco-editor/esm/vs/editor/editor.api'],
   },
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     css: false,
-    server: {
-      deps: {
-        inline: ['@guolao/vue-monaco-editor'],
-      },
-    },
   },
 })

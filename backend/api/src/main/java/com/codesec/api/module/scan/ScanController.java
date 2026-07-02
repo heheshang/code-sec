@@ -30,7 +30,7 @@ public class ScanController {
 
     @GetMapping
     @PreAuthorize("@perm.check('scan:read')")
-    public PaginatedResult<ScanListItem> list(@RequestParam Long repoId,
+    public PaginatedResult<ScanListItem> list(@RequestParam(required = false) Long repoId,
                                                @RequestParam(defaultValue = "1") int page,
                                                @RequestParam(defaultValue = "20") int size) {
         return scanService.list(repoId, page, size);

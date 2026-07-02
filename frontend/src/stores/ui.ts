@@ -50,7 +50,7 @@ export const useUiStore = defineStore('ui', () => {
   function setTheme(t: Theme): void {
     theme.value = t
     if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-cs-theme', t)
+      document.documentElement.classList.toggle('dark', t === 'dark')
     }
   }
 
@@ -68,7 +68,7 @@ export const useUiStore = defineStore('ui', () => {
 
   // Apply the theme to <html> on init
   if (typeof document !== 'undefined') {
-    document.documentElement.setAttribute('data-cs-theme', theme.value)
+    document.documentElement.classList.toggle('dark', theme.value === 'dark')
   }
 
   // Persist on every change

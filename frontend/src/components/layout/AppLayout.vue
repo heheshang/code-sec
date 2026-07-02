@@ -1,56 +1,52 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Layout } from 'ant-design-vue'
 import { useUiStore } from '@/stores/ui'
 import SidebarNav from './SidebarNav.vue'
 import TopBar from './TopBar.vue'
 
-const { Sider, Header, Content, Footer } = Layout
 const route = useRoute()
 const ui = useUiStore()
 
 const isLoginPage = computed(() => route.name === 'login')
 
-const siderWidth = computed<number>(() =>
-  ui.sidebarCollapsed ? 64 : 220,
+const siderWidth = computed<string>(() =>
+  ui.sidebarCollapsed ? '64px' : '220px',
 )
 </script>
 
 <template>
-  <Layout v-if="isLoginPage" class="cs-app cs-app--blank">
-    <Content class="cs-app__content">
-      <router-view />
-    </Content>
-  </Layout>
-  <Layout v-else class="cs-app">
-    <Sider
-      :width="siderWidth"
-      :collapsed-width="64"
-      :collapsed="ui.sidebarCollapsed"
-      :trigger="null"
-      class="cs-app__sider"
-    >
+  <el-container v-if="isLoginPage" class="cs-app cs-app--blank">
+    <el-main>
+      <router-view v-slot="{ Component, route }">
+        <transition name="cs-page-fade" mode="out-in">
+          <component :is="Component" :key="route.fullPath" />
+        </transition>
+      </router-view>
+    </el-main>
+  </el-container>
+  <el-container v-else class="cs-app">
+    <el-aside :width="siderWidth" class="cs-app__sider">
       <div class="cs-app__siderInner">
         <SidebarNav />
       </div>
-    </Sider>
-    <Layout>
-      <Header class="cs-app__header">
+    </el-aside>
+    <el-container direction="vertical">
+      <el-header class="cs-app__header">
         <TopBar />
-      </Header>
-      <Content class="cs-app__content">
+      </el-header>
+      <el-main class="cs-app__main">
         <router-view v-slot="{ Component, route }">
           <transition name="cs-page-fade" mode="out-in">
             <component :is="Component" :key="route.fullPath" />
           </transition>
         </router-view>
-      </Content>
-      <Footer class="cs-app__footer">
+      </el-main>
+      <el-footer class="cs-app__footer">
         code-sec audit workbench · prototype build
-      </Footer>
-    </Layout>
-  </Layout>
+      </el-footer>
+    </el-container>
+  </el-container>
 </template>
 
 <style scoped>
@@ -68,12 +64,14 @@ const siderWidth = computed<number>(() =>
   flex-direction: column;
 }
 .cs-app__header {
-  padding: 0;
   display: flex;
   align-items: center;
+  border-bottom: 1px solid var(--el-border-color);
+  background: var(--el-bg-color-overlay);
+  height: var(--cs-header-height);
+  padding: 0 var(--cs-space-6);
 }
-.cs-app__content {
-  overflow-y: auto;
-  background: var(--cs-bg-base);
+.cs-app__main {
+  background: var(--el-bg-color);
 }
 </style>

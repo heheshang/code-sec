@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import {
-  Card, Table, Button, Modal, Form, Select, Tag, Space,
-  Typography, message, Popconfirm, Descriptions, Drawer,
-} from 'ant-design-vue'
-import {
-  PlusOutlined, StopOutlined, ReloadOutlined, EyeOutlined,
-} from '@ant-design/icons-vue'
+import { Plus, CircleClose, Refresh, View } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { http } from '@/api/client'
 import { useScanStore } from '@/stores/scan'
@@ -14,17 +9,6 @@ import type { RepoListItem } from '@/types/repo'
 import type { ScanCreateRequest, ScanTaskResponse } from '@/types/scan'
 
 const scanStore = useScanStore()
-
-const columns = [
-  { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-  { title: 'Branch', dataIndex: 'branch', key: 'branch', width: 140 },
-  { title: 'Mode', dataIndex: 'mode', key: 'mode', width: 80 },
-  { title: 'Status', dataIndex: 'status', key: 'status', width: 110 },
-  { title: 'Findings', dataIndex: 'findingsCount', key: 'findingsCount', width: 90 },
-  { title: 'Started', dataIndex: 'startedAt', key: 'startedAt', width: 170 },
-  { title: 'Finished', dataIndex: 'finishedAt', key: 'finishedAt', width: 170 },
-  { title: 'Actions', key: 'actions', width: 120 },
-]
 
 const projects = ref<RepoListItem[]>([])
 const showCreateModal = ref(false)
@@ -34,11 +18,12 @@ const createForm = ref<ScanCreateRequest>({ repoId: 0, mode: 'full', branch: 'ma
 const showDetail = ref(false)
 const detailScan = ref<ScanTaskResponse | null>(null)
 
-const statusColor: Record<string, string> = {
-  pending: 'default',
-  running: 'processing',
+type StatusType = '' | 'primary' | 'success' | 'danger' | 'warning' | 'info'
+const statusType: Record<string, StatusType> = {
+  pending: '',
+  running: 'primary',
   completed: 'success',
-  failed: 'error',
+  failed: 'danger',
   cancelled: 'warning',
 }
 
@@ -57,25 +42,26 @@ async function openCreate(): Promise<void> {
 
 async function handleCreate(): Promise<void> {
   if (!createForm.value.repoId) {
-    message.warning('Please select a repository')
+    ElMessage.warning('Please select a repository')
     return
   }
   try {
     await scanStore.create(createForm.value)
-    message.success('Scan started')
+    ElMessage.success('Scan started')
     showCreateModal.value = false
+    scanStore.setRepoId(createForm.value.repoId)
     await scanStore.fetchList()
   } catch {
-    message.error('Failed to start scan')
+    ElMessage.error('Failed to start scan')
   }
 }
 
 async function handleCancel(id: number): Promise<void> {
   try {
     await scanStore.cancel(id)
-    message.success('Scan cancelled')
+    ElMessage.success('Scan cancelled')
   } catch {
-    message.error('Failed to cancel scan')
+    ElMessage.error('Failed to cancel scan')
   }
 }
 
@@ -84,7 +70,7 @@ async function showScanDetail(id: number): Promise<void> {
     detailScan.value = await scanStore.getById(id)
     showDetail.value = true
   } catch {
-    message.error('Failed to load scan details')
+    ElMessage.error('Failed to load scan details')
   }
 }
 
@@ -98,135 +84,163 @@ onMounted(async () => {
   <div class="cs-page">
     <PageHeader title="Scans" subtitle="Scan task history and management">
       <template #extra>
-        <Space>
-          <Select
-            v-model:value="(scanStore.repoId as any)"
+        <el-space>
+          <el-select
+            v-model="scanStore.repoId"
             placeholder="Filter by repo"
-            allow-clear
+            clearable
             style="width: 240px"
             @change="scanStore.fetchList()"
           >
-            <Select.Option v-for="p in projects" :key="p.id" :value="p.id">
-              {{ p.name }}
-            </Select.Option>
-          </Select>
-          <Button type="primary" @click="openCreate">
-            <template #icon><PlusOutlined /></template>
-            New Scan
-          </Button>
-        </Space>
+            <el-option
+              v-for="p in projects"
+              :key="p.id"
+              :value="p.id"
+              :label="p.name"
+            />
+          </el-select>
+          <el-button type="primary" @click="openCreate">
+            <el-icon><Plus /></el-icon> New Scan
+          </el-button>
+        </el-space>
       </template>
     </PageHeader>
 
-    <Card :loading="scanStore.loading">
-      <Table
-        :data-source="scanStore.items"
-        :columns="columns"
-        :pagination="{
-          total: scanStore.total,
-          current: scanStore.page,
-          pageSize: scanStore.pageSize,
-          showSizeChanger: true,
-          showTotal: (t: number) => `Total ${t} items`,
-          onChange: (p: number) => { scanStore.setPage(p); scanStore.fetchList() },
-        }"
-        row-key="id"
-        size="middle"
-      >
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'mode'">
-            <Tag>{{ record.mode }}</Tag>
+    <el-card v-loading="scanStore.loading">
+      <el-table :data="scanStore.items" row-key="id">
+        <el-table-column label="ID" prop="id" width="70" />
+        <el-table-column label="Branch" prop="branch" width="140" />
+        <el-table-column label="Mode" prop="mode" width="80">
+          <template #default="{ row }">
+            <el-tag>{{ row.mode }}</el-tag>
           </template>
-          <template v-if="column.key === 'status'">
-            <Tag :color="statusColor[record.status] ?? 'default'">{{ record.status }}</Tag>
+        </el-table-column>
+        <el-table-column label="Status" prop="status" width="110">
+          <template #default="{ row }">
+            <el-tag :type="statusType[row.status] ?? ''">{{ row.status }}</el-tag>
           </template>
-          <template v-if="column.key === 'startedAt'">
-            {{ record.startedAt ? new Date(record.startedAt).toLocaleString() : '-' }}
+        </el-table-column>
+        <el-table-column label="Findings" prop="findingsCount" width="90" />
+        <el-table-column label="Started" prop="startedAt" width="170">
+          <template #default="{ row }">
+            {{ row.startedAt ? new Date(row.startedAt).toLocaleString() : '-' }}
           </template>
-          <template v-if="column.key === 'finishedAt'">
-            {{ record.finishedAt ? new Date(record.finishedAt).toLocaleString() : '-' }}
+        </el-table-column>
+        <el-table-column label="Finished" prop="finishedAt" width="170">
+          <template #default="{ row }">
+            {{ row.finishedAt ? new Date(row.finishedAt).toLocaleString() : '-' }}
           </template>
-          <template v-if="column.key === 'actions'">
-            <Space>
-              <Button size="small" @click="showScanDetail(record.id)">
-                <template #icon><EyeOutlined /></template>
-              </Button>
-              <Popconfirm
-                v-if="record.status === 'pending' || record.status === 'running'"
+        </el-table-column>
+        <el-table-column label="Actions" width="120">
+          <template #default="{ row }">
+            <el-space>
+              <el-button size="small" @click="showScanDetail(row.id)">
+                <el-icon><View /></el-icon>
+              </el-button>
+              <el-popconfirm
+                v-if="row.status === 'pending' || row.status === 'running'"
                 title="Cancel this scan?"
-                @confirm="handleCancel(record.id)"
+                @confirm="handleCancel(row.id)"
               >
-                <Button size="small" danger>
-                  <template #icon><StopOutlined /></template>
-                </Button>
-              </Popconfirm>
-            </Space>
+                <template #reference>
+                  <el-button size="small" type="danger">
+                    <el-icon><CircleClose /></el-icon>
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </el-space>
           </template>
-        </template>
-      </Table>
-    </Card>
+        </el-table-column>
+      </el-table>
+      <div style="display: flex; justify-content: flex-end; margin-top: 12px">
+        <el-pagination
+          v-model:current-page="scanStore.page"
+          v-model:page-size="scanStore.pageSize"
+          :total="scanStore.total"
+          layout="total, sizes, prev, pager, next"
+          @current-change="() => scanStore.fetchList()"
+          @size-change="() => scanStore.fetchList()"
+        />
+      </div>
+    </el-card>
 
     <!-- Create Scan Modal -->
-    <Modal
-      v-model:open="showCreateModal"
+    <el-dialog
+      v-model="showCreateModal"
       title="New Scan"
-      @ok="handleCreate"
-      ok-text="Start Scan"
-      :mask-closable="false"
+      :close-on-click-modal="false"
     >
-      <Form :model="createForm" layout="vertical">
-        <Form.Item label="Repository" :required="true">
-          <Select v-model:value="createForm.repoId" placeholder="Select a repository">
-            <Select.Option v-for="p in projects" :key="p.id" :value="p.id">
-              {{ p.name }}
-            </Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item label="Mode">
-          <Select v-model:value="createForm.mode">
-            <Select.Option value="full">Full Scan</Select.Option>
-            <Select.Option value="mr">MR Diff Scan</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item label="Branch">
-          <Input v-model:value="createForm.branch" placeholder="main" />
-        </Form.Item>
-        <Form.Item label="Commit SHA (optional)">
-          <Input v-model:value="createForm.commitSha" placeholder="Specific commit to scan" />
-        </Form.Item>
-      </Form>
-    </Modal>
+      <el-form :model="createForm" label-position="top">
+        <el-form-item label="Repository" :required="true">
+          <el-select v-model="createForm.repoId" placeholder="Select a repository">
+            <el-option v-for="p in projects" :key="p.id" :value="p.id" :label="p.name" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Mode">
+          <el-select v-model="createForm.mode">
+            <el-option value="full" label="Full Scan" />
+            <el-option value="mr" label="MR Diff Scan" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="Branch">
+          <el-input v-model="createForm.branch" placeholder="main" />
+        </el-form-item>
+        <el-form-item label="Commit SHA (optional)">
+          <el-input v-model="createForm.commitSha" placeholder="Specific commit to scan" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showCreateModal = false">Cancel</el-button>
+        <el-button type="primary" @click="handleCreate">Start Scan</el-button>
+      </template>
+    </el-dialog>
 
     <!-- Scan Detail Drawer -->
-    <Drawer
-      v-model:open="showDetail"
+    <el-drawer
+      v-model="showDetail"
       title="Scan Details"
-      placement="right"
-      width="520"
+      :size="520"
     >
-        <Descriptions v-if="detailScan" :column="1" bordered size="small">
-        <Descriptions.Item label="ID">{{ detailScan.id }}</Descriptions.Item>
-        <Descriptions.Item label="Repo ID">{{ detailScan.repoId }}</Descriptions.Item>
-        <Descriptions.Item label="Branch">{{ detailScan.branch }}</Descriptions.Item>
-        <Descriptions.Item label="Commit SHA">{{ detailScan.commitSha }}</Descriptions.Item>
-        <Descriptions.Item label="Status">
-          <Tag :color="statusColor[detailScan.status] ?? 'default'">{{ detailScan.status }}</Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="Mode">{{ detailScan.mode }}</Descriptions.Item>
-        <Descriptions.Item label="Engine">{{ detailScan.engine }}</Descriptions.Item>
-        <Descriptions.Item label="Findings">{{ detailScan.findingsCount }}</Descriptions.Item>
-        <Descriptions.Item label="Started">{{ detailScan.startedAt ? new Date(detailScan.startedAt).toLocaleString() : '-' }}</Descriptions.Item>
-        <Descriptions.Item label="Finished">{{ detailScan.finishedAt ? new Date(detailScan.finishedAt).toLocaleString() : '-' }}</Descriptions.Item>
-        <Descriptions.Item v-if="detailScan.errorMessage" label="Error">
-          <Typography.Text type="danger">{{ detailScan.errorMessage }}</Typography.Text>
-        </Descriptions.Item>
-      </Descriptions>
-    </Drawer>
+      <template v-if="detailScan">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="ID">{{ detailScan.id }}</el-descriptions-item>
+          <el-descriptions-item label="Repo ID">{{ detailScan.repoId }}</el-descriptions-item>
+          <el-descriptions-item label="Branch">{{ detailScan.branch }}</el-descriptions-item>
+          <el-descriptions-item label="Commit SHA">{{ detailScan.commitSha }}</el-descriptions-item>
+          <el-descriptions-item label="Status">
+            <el-tag :type="statusType[detailScan.status] ?? ''">{{ detailScan.status }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="Mode">{{ detailScan.mode }}</el-descriptions-item>
+          <el-descriptions-item label="Engine">{{ detailScan.engine }}</el-descriptions-item>
+          <el-descriptions-item label="Findings">{{ detailScan.findingsCount }}</el-descriptions-item>
+          <el-descriptions-item label="Started">{{ detailScan.startedAt ? new Date(detailScan.startedAt).toLocaleString() : '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Finished">{{ detailScan.finishedAt ? new Date(detailScan.finishedAt).toLocaleString() : '-' }}</el-descriptions-item>
+          <el-descriptions-item v-if="detailScan.errorMessage" label="Error">
+            <span style="color: var(--el-color-danger)">{{ detailScan.errorMessage }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
 <style scoped>
-.cs-page {
-  padding: var(--cs-space-6);
+.cs-page :deep(.el-table) {
+  overflow-x: auto;
+}
+.cs-page :deep(.el-dialog__body) {
+  padding-top: var(--cs-space-4);
+}
+.cs-page :deep(.el-drawer__body) {
+  padding: var(--cs-space-5);
+}
+@media (max-width: 768px) {
+  .cs-page :deep(.el-table) {
+    display: block;
+    width: 100%;
+  }
+  .cs-page :deep(.el-space) {
+    flex-wrap: wrap;
+  }
 }
 </style>

@@ -1,28 +1,27 @@
 <script setup lang="ts">
-import { Tag } from 'ant-design-vue'
 import type { SnippetSearchResult } from '@/api/search'
 
 defineProps<{
   item: SnippetSearchResult
 }>()
 
-const languageColors: Record<string, string> = {
-  java: 'orange',
-  go: 'cyan',
-  python: 'blue',
-  typescript: 'geekblue',
-  javascript: 'gold',
-  php: 'purple',
-  csharp: 'green',
+const languageType: Record<string, string> = {
+  java: 'warning',
+  go: 'info',
+  python: 'primary',
+  typescript: '',
+  javascript: 'warning',
+  php: 'danger',
+  csharp: 'success',
 }
 </script>
 
 <template>
   <div class="cs-snippet-result">
     <div class="cs-snippet-result__header">
-      <Tag :color="languageColors[item.language] ?? 'default'">
+      <el-tag :type="(languageType[item.language] as any) ?? ''" size="small">
         {{ item.language }}
-      </Tag>
+      </el-tag>
     </div>
     <div class="cs-snippet-result__path">
       <code>{{ item.filePath }}</code>

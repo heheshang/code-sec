@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Select, Input, Button, Space } from 'ant-design-vue'
-import { ReloadOutlined, FilterOutlined } from '@ant-design/icons-vue'
+import { Search, Refresh, Filter } from '@element-plus/icons-vue'
 import { useVulnStore } from '@/stores/vuln'
 import type { Severity, VulnStatus, Exploitability } from '@/types/vuln'
 import { SEVERITY_LABEL, STATUS_LABEL, EXPLOITABILITY_LABEL } from '@/types/vuln'
@@ -14,11 +13,11 @@ const severityOptions = (['critical', 'high', 'medium', 'low', 'info'] as Severi
 }))
 
 const statusOptions = (
-  ['pending_audit', 'confirmed', 'fixing', 'pending_retest', 'false_positive', 'closed'] as VulnStatus[]
+  ['pending_scan', 'pending_audit', 'confirmed', 'false_positive', 'pending_fix', 'pending_retest', 'fixing', 'closed'] as VulnStatus[]
 ).map((s) => ({ label: STATUS_LABEL[s], value: s }))
 
 const exploitOptions = (
-  ['EXPLOITABLE', 'POTENTIALLY_EXPLOITABLE', 'NOT_EXPLOITABLE'] as Exploitability[]
+  ['exploitable', 'potentially_exploitable', 'not_exploitable'] as Exploitability[]
 ).map((e) => ({ label: EXPLOITABILITY_LABEL[e], value: e }))
 
 const projectOptions = computed(() => [
@@ -35,8 +34,7 @@ const activeCount = computed<number>(() => {
   return n
 })
 
-function onKeywordChange(e: Event): void {
-  const value = (e.target as HTMLInputElement).value
+function onKeywordChange(value: string): void {
   vulnStore.setFilters({ keyword: value })
 }
 
@@ -48,57 +46,64 @@ function clearAll(): void {
 <template>
   <div class="cs-vuln-filters">
     <div class="cs-vuln-filters__row">
-      <Space :size="8" wrap>
-        <FilterOutlined class="cs-vuln-filters__icon" />
-        <Select
-          :value="vulnStore.filters.projectId ?? ''"
+      <el-space :size="8" wrap>
+        <el-icon class="cs-vuln-filters__icon"><Filter /></el-icon>
+        <el-select
+          :model-value="vulnStore.filters.projectId ?? ''"
           :options="projectOptions"
           style="width: 180px"
           placeholder="Project"
-          @change="(v: unknown) => vulnStore.setFilters({ projectId: v === '' || v === undefined ? null : String(v) })"
+          @change="(v: string | number) => vulnStore.setFilters({ projectId: v === '' || v === undefined ? null : String(v) })"
         />
-        <Select
-          mode="multiple"
-          :value="vulnStore.filters.severity"
+        <el-select
+          multiple
+          :model-value="vulnStore.filters.severity"
           :options="severityOptions"
           style="width: 220px"
           placeholder="Severity"
-          :max-tag-count="2"
-          allow-clear
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
           @change="(v: unknown) => vulnStore.setFilters({ severity: (Array.isArray(v) ? v : []) as Severity[] })"
         />
-        <Select
-          mode="multiple"
-          :value="vulnStore.filters.status"
+        <el-select
+          multiple
+          :model-value="vulnStore.filters.status"
           :options="statusOptions"
           style="width: 260px"
           placeholder="Status"
-          :max-tag-count="2"
-          allow-clear
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
           @change="(v: unknown) => vulnStore.setFilters({ status: (Array.isArray(v) ? v : []) as VulnStatus[] })"
         />
-        <Select
-          mode="multiple"
-          :value="vulnStore.filters.exploitability"
+        <el-select
+          multiple
+          :model-value="vulnStore.filters.exploitability"
           :options="exploitOptions"
           style="width: 220px"
           placeholder="可利用性"
-          :max-tag-count="2"
-          allow-clear
+          collapse-tags
+          collapse-tags-tooltip
+          clearable
           @change="(v: unknown) => vulnStore.setFilters({ exploitability: (Array.isArray(v) ? v : []) as Exploitability[] })"
         />
-        <Input.Search
-          :value="vulnStore.filters.keyword"
+        <el-input
+          :model-value="vulnStore.filters.keyword"
           placeholder="Title, file, CWE…"
           style="width: 260px"
-          allow-clear
-          @change="onKeywordChange"
-        />
-        <Button @click="clearAll" :disabled="activeCount === 0">
-          <ReloadOutlined /> Reset
+          clearable
+          @input="onKeywordChange"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+        <el-button @click="clearAll" :disabled="activeCount === 0">
+          <el-icon><Refresh /></el-icon> Reset
           <span v-if="activeCount > 0" class="cs-vuln-filters__count">{{ activeCount }}</span>
-        </Button>
-      </Space>
+        </el-button>
+      </el-space>
     </div>
   </div>
 </template>

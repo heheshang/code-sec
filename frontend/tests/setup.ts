@@ -15,8 +15,12 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Avoid loading the actual MSW worker in unit tests; tests that need
-// network behavior should spin up a node server explicitly.
+// CodeMirror 6 calls Range.getClientRects() internally, which jsdom doesn't
+// implement. Polyfill to suppress unhandled errors in tests that mount CM.
+if (typeof Range !== 'undefined' && !Range.prototype.getClientRects) {
+  Range.prototype.getClientRects = (() => []) as unknown as () => DOMRectList
+}
+
 beforeAll(() => {
   // no-op
 })

@@ -5,8 +5,7 @@
  * Pairs with CodeViewer for a full context block.
  */
 import { computed } from 'vue'
-import { Tag, Space, Typography } from 'ant-design-vue'
-import { CodeOutlined } from '@ant-design/icons-vue'
+import { Document } from '@element-plus/icons-vue'
 import type { Vuln } from '@/types/vuln'
 import SeverityTag from '@/components/vuln/SeverityTag.vue'
 
@@ -22,17 +21,17 @@ const cve = computed<string | null>(() => props.vuln.cve)
 <template>
   <div class="cs-vuln-line-marker">
     <div class="cs-vuln-line-marker__head">
-      <CodeOutlined class="cs-vuln-line-marker__icon" />
-      <Typography.Text class="cs-vuln-line-marker__path">
+      <el-icon class="cs-vuln-line-marker__icon"><Document /></el-icon>
+      <span class="cs-vuln-line-marker__path">
         {{ vuln.filePath }}<span class="cs-vuln-line-marker__lines">:{{ vuln.lineStart }}–{{ vuln.lineEnd }}</span>
-      </Typography.Text>
+      </span>
     </div>
-    <Space :size="6" wrap>
+    <el-space :size="6" wrap>
       <SeverityTag :severity="vuln.severity" size="sm" />
-      <Tag v-if="cve !== null" color="red" bordered>{{ cve }}</Tag>
-      <Tag bordered>{{ vuln.cwe }}</Tag>
-      <Tag bordered color="purple">{{ vuln.engine }}</Tag>
-    </Space>
+      <el-tag v-if="cve !== null" type="danger">{{ cve }}</el-tag>
+      <el-tag>{{ vuln.cwe }}</el-tag>
+      <el-tag type="info">{{ vuln.engine }}</el-tag>
+    </el-space>
   </div>
 </template>
 

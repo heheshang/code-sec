@@ -117,7 +117,7 @@
 }
 
 /* Dark mode tokens — only used by SettingsView toggle, app keeps light default */
-[data-cs-theme='dark'] {
+:root.dark {
   --cs-text-primary: #F5F5F5;
   --cs-text-secondary: #BFBFBF;
   --cs-text-tertiary: #8C8C8C;

@@ -1,15 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import Antd from 'ant-design-vue'
+import ElementPlus from 'element-plus'
 import AuditActionPanel from '@/components/audit/AuditActionPanel.vue'
 import type { AuditAction } from '@/types/audit'
-
-// We only need the inner form behavior; stub Form/Input to plain elements.
-vi.mock('ant-design-vue', async () => {
-  const actual = await vi.importActual<typeof import('ant-design-vue')>('ant-design-vue')
-  return actual
-})
 
 describe('AuditActionPanel', () => {
   beforeEach(() => {
@@ -19,7 +13,7 @@ describe('AuditActionPanel', () => {
   function mountPanel(modelValue: AuditAction) {
     return mount(AuditActionPanel, {
       props: { modelValue },
-      global: { plugins: [Antd] },
+      global: { plugins: [ElementPlus] },
     })
   }
 

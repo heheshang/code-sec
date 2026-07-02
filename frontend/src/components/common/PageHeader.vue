@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Space, Typography } from 'ant-design-vue'
 import type { VNode } from 'vue'
 
 interface Crumb {
@@ -27,19 +26,19 @@ defineSlots<{
 <template>
   <div class="cs-page-header">
     <div class="cs-page-header__main">
-      <a-breadcrumb v-if="crumbs.length > 0" class="cs-page-header__crumbs">
-        <a-breadcrumb-item v-for="(c, i) in crumbs" :key="i">
+      <el-breadcrumb v-if="crumbs.length > 0" class="cs-page-header__crumbs">
+        <el-breadcrumb-item v-for="(c, i) in crumbs" :key="i">
           <router-link v-if="c.to" :to="c.to">{{ c.label }}</router-link>
           <span v-else>{{ c.label }}</span>
-        </a-breadcrumb-item>
-      </a-breadcrumb>
-      <Space :size="12" align="center">
-        <Typography.Title :level="3" class="cs-page-header__title">{{ title }}</Typography.Title>
+        </el-breadcrumb-item>
+      </el-breadcrumb>
+      <el-space :size="12" alignment="center">
+        <h3 class="cs-page-header__title">{{ title }}</h3>
         <slot />
-      </Space>
-      <Typography.Text v-if="subtitle" class="cs-page-header__subtitle">
+      </el-space>
+      <span v-if="subtitle" class="cs-page-header__subtitle">
         {{ subtitle }}
-      </Typography.Text>
+      </span>
     </div>
     <div v-if="$slots.extra" class="cs-page-header__extra">
       <slot name="extra" />

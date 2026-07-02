@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Timeline, Tag, Typography, Space } from 'ant-design-vue'
-import { CheckCircleOutlined, CloseCircleOutlined, ReloadOutlined, UserOutlined } from '@ant-design/icons-vue'
+import { CircleCheck, CircleClose, Refresh, User } from '@element-plus/icons-vue'
 import type { AuditRecord, AuditAction } from '@/types/audit'
 import dayjs from 'dayjs'
 
@@ -15,40 +14,40 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 interface TimelineItem {
-  color: string
-  dot: typeof CheckCircleOutlined
+  type: 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  dot: object
   action: AuditAction
   record: AuditRecord
   date: string
 }
 
 const items = computed<TimelineItem[]>(() =>
-  props.records.map((r) => {
+  (props.records ?? []).map((r) => {
     switch (r.action) {
       case 'confirm':
         return {
-          color: 'var(--cs-severity-high)',
-          dot: CheckCircleOutlined,
+          type: 'danger',
+          dot: CircleCheck,
           action: r.action,
           record: r,
           date: dayjs(r.auditedAt).format('MMM D, HH:mm'),
-        }
+        } as TimelineItem
       case 'false_positive':
         return {
-          color: 'var(--cs-text-tertiary)',
-          dot: CloseCircleOutlined,
+          type: 'info',
+          dot: CircleClose,
           action: r.action,
           record: r,
           date: dayjs(r.auditedAt).format('MMM D, HH:mm'),
-        }
+        } as TimelineItem
       case 'need_retest':
         return {
-          color: 'var(--cs-severity-medium)',
-          dot: ReloadOutlined,
+          type: 'warning',
+          dot: Refresh,
           action: r.action,
           record: r,
           date: dayjs(r.auditedAt).format('MMM D, HH:mm'),
-        }
+        } as TimelineItem
     }
   }),
 )
@@ -64,37 +63,36 @@ const actionLabel: Record<AuditAction, string> = {
   <div class="cs-audit-history">
     <div v-if="loading" class="cs-audit-history__loading">Loading history…</div>
     <div v-else-if="records.length === 0" class="cs-audit-history__empty">
-      <Typography.Text type="secondary">No audit history yet for this finding.</Typography.Text>
+      <span class="cs-audit-history__empty-text">No audit history yet for this finding.</span>
     </div>
-    <Timeline v-else mode="left" class="cs-audit-history__timeline">
-      <Timeline.Item
+    <el-timeline v-else class="cs-audit-history__timeline">
+      <el-timeline-item
         v-for="(item, idx) in items"
         :key="idx"
-        :color="item.color"
+        :type="item.type"
+        :timestamp="item.date"
+        placement="top"
       >
         <template #dot>
-          <component :is="item.dot" :style="{ color: item.color, fontSize: '16px' }" />
+          <el-icon :size="16"><component :is="item.dot" /></el-icon>
         </template>
         <div class="cs-audit-history__card">
           <div class="cs-audit-history__head">
-            <Typography.Text class="cs-audit-history__action">{{ actionLabel[item.action] }}</Typography.Text>
-            <Space :size="6">
-              <Tag bordered><UserOutlined /> {{ item.record.auditorName }}</Tag>
-              <Tag bordered color="default">{{ item.date }}</Tag>
-            </Space>
+            <span class="cs-audit-history__action">{{ actionLabel[item.action] }}</span>
+            <el-space :size="6">
+              <el-tag effect="plain"><el-icon :size="12"><User /></el-icon> {{ item.record.auditorName }}</el-tag>
+              <el-tag effect="plain">{{ item.date }}</el-tag>
+            </el-space>
           </div>
-          <Typography.Paragraph
-            v-if="item.record.exploitCondition"
-            class="cs-audit-history__body"
-          >
+          <p v-if="item.record.exploitCondition" class="cs-audit-history__body">
             {{ item.record.exploitCondition }}
-          </Typography.Paragraph>
+          </p>
           <div v-if="item.record.pocContent" class="cs-audit-history__poc">
             <pre>{{ item.record.pocContent }}</pre>
           </div>
         </div>
-      </Timeline.Item>
-    </Timeline>
+      </el-timeline-item>
+    </el-timeline>
   </div>
 </template>
 
@@ -106,6 +104,8 @@ const actionLabel: Record<AuditAction, string> = {
 .cs-audit-history__empty {
   text-align: center;
   padding: var(--cs-space-6) 0;
+}
+.cs-audit-history__empty-text {
   color: var(--cs-text-tertiary);
 }
 .cs-audit-history__timeline {
@@ -130,18 +130,18 @@ const actionLabel: Record<AuditAction, string> = {
   font-size: var(--cs-font-size-md);
 }
 .cs-audit-history__body {
-  margin: var(--cs-space-1) 0 !important;
+  margin: var(--cs-space-1) 0;
   color: var(--cs-text-secondary);
   font-size: var(--cs-font-size-sm);
 }
 .cs-audit-history__poc {
   margin-top: var(--cs-space-2);
-  background: #0F1117;
+  background: var(--cs-bg-code, #0F1117);
   border-radius: var(--cs-radius-sm);
   padding: var(--cs-space-2) var(--cs-space-3);
   font-family: var(--cs-font-mono);
   font-size: 12px;
-  color: #E5E7EB;
+  color: var(--cs-text-code, #E5E7EB);
   overflow-x: auto;
   white-space: pre-wrap;
 }

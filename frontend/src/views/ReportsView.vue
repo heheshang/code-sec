@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Row, Col, Card, Tag, Typography, Space, Button, message } from 'ant-design-vue'
-import { FileTextOutlined, ClockCircleOutlined, ThunderboltOutlined, FilePdfOutlined } from '@ant-design/icons-vue'
+import { Document, Clock, Promotion } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { http } from '@/api/client'
+import { errMsg } from '@/utils/error'
 
 interface ReportTemplate {
   id: string
@@ -23,84 +24,90 @@ onMounted(async () => {
     const resp = await http.get<{ items: ReportTemplate[] }>('/reports')
     templates.value = resp.data.items
   } catch (e) {
-    message.error(e instanceof Error ? e.message : 'Failed to load reports')
+    ElMessage.error(e instanceof Error ? e.message : 'Failed to load reports')
   } finally {
     loading.value = false
   }
 })
 
-function handleGenerate(t: ReportTemplate): void {
+async function handleGenerate(t: ReportTemplate): Promise<void> {
   generatingId.value = t.id
-  // Simulate async generation
-  setTimeout(() => {
-    generatingId.value = null
+  try {
+    await http.post(`/reports/${t.id}/generate`)
     t.lastGeneratedAt = new Date().toISOString()
-    message.success(`${t.name} is being generated. Check your email in ~2 minutes.`)
-  }, 900)
+    ElMessage.success(`${t.name} is being generated. Check your email in ~2 minutes.`)
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
+  } finally {
+    generatingId.value = null
+  }
 }
 
-const frequencyColor: Record<ReportTemplate['frequency'], string> = {
-  monthly: 'purple',
-  weekly: 'blue',
-  'on-demand': 'default',
+type FrequencyType = '' | 'primary' | 'success' | 'danger' | 'warning' | 'info'
+const frequencyType: Record<ReportTemplate['frequency'], FrequencyType> = {
+  monthly: 'info',
+  weekly: 'primary',
+  'on-demand': '',
 }
 </script>
 
 <template>
-  <div class="cs-reports">
+  <div class="cs-page">
     <PageHeader
       title="Reports"
       subtitle="Generate, schedule, and archive security reports for compliance and operations"
-    >
-      <Tag color="purple" bordered>4 templates</Tag>
-    </PageHeader>
+    />
 
-    <Row :gutter="[16, 16]">
-      <Col v-for="t in templates" :key="t.id" :xs="24" :sm="12" :lg="8">
-        <Card :bordered="false" class="cs-reports__card" :loading="loading">
-          <template #title>
-            <Space :size="8">
-              <FileTextOutlined class="cs-reports__icon" />
-              <span>{{ t.name }}</span>
-            </Space>
-          </template>
-          <template #extra>
-            <Tag :color="frequencyColor[t.frequency]" bordered>{{ t.frequency }}</Tag>
-          </template>
-          <Typography.Paragraph class="cs-reports__desc">
-            {{ t.description }}
-          </Typography.Paragraph>
-          <div class="cs-reports__meta">
-            <ClockCircleOutlined class="cs-reports__metaIcon" />
-            <Typography.Text type="secondary" class="cs-reports__metaText">
-              <template v-if="t.lastGeneratedAt !== null">
-                Last generated {{ dayjs(t.lastGeneratedAt).format('MMM D, HH:mm') }}
-              </template>
-              <template v-else>
-                Not generated yet
-              </template>
-            </Typography.Text>
-          </div>
-          <Space :size="6" class="cs-reports__formats">
-            <Tag bordered color="default">PDF</Tag>
-            <Tag bordered color="default">HTML</Tag>
-            <Tag bordered color="default">CSV</Tag>
-          </Space>
-          <div class="cs-reports__actions">
-            <Button
-              type="primary"
-              :loading="generatingId === t.id"
-              @click="handleGenerate(t)"
-            >
-              <ThunderboltOutlined /> Generate now
-            </Button>
-            <Button>
-              <FilePdfOutlined /> Sample
-            </Button>
-          </div>
-        </Card>
-      </Col>
-    </Row>
+    <div v-loading="loading">
+      <template v-if="!loading && templates.length === 0">
+        <el-card shadow="never" class="cs-reports__empty">
+          <el-empty description="No report templates available. Reports will appear here once configured." />
+        </el-card>
+      </template>
+
+      <el-row v-else :gutter="16">
+        <el-col v-for="t in templates" :key="t.id" :xs="24" :sm="12" :lg="8" style="margin-bottom: 16px">
+          <el-card shadow="never" class="cs-reports__card">
+            <template #header>
+              <div style="display: flex; align-items: center; justify-content: space-between">
+                <el-space :size="8">
+                  <el-icon class="cs-reports__icon"><Document /></el-icon>
+                  <span>{{ t.name }}</span>
+                </el-space>
+                <el-tag :type="frequencyType[t.frequency]" effect="plain" size="small">{{ t.frequency }}</el-tag>
+              </div>
+            </template>
+            <p class="cs-reports__desc">
+              {{ t.description }}
+            </p>
+            <div class="cs-reports__meta">
+              <el-icon :size="14"><Clock /></el-icon>
+              <span class="cs-reports__metaText">
+                <template v-if="t.lastGeneratedAt !== null">
+                  Last generated {{ dayjs(t.lastGeneratedAt).format('MMM D, HH:mm') }}
+                </template>
+                <template v-else>
+                  Not generated yet
+                </template>
+              </span>
+            </div>
+            <el-space :size="6" class="cs-reports__formats">
+              <el-tag effect="plain" size="small">PDF</el-tag>
+              <el-tag effect="plain" size="small">HTML</el-tag>
+              <el-tag effect="plain" size="small">CSV</el-tag>
+            </el-space>
+            <div class="cs-reports__actions">
+              <el-button type="primary" :loading="generatingId === t.id" @click="handleGenerate(t)">
+                <el-icon><Promotion /></el-icon> Generate now
+              </el-button>
+              <el-button>
+                <el-icon><Document /></el-icon> Sample
+              </el-button>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
+    </div>
   </div>
 </template>
 
@@ -123,6 +130,7 @@ const frequencyColor: Record<ReportTemplate['frequency'], string> = {
   color: var(--cs-text-secondary);
   line-height: var(--cs-line-height-relaxed);
   min-height: 60px;
+  margin: 0 0 var(--cs-space-3);
 }
 .cs-reports__meta {
   display: flex;
@@ -131,9 +139,6 @@ const frequencyColor: Record<ReportTemplate['frequency'], string> = {
   font-size: var(--cs-font-size-xs);
   color: var(--cs-text-tertiary);
   margin-bottom: var(--cs-space-3);
-}
-.cs-reports__metaIcon {
-  color: var(--cs-text-tertiary);
 }
 .cs-reports__formats {
   margin-bottom: var(--cs-space-3);

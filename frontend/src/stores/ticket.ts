@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { http } from '@/api/client'
+import { ElMessage } from 'element-plus'
+import { errMsg } from '@/utils/error'
 import type { TicketResponse, TicketHistoryItem, TicketTransitionRequest, TicketStatus } from '@/types/ticket'
 
 export const useTicketStore = defineStore('ticket', () => {
@@ -23,8 +25,8 @@ export const useTicketStore = defineStore('ticket', () => {
       total.value = resp.data.total
       page.value = resp.data.page
       pageSize.value = resp.data.size ?? resp.data.pageSize ?? 20
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load tickets'
+    } catch (e: unknown) {
+      error.value = errMsg(e)
     } finally {
       loading.value = false
     }

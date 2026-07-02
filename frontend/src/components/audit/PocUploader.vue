@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Upload, Input, Typography, Space, Button } from 'ant-design-vue'
-import { InboxOutlined, LinkOutlined, DeleteOutlined } from '@ant-design/icons-vue'
-import type { UploadProps } from 'ant-design-vue'
+import { Upload, Link, Delete } from '@element-plus/icons-vue'
 import type { PocAttachment } from '@/types/audit'
 
 interface Props {
@@ -31,18 +29,19 @@ function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
-const handleBeforeUpload: NonNullable<UploadProps['beforeUpload']> = async (file) => {
-  if (file.size > 4 * 1024 * 1024) {
-    return Upload.LIST_IGNORE
+function handleBeforeUpload(rawFile: File): boolean {
+  if (rawFile.size > 4 * 1024 * 1024) {
+    return false
   }
-  const preview = await fileToDataUrl(file)
-  const att: PocAttachment = {
-    id: makeId(),
-    name: file.name,
-    type: 'image',
-    preview,
-  }
-  emit('update:modelValue', [...props.modelValue, att])
+  fileToDataUrl(rawFile).then((preview) => {
+    const att: PocAttachment = {
+      id: makeId(),
+      name: rawFile.name,
+      type: 'image',
+      preview,
+    }
+    emit('update:modelValue', [...props.modelValue, att])
+  })
   return false
 }
 
@@ -62,49 +61,51 @@ function addUrlAttachment(): void {
 function removeAttachment(id: string): void {
   emit('update:modelValue', props.modelValue.filter((a) => a.id !== id))
 }
-
-function updateContent(e: Event): void {
-  emit('update:content', (e.target as HTMLTextAreaElement).value)
-}
 </script>
 
 <template>
   <div class="cs-poc-uploader">
-    <Typography.Text class="cs-poc-uploader__label">Proof of concept</Typography.Text>
-    <Input.TextArea
-      :value="content"
+    <span class="cs-poc-uploader__label">Proof of concept</span>
+    <el-input
+      :model-value="content"
+      type="textarea"
       :rows="5"
       placeholder="Describe the steps to reproduce, paste a curl request, or list the payload that triggers the bug."
       class="cs-poc-uploader__textarea"
-      @change="updateContent"
+      @input="(v: string) => emit('update:content', v)"
     />
 
     <div class="cs-poc-uploader__row">
-      <Upload.Dragger
-        :before-upload="handleBeforeUpload"
-        :show-upload-list="false"
+      <el-upload
+        drag
         :multiple="true"
         accept="image/*"
+        :auto-upload="false"
+        :before-upload="handleBeforeUpload"
+        :show-file-list="false"
         class="cs-poc-uploader__drop"
       >
-        <p class="cs-poc-uploader__dropInner">
-          <InboxOutlined class="cs-poc-uploader__dropIcon" />
-        </p>
+        <div class="cs-poc-uploader__dropInner">
+          <el-icon :size="22" color="var(--cs-color-primary)"><Upload /></el-icon>
+        </div>
         <p class="cs-poc-uploader__dropText">Drop a screenshot or click to upload</p>
         <p class="cs-poc-uploader__dropHint">PNG, JPG up to 4 MB</p>
-      </Upload.Dragger>
+      </el-upload>
 
       <div class="cs-poc-uploader__urlBlock">
-        <Typography.Text class="cs-poc-uploader__label">Or attach a URL</Typography.Text>
-        <Space.Compact style="display: flex">
-          <Input
-            v-model:value="urlInput"
-            :prefix="LinkOutlined"
+        <span class="cs-poc-uploader__label">Or attach a URL</span>
+        <div class="cs-poc-uploader__urlRow">
+          <el-input
+            v-model="urlInput"
             placeholder="https://paste.example/poc"
-            @press-enter="addUrlAttachment"
-          />
-          <Button @click="addUrlAttachment" :disabled="urlInput.trim().length === 0">Attach</Button>
-        </Space.Compact>
+            @keyup.enter="addUrlAttachment"
+          >
+            <template #prefix>
+              <el-icon><Link /></el-icon>
+            </template>
+          </el-input>
+          <el-button type="primary" :disabled="urlInput.trim().length === 0" @click="addUrlAttachment">Attach</el-button>
+        </div>
       </div>
     </div>
 
@@ -112,12 +113,12 @@ function updateContent(e: Event): void {
       <div v-for="att in modelValue" :key="att.id" class="cs-poc-uploader__item">
         <img v-if="att.type === 'image'" :src="att.preview" :alt="att.name" class="cs-poc-uploader__thumb" />
         <div v-else class="cs-poc-uploader__urlChip">
-          <LinkOutlined />
+          <el-icon><Link /></el-icon>
           <span class="cs-poc-uploader__urlText">{{ att.name }}</span>
         </div>
-        <Button type="text" size="small" @click="removeAttachment(att.id)">
-          <DeleteOutlined />
-        </Button>
+        <el-button text size="small" @click="removeAttachment(att.id)">
+          <el-icon><Delete /></el-icon>
+        </el-button>
       </div>
     </div>
   </div>
@@ -145,19 +146,15 @@ function updateContent(e: Event): void {
   gap: var(--cs-space-3);
 }
 .cs-poc-uploader__drop {
-  background: var(--cs-bg-sunken);
-  border-color: var(--cs-border) !important;
-  padding: var(--cs-space-3) !important;
+  width: 100%;
 }
-.cs-poc-uploader__drop :deep(.ant-upload-drag-icon) {
-  display: none;
+.cs-poc-uploader__drop :deep(.el-upload-dragger) {
+  background: var(--cs-bg-sunken);
+  border-color: var(--cs-border);
+  padding: var(--cs-space-3);
 }
 .cs-poc-uploader__dropInner {
   margin: 0 0 4px;
-  font-size: 22px;
-}
-.cs-poc-uploader__dropIcon {
-  color: var(--cs-color-primary);
 }
 .cs-poc-uploader__dropText {
   font-size: var(--cs-font-size-sm);
@@ -174,6 +171,10 @@ function updateContent(e: Event): void {
   flex-direction: column;
   gap: var(--cs-space-1);
   justify-content: center;
+}
+.cs-poc-uploader__urlRow {
+  display: flex;
+  gap: var(--cs-space-1);
 }
 .cs-poc-uploader__list {
   display: flex;

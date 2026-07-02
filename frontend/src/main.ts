@@ -1,19 +1,20 @@
- import { createApp } from 'vue'
- import { createPinia } from 'pinia'
- import Antd from 'ant-design-vue'
- import 'ant-design-vue/dist/reset.css'
- 
- import App from './App.vue'
- import { router } from './router'
- 
- import './styles/global.css'
- 
- function bootstrap(): void {
-   const app = createApp(App)
-   app.use(createPinia())
-   app.use(router)
-   app.use(Antd)
-   app.mount('#app')
- }
- 
- void bootstrap()
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
+
+import App from './App.vue'
+import { router } from './router'
+
+import './styles/global.css'
+
+function bootstrap(): void {
+  const app = createApp(App)
+  app.use(createPinia())
+  app.use(router)
+  app.use(ElementPlus)
+  app.mount('#app')
+}
+
+void bootstrap()

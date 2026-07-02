@@ -34,9 +34,83 @@ a:hover {
   color: var(--cs-color-primary-hover);
 }
 
-/* Compact, dense feel — this is a tool, not a marketing site */
-.cs-dense .ant-table-tbody > tr > td {
-  padding-block: 10px;
+/* =========================================
+   Element Plus 主题覆盖
+   ========================================= */
+:root {
+  --el-color-primary: #5B47E0;
+  --el-color-primary-light-3: #7D6BE8;
+  --el-color-primary-light-5: #A395EF;
+  --el-color-primary-light-7: #C8BFF5;
+  --el-color-primary-light-8: #DBD6F9;
+  --el-color-primary-light-9: #EDEAFB;
+  --el-color-primary-dark-2: #4939B3;
+  --el-color-success: #00B96B;
+  --el-color-warning: #FAAD14;
+  --el-color-danger: #CF1322;
+  --el-color-error: #CF1322;
+  --el-color-info: #1890FF;
+  --el-text-color-primary: #1F1F1F;
+  --el-text-color-regular: #595959;
+  --el-text-color-secondary: #8C8C8C;
+  --el-text-color-placeholder: #BFBFBF;
+  --el-border-color: #E5E7EB;
+  --el-border-color-light: #F0F0F0;
+  --el-border-color-lighter: #F5F5F5;
+  --el-border-color-extra-light: #FAFAFA;
+  --el-bg-color: #F5F6FA;
+  --el-bg-color-overlay: #FFFFFF;
+  --el-bg-color-page: #F5F6FA;
+  --el-fill-color: #F0F0F0;
+  --el-fill-color-light: #F5F5F5;
+  --el-fill-color-lighter: #FAFAFA;
+  --el-font-size-base: 14px;
+  --el-border-radius-base: 6px;
+  --el-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  --el-header-height: var(--cs-header-height);
+}
+
+/* 暗色模式 */
+.dark {
+  --el-bg-color: #0F1117;
+  --el-bg-color-overlay: #181A23;
+  --el-bg-color-page: #0F1117;
+  --el-text-color-primary: #E5E7EB;
+  --el-text-color-regular: #B0B3C0;
+  --el-text-color-secondary: #7A7A8A;
+  --el-border-color: #2A2D3A;
+  --el-border-color-light: #21242F;
+  --el-fill-color: #21242F;
+  --el-fill-color-light: #2A2D3A;
+}
+
+/* el-header 默认 padding fix */
+.el-header {
+  padding: 0 !important;
+}
+
+/* el-aside 边框 */
+.el-aside {
+  border-right: 1px solid var(--el-border-color);
+  background: var(--el-bg-color-overlay);
+  transition: width var(--cs-duration-base) var(--cs-ease-out);
+}
+
+/* el-main 内容区 */
+.el-main {
+  padding: var(--cs-space-6);
+  background: var(--el-bg-color);
+  overflow-y: auto;
+}
+
+/* el-footer */
+.el-footer {
+  padding: 0 var(--cs-space-6) var(--cs-space-4) !important;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  font-size: var(--cs-font-size-sm);
+  text-align: center;
+  height: auto !important;
 }
 
 /* Custom scrollbar — modern, not Win98 */
@@ -54,32 +128,6 @@ a:hover {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(15, 17, 35, 0.28);
-}
-
-/* AntD overrides — fix the worst generic-template defaults */
-.ant-layout {
-  background: var(--cs-bg-base);
-}
-.ant-layout-sider {
-  background: var(--cs-bg-elevated) !important;
-  border-right: 1px solid var(--cs-border);
-}
-.ant-layout-header {
-  background: var(--cs-bg-elevated);
-  border-bottom: 1px solid var(--cs-border);
-  padding-inline: var(--cs-space-6) !important;
-  height: var(--cs-header-height);
-  line-height: var(--cs-header-height);
-}
-.ant-layout-content {
-  padding: var(--cs-space-6);
-}
-.ant-layout-footer {
-  background: transparent;
-  padding: 0 var(--cs-space-6) var(--cs-space-4) !important;
-  color: var(--cs-text-tertiary);
-  font-size: var(--cs-font-size-sm);
-  text-align: center;
 }
 
 /* Severity tags — pill style, not default AntD rectangles */
@@ -178,26 +226,4 @@ a:hover {
 .cs-page-fade-leave-to {
   opacity: 0;
   transform: translateY(-4px);
-}
-
-/* Audit decision radio cards */
-.cs-decision-card {
-  border: 1px solid var(--cs-border);
-  border-radius: var(--cs-radius-md);
-  padding: var(--cs-space-3) var(--cs-space-4);
-  cursor: pointer;
-  transition: all var(--cs-duration-fast) var(--cs-ease-out);
-  background: var(--cs-bg-elevated);
-}
-.cs-decision-card:hover {
-  border-color: var(--cs-color-primary);
-  background: var(--cs-color-primary-bg);
-}
-.cs-decision-card.is-selected {
-  border-color: var(--cs-color-primary);
-  background: var(--cs-color-primary-bg);
-  box-shadow: 0 0 0 2px rgba(91, 71, 224, 0.12);
-}
-.cs-decision-card .ant-radio-wrapper {
-  width: 100%;
 }

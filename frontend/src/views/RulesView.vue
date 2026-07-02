@@ -1,14 +1,10 @@
 <script setup lang="ts">
-import { ref, h, onMounted } from 'vue'
-import {
-  Card, Table, Tag, Button, Switch, Modal, Form, Input, Select,
-  Space, Typography, message, Alert, Row, Col
-} from 'ant-design-vue'
-import {
-  SyncOutlined, PlusOutlined, DeleteOutlined, SearchOutlined
-} from '@ant-design/icons-vue'
+import { ref, onMounted } from 'vue'
+import { Refresh, Plus, Delete, Search } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { http } from '@/api/client'
+import { errMsg } from '@/utils/error'
 
 interface RuleItem {
   id: number
@@ -54,8 +50,9 @@ const exemptions = ref<ExemptionItem[]>([])
 const showExemptionList = ref(false)
 const exemptionListLoading = ref(false)
 
-const severityColors: Record<string, string> = {
-  critical: 'red', high: 'orange', medium: 'gold', low: 'blue', info: 'default',
+type SeverityType = '' | 'primary' | 'success' | 'danger' | 'warning' | 'info'
+const severityType: Record<string, SeverityType> = {
+  critical: 'danger', high: 'warning', medium: 'warning', low: 'primary', info: '',
 }
 
 onMounted(() => loadRules())
@@ -69,8 +66,8 @@ async function loadRules() {
     const resp = await http.get<{ items: RuleItem[]; total: number }>('/rules', { params })
     rules.value = resp.data.items
     total.value = resp.data.total
-  } catch (e: any) {
-    message.error(e.message || 'Failed to load rules')
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   } finally {
     loading.value = false
   }
@@ -80,10 +77,10 @@ async function handleSync() {
   syncing.value = true
   try {
     const resp = await http.post<{ synced: number }>('/rules/sync')
-    message.success(`Synced ${resp.data.synced} rules from engine`)
+    ElMessage.success(`Synced ${resp.data.synced} rules from engine`)
     await loadRules()
-  } catch (e: any) {
-    message.error(e.message || 'Sync failed')
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   } finally {
     syncing.value = false
   }
@@ -93,9 +90,9 @@ async function handleToggle(rule: RuleItem) {
   try {
     await http.put(`/rules/${rule.id}`, { enabled: !rule.enabled })
     rule.enabled = !rule.enabled
-    message.success(`${rule.name}: ${rule.enabled ? 'Enabled' : 'Disabled'}`)
-  } catch (e: any) {
-    message.error(e.message || 'Toggle failed')
+    ElMessage.success(`${rule.name}: ${rule.enabled ? 'Enabled' : 'Disabled'}`)
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   }
 }
 
@@ -107,119 +104,165 @@ function openExemptionDialog(ruleId: number) {
 }
 
 async function submitExemption() {
-  if (!exemptionProjectId.value) { message.warning('Please enter a project ID'); return }
+  if (!exemptionProjectId.value) { ElMessage.warning('Please enter a project ID'); return }
   exemptionLoading.value = true
   try {
     await http.post(`/projects/${exemptionProjectId.value}/exemptions`, {
       ruleId: exemptionRuleId.value, reason: exemptionReason.value,
     })
-    message.success('Exemption added')
+    ElMessage.success('Exemption added')
     showExemptionDialog.value = false
-  } catch (e: any) {
-    message.error(e.message || 'Failed to add exemption')
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   } finally { exemptionLoading.value = false }
 }
 
 async function loadExemptions() {
-  if (!exemptionProjectId.value) { message.warning('Please enter a project ID'); return }
+  if (!exemptionProjectId.value) { ElMessage.warning('Please enter a project ID'); return }
   exemptionListLoading.value = true
   showExemptionList.value = true
   try {
     const resp = await http.get<ExemptionItem[]>(`/projects/${exemptionProjectId.value}/exemptions`)
     exemptions.value = resp.data
-  } catch (e: any) {
-    message.error(e.message || 'Failed to load exemptions')
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   } finally { exemptionListLoading.value = false }
 }
 
 async function removeExemption(ruleId: number) {
   try {
     await http.delete(`/projects/${exemptionProjectId.value}/exemptions/${ruleId}`)
-    message.success('Exemption removed')
+    ElMessage.success('Exemption removed')
     exemptions.value = exemptions.value.filter(e => e.ruleId !== ruleId)
-  } catch (e: any) {
-    message.error(e.message || 'Failed to remove exemption')
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   }
 }
-
-function handleTableChange(pagination: any) {
-  page.value = pagination.current
-  pageSize.value = pagination.pageSize
-  loadRules()
-}
-
-const sevTag = (s: string) => h(Tag, { color: severityColors[s] || 'default' }, () => s)
-
-const columns = [
-  { title: 'Rule ID', dataIndex: 'ruleId', key: 'ruleId', width: 200 },
-  { title: 'Name', dataIndex: 'name', key: 'name', width: 250 },
-  { title: 'Severity', dataIndex: 'severity', key: 'severity', width: 100, customRender: ({ value }: { value: string }) => sevTag(value) },
-  { title: 'CWE', dataIndex: 'cwe', key: 'cwe', width: 100 },
-  { title: 'Language', dataIndex: 'language', key: 'language', width: 100 },
-  { title: 'Engine', dataIndex: 'engine', key: 'engine', width: 100 },
-  { title: 'Type', dataIndex: 'detectionType', key: 'detectionType', width: 80 },
-  { title: 'Enabled', dataIndex: 'enabled', key: 'enabled', width: 100, customRender: ({ value, record }: { value: boolean; record: RuleItem }) => h(Switch, { checked: value, onChange: () => handleToggle(record) }) },
-  { title: 'Actions', key: 'actions', width: 160, customRender: ({ record }: { record: RuleItem }) => h(Button, { size: 'small', onClick: () => openExemptionDialog(record.id) }, { icon: () => h(PlusOutlined), default: () => 'Exempt' }) },
-]
-
-const exemptionColumns = [
-  { title: 'Rule Name', dataIndex: 'ruleName', key: 'ruleName' },
-  { title: 'Rule ID', dataIndex: 'ruleId', key: 'ruleId' },
-  { title: 'Severity', dataIndex: 'ruleSeverity', key: 'ruleSeverity', customRender: ({ value }: { value: string }) => sevTag(value) },
-  { title: 'Reason', dataIndex: 'reason', key: 'reason' },
-  { title: 'Created By', dataIndex: 'createdBy', key: 'createdBy' },
-  { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt' },
-  { title: 'Actions', key: 'actions', customRender: ({ record }: { record: ExemptionItem }) => h(Button, { danger: true, size: 'small', onClick: () => removeExemption(record.ruleId) }, { icon: () => h(DeleteOutlined), default: () => 'Remove' }) },
-]
 </script>
 
 <template>
-  <div class="cs-rules">
+  <div class="cs-page">
     <PageHeader title="Rule Management" subtitle="Manage detection rules and project-level exemptions" />
-    <Card :bordered="false">
-      <template #title><Space><span>Detection Rules</span><Tag v-if="total > 0">{{ total }} rules</Tag></Space></template>
-      <template #extra>
-        <Space>
-          <Select v-model:value="filterSeverity" placeholder="Severity" allow-clear style="width: 120px" @change="loadRules">
-            <Select.Option value="critical">Critical</Select.Option>
-            <Select.Option value="high">High</Select.Option>
-            <Select.Option value="medium">Medium</Select.Option>
-            <Select.Option value="low">Low</Select.Option>
-          </Select>
-          <Select v-model:value="filterLanguage" placeholder="Language" allow-clear style="width: 120px" @change="loadRules">
-            <Select.Option value="java">Java</Select.Option>
-          </Select>
-          <Button :loading="syncing" @click="handleSync"><template #icon><SyncOutlined /></template>Sync from Engine</Button>
-        </Space>
+    <el-card shadow="never">
+      <template #header>
+        <span style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+          <el-space>
+            <span>Detection Rules</span>
+            <el-tag v-if="total > 0" size="small">{{ total }} rules</el-tag>
+          </el-space>
+          <el-space>
+            <el-select v-model="filterSeverity" placeholder="Severity" clearable style="width: 120px" @change="loadRules">
+              <el-option value="critical" label="Critical" />
+              <el-option value="high" label="High" />
+              <el-option value="medium" label="Medium" />
+              <el-option value="low" label="Low" />
+            </el-select>
+            <el-select v-model="filterLanguage" placeholder="Language" clearable style="width: 120px" @change="loadRules">
+              <el-option value="java" label="Java" />
+            </el-select>
+            <el-button :loading="syncing" @click="handleSync">
+              <el-icon><Refresh /></el-icon> Sync from Engine
+            </el-button>
+          </el-space>
+        </span>
       </template>
-      <Table :dataSource="rules" :columns="columns" :loading="loading"
-        :pagination="{ current: page, pageSize, total, showSizeChanger: true, showTotal: (t: number) => `${t} rules` }"
-        rowKey="id" size="middle" @change="handleTableChange" />
-    </Card>
-    <Card :bordered="false" style="margin-top: 16px">
-      <template #title><Space><span>Project Exemptions</span></Space></template>
-      <Space direction="vertical" style="width: 100%">
-        <Row :gutter="8">
-          <Col :span="6"><Input v-model:value="exemptionProjectId" placeholder="Enter project ID" type="number" /></Col>
-          <Col><Button type="primary" :loading="exemptionListLoading" @click="loadExemptions"><template #icon><SearchOutlined /></template>View Exemptions</Button></Col>
-        </Row>
+      <el-table :data="rules" v-loading="loading" row-key="id">
+        <el-table-column label="Rule ID" prop="ruleId" width="200" />
+        <el-table-column label="Name" prop="name" width="250" />
+        <el-table-column label="Severity" prop="severity" width="100">
+          <template #default="{ row }">
+            <el-tag :type="severityType[row.severity] ?? ''">{{ row.severity }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="CWE" prop="cwe" width="100" />
+        <el-table-column label="Language" prop="language" width="100" />
+        <el-table-column label="Engine" prop="engine" width="100" />
+        <el-table-column label="Type" prop="detectionType" width="80" />
+        <el-table-column label="Enabled" prop="enabled" width="100">
+          <template #default="{ row }">
+            <el-switch :model-value="!!row.enabled" @change="() => handleToggle(row as RuleItem)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="Actions" width="160">
+          <template #default="{ row }">
+            <el-button size="small" @click="openExemptionDialog((row as RuleItem).id)">
+              <el-icon><Plus /></el-icon> Exempt
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div style="display: flex; justify-content: flex-end; margin-top: 12px">
+        <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          @current-change="loadRules"
+          @size-change="loadRules"
+        />
+      </div>
+    </el-card>
+    <el-card shadow="never" style="margin-top: var(--cs-space-4)">
+      <template #header>
+        <el-space><span>Project Exemptions</span></el-space>
+      </template>
+      <div style="display: flex; flex-direction: column; gap: var(--cs-space-3)">
+        <el-row :gutter="8">
+          <el-col :span="6">
+            <el-input v-model="exemptionProjectId" placeholder="Enter project ID" type="number" />
+          </el-col>
+          <el-col>
+            <el-button type="primary" :loading="exemptionListLoading" @click="loadExemptions">
+              <el-icon><Search /></el-icon> View Exemptions
+            </el-button>
+          </el-col>
+        </el-row>
         <div v-if="showExemptionList">
-          <Table v-if="exemptions.length > 0" :dataSource="exemptions" :columns="exemptionColumns" rowKey="id" size="small" :pagination="false" />
-          <Alert v-else type="info" message="No exemptions found for this project" show-icon />
+          <el-table v-if="exemptions.length > 0" :data="exemptions" row-key="id" size="small">
+            <el-table-column label="Rule Name" prop="ruleName" />
+            <el-table-column label="Rule ID" prop="ruleId" />
+            <el-table-column label="Severity" prop="ruleSeverity">
+              <template #default="{ row }">
+                <el-tag :type="severityType[row.ruleSeverity] ?? ''">{{ row.ruleSeverity }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="Reason" prop="reason" />
+            <el-table-column label="Created By" prop="createdBy" />
+            <el-table-column label="Created At" prop="createdAt" />
+            <el-table-column label="Actions">
+              <template #default="{ row }">
+                <el-button type="danger" size="small" @click="removeExemption((row as ExemptionItem).ruleId)">
+                  <el-icon><Delete /></el-icon> Remove
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <el-alert v-else type="info" title="No exemptions found for this project" show-icon :closable="false" />
         </div>
-      </Space>
-    </Card>
-    <Modal v-model:visible="showExemptionDialog" title="Add Project Exemption" :confirm-loading="exemptionLoading" @ok="submitExemption">
-      <Form layout="vertical">
-        <Form.Item label="Rule ID"><Input :value="exemptionRuleId" disabled /></Form.Item>
-        <Form.Item label="Project ID" required><Input v-model:value="exemptionProjectId" placeholder="Enter project ID" type="number" /></Form.Item>
-        <Form.Item label="Reason"><Input.TextArea v-model:value="exemptionReason" placeholder="Why is this rule exempted?" :rows="3" /></Form.Item>
-        <Form.Item label="Expires At"><Input placeholder="Coming soon" disabled /></Form.Item>
-      </Form>
-    </Modal>
+      </div>
+    </el-card>
+    <el-dialog v-model="showExemptionDialog" title="Add Project Exemption" :close-on-click-modal="false">
+      <el-form label-position="top">
+        <el-form-item label="Rule ID">
+          <el-input :model-value="exemptionRuleId" disabled />
+        </el-form-item>
+        <el-form-item label="Project ID" required>
+          <el-input v-model="exemptionProjectId" placeholder="Enter project ID" type="number" />
+        </el-form-item>
+        <el-form-item label="Reason">
+          <el-input v-model="exemptionReason" type="textarea" :rows="3" placeholder="Why is this rule exempted?" />
+        </el-form-item>
+        <el-form-item label="Expires At">
+          <el-input placeholder="Coming soon" disabled />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showExemptionDialog = false">Cancel</el-button>
+        <el-button type="primary" :loading="exemptionLoading" @click="submitExemption">Submit</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.cs-rules { max-width: 1400px; }
 </style>

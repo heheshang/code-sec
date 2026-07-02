@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { http } from '@/api/client'
+import { ElMessage } from 'element-plus'
+import { errMsg } from '@/utils/error'
 import type { RepoListItem, RepoResponse, RepoCreateRequest, RepoUpdateRequest, TestConnectionResponse } from '@/types/repo'
 
 export const useRepoStore = defineStore('repo', () => {
@@ -20,8 +22,8 @@ export const useRepoStore = defineStore('repo', () => {
       total.value = resp.data.total
       page.value = resp.data.page
       pageSize.value = resp.data.size ?? resp.data.pageSize ?? 20
-    } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Failed to load repos'
+    } catch (e: unknown) {
+      error.value = errMsg(e)
     } finally {
       loading.value = false
     }
@@ -34,19 +36,26 @@ export const useRepoStore = defineStore('repo', () => {
 
   async function create(req: RepoCreateRequest): Promise<RepoResponse> {
     const resp = await http.post<RepoResponse>('/repos', req)
+    ElMessage.success('Repository created successfully')
     await fetchList()
     return resp.data
   }
 
   async function update(id: number, req: RepoUpdateRequest): Promise<RepoResponse> {
     const resp = await http.put<RepoResponse>(`/repos/${id}`, req)
+    ElMessage.success('Repository updated successfully')
     await fetchList()
     return resp.data
   }
 
   async function remove(id: number): Promise<void> {
-    await http.delete(`/repos/${id}`)
-    await fetchList()
+    try {
+      await http.delete(`/repos/${id}`)
+      ElMessage.success('Repository deleted successfully')
+      await fetchList()
+    } catch (e: unknown) {
+      ElMessage.error(errMsg(e))
+    }
   }
 
   async function testConnection(id: number): Promise<TestConnectionResponse> {

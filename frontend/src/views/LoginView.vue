@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Form, Input, Button, Card, message } from 'ant-design-vue'
-import { UserOutlined, LockOutlined } from '@ant-design/icons-vue'
+import { ElMessage } from 'element-plus'
+import { User, Lock } from '@element-plus/icons-vue'
 import { http, setToken } from '@/api/client'
 
 const router = useRouter()
@@ -13,7 +13,7 @@ const loading = ref(false)
 
 async function handleLogin() {
   if (!username.value.trim() || !password.value.trim()) {
-    message.warning('Please enter username and password')
+    ElMessage.warning('Please enter username and password')
     return
   }
   loading.value = true
@@ -26,7 +26,7 @@ async function handleLogin() {
     const redirect = (route.query.redirect as string) || '/dashboard'
     await router.push(redirect)
   } catch (e) {
-    message.error(e instanceof Error ? e.message : 'Login failed')
+    ElMessage.error(e instanceof Error ? e.message : 'Login failed')
   } finally {
     loading.value = false
   }
@@ -35,48 +35,47 @@ async function handleLogin() {
 
 <template>
   <div class="cs-login">
-    <Card class="cs-login__card" :bordered="false">
+    <el-card class="cs-login__card" shadow="never">
       <div class="cs-login__head">
         <h1 class="cs-login__title">code-sec</h1>
         <p class="cs-login__subtitle">Code Security Audit Platform</p>
       </div>
-      <Form layout="vertical" @submit.prevent="handleLogin">
-        <Form.Item label="Username" name="username">
-          <Input
-            v-model:value="username"
+      <el-form label-position="top" @submit.prevent="handleLogin">
+        <el-form-item label="Username">
+          <el-input
+            v-model="username"
             placeholder="Enter username"
-            size="large"
             autocomplete="username"
           >
-            <template #prefix><UserOutlined /></template>
-          </Input>
-        </Form.Item>
-        <Form.Item label="Password" name="password">
-          <Input.Password
-            v-model:value="password"
+            <template #prefix><el-icon><User /></el-icon></template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="Password">
+          <el-input
+            v-model="password"
+            type="password"
+            show-password
             placeholder="Enter password"
-            size="large"
             autocomplete="current-password"
           >
-            <template #prefix><LockOutlined /></template>
-          </Input.Password>
-        </Form.Item>
-        <Form.Item>
-          <Button
+            <template #prefix><el-icon><Lock /></el-icon></template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button
             type="primary"
-            html-type="submit"
+            native-type="submit"
             :loading="loading"
-            block
-            size="large"
+            style="width: 100%"
           >
             Sign in
-          </Button>
-        </Form.Item>
-      </Form>
+          </el-button>
+        </el-form-item>
+      </el-form>
       <div class="cs-login__footer">
-        <span class="cs-login__hint">Demo: admin / admin123</span>
+        <span class="cs-login__hint">Enter your credentials to sign in</span>
       </div>
-    </Card>
+    </el-card>
   </div>
 </template>
 
