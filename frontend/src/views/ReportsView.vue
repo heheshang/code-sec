@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Document, Clock, Promotion } from '@element-plus/icons-vue'
+import { Document, Clock, Promotion, Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 import PageHeader from '@/components/common/PageHeader.vue'
@@ -40,6 +40,41 @@ async function handleGenerate(t: ReportTemplate): Promise<void> {
     ElMessage.error(errMsg(e))
   } finally {
     generatingId.value = null
+  }
+}
+
+async function handleSample(t: ReportTemplate): Promise<void> {
+  try {
+    const resp = await http.get<Record<string, unknown>>(`/reports/${t.id}/sample`)
+    const blob = new Blob([JSON.stringify(resp.data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${t.id}-sample.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success(`Downloaded ${t.id}-sample.json`)
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
+  }
+}
+
+async function handleDownloadFormat(t: ReportTemplate, format: string): Promise<void> {
+  try {
+    const resp = await http.get(`/reports/${t.id}/download`, {
+      params: { format },
+      responseType: 'blob',
+    })
+    const filename = `${t.id}-report.${format}`
+    const url = URL.createObjectURL(resp.data as Blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success(`Downloaded ${filename}`)
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
   }
 }
 
@@ -92,16 +127,22 @@ const frequencyType: Record<ReportTemplate['frequency'], FrequencyType> = {
               </span>
             </div>
             <el-space :size="6" class="cs-reports__formats">
-              <el-tag effect="plain" size="small">PDF</el-tag>
-              <el-tag effect="plain" size="small">HTML</el-tag>
-              <el-tag effect="plain" size="small">CSV</el-tag>
+              <el-button text size="small" @click="handleDownloadFormat(t, 'pdf')">
+                <el-icon><Download /></el-icon> PDF
+              </el-button>
+              <el-button text size="small" @click="handleDownloadFormat(t, 'html')">
+                <el-icon><Download /></el-icon> HTML
+              </el-button>
+              <el-button text size="small" @click="handleDownloadFormat(t, 'csv')">
+                <el-icon><Download /></el-icon> CSV
+              </el-button>
             </el-space>
             <div class="cs-reports__actions">
               <el-button type="primary" :loading="generatingId === t.id" @click="handleGenerate(t)">
                 <el-icon><Promotion /></el-icon> Generate now
               </el-button>
-              <el-button>
-                <el-icon><Document /></el-icon> Sample
+              <el-button @click="handleSample(t)">
+                <el-icon><Download /></el-icon> Sample
               </el-button>
             </div>
           </el-card>
