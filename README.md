@@ -1,63 +1,137 @@
 # CodeSec — Code Security Audit Platform
 
-CodeSec is an automated SAST (Static Application Security Testing) platform that scans source code for security vulnerabilities, judges exploitability via call-graph analysis, and integrates with GitLab for MR-level feedback.
+CodeSec is an automated SAST (Static Application Security Testing) platform that scans source code for security vulnerabilities, judges exploitability via call-graph analysis, and provides a human-in-the-loop audit workbench for triage, remediation, and tracking.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                    Frontend                      │
-│            Vue 3 + TypeScript + Vite            │
-└──────────────────────┬──────────────────────────┘
-                       │ HTTP/REST
-┌──────────────────────▼──────────────────────────┐
-│                   Backend API                    │
-│         Spring Boot 3 / Java 17                 │
-│                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ Security │ │ Repo Mgt │ │ Vuln Mgt         │ │
-│  │ JWT/RBAC │ │ CRUD     │ │ Findings/Tickets │ │
-│  └──────────┘ └──────────┘ └──────────────────┘ │
-│  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ Scan Mgt │ │ Webhook  │ │ Audit Log        │ │
-│  └──────────┘ └──────────┘ └──────────────────┘ │
-└──────┬──────────────┬──────────────┬─────────────┘
-       │              │              │
-       ▼              ▼              ▼
-┌──────────┐ ┌──────────────┐ ┌──────────────┐
-│  Worker  │ │ Engine-      │ │ ES-          │
-│  Queue   │ │ Adapter      │ │ Integration  │
-│  Consumer│ │              │ │ Search/Index │
-└────┬─────┘ └──────┬───────┘ └──────┬───────┘
-     │              │                │
-     ▼              ▼                ▼
-┌──────────┐ ┌──────────────┐ ┌──────────────────┐
-│  Engine  │ │ GitLab       │ │ Elasticsearch    │
-│  SAST    │ │ Integration  │ │ (Vuln/Snippet)   │
-│  Scan    │ │ MR Commenter │ │                  │
-└──────────┘ └──────────────┘ └──────────────────┘
-     │
-     ▼
-┌──────────┐ ┌──────────────┐ ┌──────────────────┐
-│Detectors │ │ Call Graph   │ │ Exploitability   │
-│SQL/ XSS/ │ │ Analysis     │ │ Judger           │
-│Crypto/   │ │              │ │                  │
-│Password  │ └──────────────┘ └──────────────────┘
-└──────────┘
+┌──────────────────────────────────────────────────────┐
+│                    Frontend                           │
+│      Vue 3 + TypeScript + Vite + Element Plus        │
+│                                                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────────┐  │
+│  │ Dashboard│ │ Scans    │ │ Vulnerabilities       │  │
+│  │ (ECharts)│ │ Manager  │ │ Browser + Search      │  │
+│  └──────────┘ └──────────┘ └──────────────────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────────┐  │
+│  │ Audit    │ │ Tickets  │ │ Reports / Rules /    │  │
+│  │ Workbench│ │ Manager  │ │ Settings / Repos     │  │
+│  └──────────┘ └──────────┘ └──────────────────────┘  │
+│                                                        │
+│  CodeMirror 6 (multi-lang)  ·  ECharts ·  Pinia       │
+└──────────────────────┬───────────────────────────────┘
+                       │ HTTP/REST (Axios)
+┌──────────────────────▼───────────────────────────────┐
+│                   Backend API                         │
+│              Spring Boot 3 / Java 17                  │
+│                                                        │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐  │
+│  │ Security │ │ Repo Mgt│ │ Scan Mgt │ │ Vuln Mgt│  │
+│  │ JWT/RBAC │ │ CRUD    │ │ Trigger  │ │ Findings│  │
+│  └──────────┘ └──────────┘ └──────────┘ └─────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌─────────┐  │
+│  │ Ticket   │ │ Audit    │ │ Webhook  │ │ Export  │  │
+│  │ Manager  │ │ Log      │ │ Receiver │ │ (PDF)   │  │
+│  └──────────┘ └──────────┘ └──────────┘ └─────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────────────┐  │
+│  │ Rule Mgt │ │ Dashboard│ │ Admin / Internal     │  │
+│  │ (Allow-  │ │ (Stats)  │ │ Health / Mgmt        │  │
+│  │ list)    │ │          │ │                      │  │
+│  └──────────┘ └──────────┘ └──────────────────────┘  │
+└──────┬────────────────┬────────────────┬─────────────┘
+       │                │                │
+       ▼                ▼                ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
+│   Worker     │ │ Engine-      │ │ ES-Integration   │
+│   Queue      │ │ Adapter      │ │ Vuln/Snippet     │
+│   Consumer   │ │ (Abstraction)│ │ Full-text Search │
+└──────┬───────┘ └──────┬───────┘ └──────────────────┘
+       │                │
+       ▼                ▼
+┌──────────────────────────────────────────────────────┐
+│                    Scan Engine                        │
+│  ┌─────────┐  ┌──────────┐  ┌────────────────────┐  │
+│  │ AST     │  │Rule-based│  │ Call Graph         │  │
+│  │ Parser  │→ │Detectors │  │ BFS Reachability   │  │
+│  │JavaParser│ │          │  │                    │  │
+│  └─────────┘  └──────────┘  └────────────────────┘  │
+│                       │                              │
+│                       ▼                              │
+│  ┌──────────────────────────────────────────────┐    │
+│  │ Multi-Language Extension                      │    │
+│  │ Java + Go (tree-sitter) + Python (tree-sitter)│    │
+│  └──────────────────────────────────────────────┘    │
+│                       │                              │
+│                       ▼                              │
+│  ┌──────────────────────────────────────────────┐    │
+│  │ Exploitability Judger                         │    │
+│  │ · Taint tracking: input → vulnerable sink      │    │
+│  │ · Framework protection detection               │    │
+│  │ · Input controllability scoring                │    │
+│  └──────────────────────────────────────────────┘    │
+│                                                      │
+│  Detectors: SQLi · XSS · Weak Crypto · Hardcoded     │
+│  Credentials · Go Cmd Injection · Python Unsafe Eval │
+└──────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────┐
+│              GitLab Integration                       │
+│  Webhook Receiver → MR Diff Scan → Comment Reporter  │
+└──────────────────────────────────────────────────────┘
 ```
 
-### Key Components
+### Module Map
 
-| Module | Description | Tech |
-|--------|-------------|------|
-| **`backend/api`** | REST API — auth, repo, scan, vuln, ticket, webhook, audit | Spring Boot 3 / JPA / Flyway |
-| **`backend/engine`** | SAST scan engine — detectors, AST parser, call graph, exploitability | Java 17, JavaParser |
-| **`backend/engine-adapter`** | Abstraction layer decoupling API from engine | Spring |
-| **`backend/es-integration`** | Elasticsearch — vuln/snippet indexing, full-text search | Spring Data ES |
-| **`backend/gitlab-integration`** | GitLab — webhook receiver, MR diff scan, comment reporter | GitLab REST API |
-| **`backend/worker`** | Async scan queue consumer | Spring Boot |
-| **`backend/common`** | Shared lib — crypto (AES-GCM, KMS), base types | Spring |
-| **`frontend`** | Dashboard, scan management, vulnerability browser, search | Vue 3 / Pinia / TypeScript |
+| Module | Responsibility | Tech Stack |
+|--------|---------------|------------|
+| **`backend/api`** | REST API — 11 domain modules: auth, repo, scan, vuln, ticket, audit, webhook, rule, dashboard, export, admin | Spring Boot 3 / JPA / Flyway / PostgreSQL |
+| **`backend/engine`** | SAST scan engine — AST parsing, rule-based detection, call-graph analysis, exploitability judgment, multi-language extension (Go, Python) | Java 17, JavaParser, tree-sitter |
+| **`backend/engine-adapter`** | Abstraction layer decoupling `api` from `engine` — configurable engine routing | Spring |
+| **`backend/es-integration`** | Elasticsearch integration — vuln finding indexing, code snippet indexing, full-text search | Spring Data ES |
+| **`backend/gitlab-integration`** | GitLab webhook receiver, MR diff scanning, comment/note reporter | GitLab REST API |
+| **`backend/worker`** | Async scan queue consumer — processes scan tasks from the queue with improved error handling and tests | Spring Boot / ForkJoinPool |
+| **`backend/common`** | Shared library — encryption (AES-GCM, KMS), base types, common utilities | Spring |
+| **`frontend`** | SPA audit workbench — 11 views, 20+ components, 7 Pinia stores, full-text search UI | Vue 3.4 / TypeScript / Vite / Element Plus / Pinia / CodeMirror 6 / ECharts |
+
+## Backend API Modules
+
+```
+backend/api/src/main/java/com/codesec/api/module/
+├── admin/          — Admin operations
+├── audit/          — Audit log queries & export
+├── dashboard/      — Aggregated statistics (vuln distribution, fix rate, severity breakdown)
+├── export/         — PDF report generation (OpenPDF)
+├── internal/       — Internal/health endpoints
+├── repo/           — Repository CRUD
+├── rule/           — Rule whitelist management (ProjectExemption)
+├── scan/           — Scan trigger, status polling, history
+├── ticket/         — Vulnerability ticket lifecycle
+├── vuln/           — Vulnerability finding browser, filtering, search
+└── webhook/        — GitLab webhook receiver
+```
+
+## Frontend Structure
+
+```
+frontend/src/
+├── api/            — Axios HTTP client & typed API wrappers
+├── components/     — Domain-organized components
+│   ├── audit/      — Audit workbench (action panel, timeline, PoC, fix editor)
+│   ├── code/       — CodeMirror 6 viewer with vulnerability line markers
+│   ├── common/     — Shared UI (EmptyState, PageHeader, Skeleton, StatCard, TopProgressBar)
+│   ├── layout/     — Shell layout (SidebarNav, TopBar, AppLayout)
+│   ├── search/     — Full-text search (global search, filters, result items)
+│   └── vuln/       — Vulnerability display (table, filters, badges, severity tags)
+├── composables/    — Vue composables (useCrudStore, useGlobalShortcut)
+├── router/         — Vue Router configuration
+├── stores/         — 6 Pinia stores (audit, repo, scan, ticket, ui, vuln, search)
+├── styles/         — CSS variables & global styles
+├── types/          — TypeScript interfaces (vuln, ticket, audit, repo, scan, project)
+├── utils/          — Shared utilities
+└── views/          — 11 page views (Dashboard, Scans, Vuln, Ticket, Audit, Reports,
+                     Rules, Repos, Settings, SearchResults, Login, Workbench)
+```
 
 ## Quick Start
 
@@ -66,14 +140,14 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
 - Java 17+
 - Maven 3.8+
 - PostgreSQL 16
-- Elasticsearch 8.x (optional, for search features)
+- Elasticsearch 8.x (optional, search features degrade gracefully)
 - Node.js 18+ (for frontend)
 
 ### Backend
 
 ```bash
 # Start infrastructure
-docker compose up -d postgres
+docker compose up -d postgres elasticsearch
 
 # Build all modules
 mvn clean install -f backend/pom.xml
@@ -104,31 +178,52 @@ docker compose up --build
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/codesec` | PostgreSQL JDBC URL |
-| `SPRING_DATASOURCE_USERNAME` | `codesec` | DB user |
-| `SPRING_DATASOURCE_PASSWORD` | `codesec123` | DB password |
+| `SPRING_DATASOURCE_USERNAME` | `codesec` | Database user |
+| `SPRING_DATASOURCE_PASSWORD` | `codesec123` | Database password |
 | `JWT_SECRET` | *(auto-generated)* | JWT signing key |
 | `ES_HOST` | `localhost:9200` | Elasticsearch host |
 
-## Scan Engine
+## Scan Pipeline
 
-The engine runs a multi-phase pipeline:
+The engine executes a multi-phase pipeline for each scan:
 
-1. **Parse** — AST parsing with JavaParser
-2. **Detect** — Rule-based detectors match vulnerability patterns
-   - SQL Injection (MyBatis/JPA/Hibernate)
-   - Cross-Site Scripting (XSS)
-   - Weak Cryptography
-   - Hardcoded Credentials
-3. **Judge** — Call-graph reachability + exploitability analysis
-   - Taint tracking from user input to vulnerable sinks
-   - Framework protection detection (Spring Security, ESAPI)
-   - Input controllability scoring
-4. **Report** — Structured findings with severity, exploitability, and fix guidance
+```mermaid
+flowchart LR
+    A[Parse] --> B[Detect]
+    B --> C[Judge]
+    C --> D[Report]
+    B -.-> E[Multi-Language]
+    E -.-> B
+```
+
+### 1. Parse
+AST construction using **JavaParser** (Java) and **tree-sitter** (Go, Python). Builds a project-level method symbol table and call graph skeleton.
+
+### 2. Detect
+Rule-based detectors match vulnerability patterns across supported languages:
+
+| Detector | Language | Pattern |
+|----------|----------|---------|
+| SQL Injection | Java | MyBatis `${}` / JPA `@Query` concatenation / Hibernate HQL injection |
+| Cross-Site Scripting | Java | Unsafe reflection output, `Response.sendRedirect()` with user input |
+| Weak Cryptography | Java | DES, MD5, SHA-1, ECB mode, static IV |
+| Hardcoded Credentials | Java | Password/secret/API key literals |
+| Command Injection | Go | `exec.Command` with unsanitized input |
+| Unsafe Eval | Python | `eval()`, `exec()`, `pickle.loads()` with tainted input |
+
+### 3. Judge — Exploitability Analysis
+- **BFS call-graph reachability** — traces from framework entry points (controllers, listeners) to vulnerable sinks
+- **Taint tracking** — user-controllable input propagation through method parameters
+- **Framework protection detection** — Spring Security annotations, ESAPI wrappers
+- **Input controllability scoring** — `exploitable` / `potentially_exploitable` / `not_exploitable`
+
+### 4. Report
+Structured findings with: CWE/CVE identifiers, severity (Critical/High/Medium/Low), exploitability level, code snippet with line range, fix suggestion, and engine raw trace.
 
 ## Development
 
 ```bash
-# Run all tests
+# Run all backend tests
 mvn test -f backend/pom.xml
 
 # Run specific module tests
@@ -139,7 +234,18 @@ cd frontend && npm run lint
 
 # Type-check frontend
 cd frontend && npm run type-check
+
+# Run frontend unit tests
+cd frontend && npm run test:unit
 ```
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/e2e-smoke.sh` | End-to-end smoke test |
+| `scripts/run-demo.sh` | Launch demo environment |
+| `scripts/migrate-kms.sh` | KMS key migration utility |
 
 ## License
 
