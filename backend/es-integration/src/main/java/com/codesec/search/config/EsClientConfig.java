@@ -95,8 +95,7 @@ public class EsClientConfig {
                 );
                 log.info("ES index '{}' created successfully from {}", fullName, mappingResource);
             } catch (Exception e) {
-                log.error("Failed to create ES index '{}': {}", fullName, e.getMessage(), e);
-                throw new RuntimeException("ES index initialization failed for " + fullName, e);
+                log.warn("ES index '{}' init skipped — ES unavailable: {}", fullName, e.getMessage());
             }
         }
 
