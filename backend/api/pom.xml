@@ -24,6 +24,10 @@
             <groupId>com.codesec</groupId>
             <artifactId>code-sec-backend-engine-adapter</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.codesec</groupId>
+            <artifactId>code-sec-backend-es-integration</artifactId>
+        </dependency>
 
         <!-- Spring Boot Starters -->
         <dependency>
