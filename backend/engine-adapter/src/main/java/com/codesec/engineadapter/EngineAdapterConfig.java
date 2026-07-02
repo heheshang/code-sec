@@ -14,7 +14,7 @@ public class EngineAdapterConfig {
     public RuleRegistry ruleRegistry() {
         RuleRegistry registry = new RuleRegistry();
         try {
-            registry.loadFromClasspath("rules");
+            registry.loadFromClasspath("rules/java", "rules/go", "rules/python");
             log.info("Loaded {} rules from classpath", registry.size());
         } catch (Exception e) {
             log.warn("Failed to load rules from classpath: {}", e.getMessage());
