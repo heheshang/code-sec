@@ -114,6 +114,8 @@ public class VulnService {
             .title(e.getTitle()).description(e.getDescription()).codeSnippet(e.getCodeSnippet())
             .filePath(e.getFilePath()).lineStart(e.getLineStart()).lineEnd(e.getLineEnd())
             .cwe(e.getCwe()).cve(e.getCve()).engine(e.getEngine()).discoveredAt(e.getDiscoveredAt())
+            .aiVerdict(e.getAiVerdict()).aiConfidence(e.getAiConfidence())
+            .aiExplanation(e.getAiExplanation()).aiGeneratedPatch(e.getAiGeneratedPatch())
             .build();
     }
 

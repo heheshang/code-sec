@@ -42,6 +42,10 @@ export interface VulnApiResponse {
   cve: string | null
   engine: Engine
   discoveredAt: string
+  aiVerdict?: string | null
+  aiConfidence?: number | null
+  aiExplanation?: string | null
+  aiGeneratedPatch?: string | null
 }
 
 /**
@@ -75,6 +79,10 @@ export interface Vuln {
   assignee?: string | null
   deadline?: string | null
   closedAt?: string | null
+  aiVerdict?: string
+  aiConfidence?: number
+  aiExplanation?: string
+  aiGeneratedPatch?: string
 }
 
 /** Map an API response to the frontend Vuln model (string ids, undefined defaults). */
@@ -95,6 +103,10 @@ export function vulnFromApi(r: VulnApiResponse): Vuln {
     cve: r.cve,
     engine: r.engine,
     discoveredAt: r.discoveredAt,
+    aiVerdict: r.aiVerdict ?? undefined,
+    aiConfidence: r.aiConfidence ?? undefined,
+    aiExplanation: r.aiExplanation ?? undefined,
+    aiGeneratedPatch: r.aiGeneratedPatch ?? undefined,
   }
 }
 

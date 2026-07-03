@@ -1,0 +1,71 @@
+# VulnAnalysis benchmark samples
+# Each document is a single sample
+id: vuln-001-sqli
+language: java
+code: "String q = \"SELECT * FROM users WHERE id = '\" + request.getParameter(\"id\") + \"'\";\nstatement.executeQuery(q);"
+expectedVuln: SQL Injection
+cwe: CWE-89
+difficulty: basic
+---
+id: vuln-002-sqli
+language: java
+code: "String sql = \"SELECT * FROM orders WHERE user = '\" + userId + \"'\";\nPreparedStatement ps = conn.prepareStatement(sql);"
+expectedVuln: SQL Injection
+cwe: CWE-89
+difficulty: basic
+---
+id: vuln-003-xss
+language: java
+code: "String name = request.getParameter(\"name\");\nout.println(\"<div>Welcome, \" + name + \"</div>\");"
+expectedVuln: XSS
+cwe: CWE-79
+difficulty: basic
+---
+id: vuln-004-xss
+language: typescript
+code: "const userInput = req.query.q;\nres.send(`<div>${userInput}</div>`);"
+expectedVuln: XSS
+cwe: CWE-79
+difficulty: basic
+---
+id: vuln-005-path-traversal
+language: java
+code: "String path = request.getParameter(\"file\");\nFile f = new File(\"/data/\" + path);\nFileInputStream fis = new FileInputStream(f);"
+expectedVuln: Path Traversal
+cwe: CWE-22
+difficulty: basic
+---
+id: vuln-006-command-injection
+language: python
+code: "import os\nuser_host = request.form['host']\nos.system(f\"ping {user_host}\")"
+expectedVuln: Command Injection
+cwe: CWE-78
+difficulty: basic
+---
+id: vuln-007-sqli
+language: go
+code: "query := fmt.Sprintf(\"SELECT * FROM users WHERE id = %s\", r.URL.Query().Get(\"id\"))\ndb.Query(query)"
+expectedVuln: SQL Injection
+cwe: CWE-89
+difficulty: basic
+---
+id: vuln-008-xss
+language: go
+code: "name := r.URL.Query().Get(\"name\")\nfmt.Fprintf(w, \"<html><body>Hello %s</body></html>\", name)"
+expectedVuln: XSS
+cwe: CWE-79
+difficulty: basic
+---
+id: vuln-009-sqli-safe
+language: java
+code: "PreparedStatement ps = conn.prepareStatement(\"SELECT * FROM users WHERE id = ?\");\nps.setString(1, request.getParameter(\"id\"));\nResultSet rs = ps.executeQuery();"
+expectedVuln: null
+cwe: null
+difficulty: safe
+---
+id: vuln-010-xss-safe
+language: java
+code: "String name = request.getParameter(\"name\");\nString encoded = StringEscapeUtils.escapeHtml4(name);\nout.println(\"<div>Welcome, \" + encoded + \"</div>\");"
+expectedVuln: null
+cwe: null
+difficulty: safe

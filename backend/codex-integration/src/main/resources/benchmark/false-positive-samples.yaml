@@ -1,0 +1,105 @@
+# FalsePositiveFilter benchmark samples
+# Each document is a single sample
+id: fp-001-true-positive
+ruleId: java-sqli-1
+title: SQL Injection in PreparedStatement
+severity: CRITICAL
+language: java
+code: "String q = \"SELECT * FROM users WHERE id = '\" + request.getParameter(\"id\") + \"'\";\nstatement.executeQuery(q);"
+callChain: "getUser() -> executeQuery()"
+dataSource: "HttpServletRequest.getParameter()"
+reachable: true
+frameworkProtection: none
+expectedVerdict: true_positive
+confidence: 0.95
+---
+id: fp-002-false-positive
+ruleId: java-sqli-1
+title: SQL Injection with parameterized query
+severity: HIGH
+language: java
+code: "PreparedStatement ps = conn.prepareStatement(\"SELECT * FROM users WHERE id = ?\");\nps.setString(1, request.getParameter(\"id\"));\nResultSet rs = ps.executeQuery();"
+callChain: "getUser() -> prepareStatement() -> executeQuery()"
+dataSource: "HttpServletRequest.getParameter()"
+reachable: true
+frameworkProtection: parameterized_query
+expectedVerdict: false_positive
+confidence: 0.90
+---
+id: fp-003-true-positive
+ruleId: java-xss-1
+title: Reflected XSS
+severity: HIGH
+language: java
+code: "String name = request.getParameter(\"name\");\nout.println(\"<div>Welcome, \" + name + \"</div>\");"
+callChain: "greetUser() -> out.println()"
+dataSource: "HttpServletRequest.getParameter()"
+reachable: true
+frameworkProtection: none
+expectedVerdict: true_positive
+confidence: 0.90
+---
+id: fp-004-false-positive
+ruleId: java-xss-1
+title: Reflected XSS with encoding
+severity: HIGH
+language: java
+code: "String name = request.getParameter(\"name\");\nString encoded = StringEscapeUtils.escapeHtml4(name);\nout.println(\"<div>Welcome, \" + encoded + \"</div>\");"
+callChain: "greetUser() -> escapeHtml4() -> out.println()"
+dataSource: "HttpServletRequest.getParameter()"
+reachable: true
+frameworkProtection: output_encoding
+expectedVerdict: false_positive
+confidence: 0.88
+---
+id: fp-005-true-positive
+ruleId: python-cmd-injection-1
+title: Command Injection in subprocess
+severity: CRITICAL
+language: python
+code: "import os\nuser_host = request.form['host']\nos.system(f\"ping {user_host}\")"
+callChain: "pingHost() -> os.system()"
+dataSource: "flask.request.form"
+reachable: true
+frameworkProtection: none
+expectedVerdict: true_positive
+confidence: 0.95
+---
+id: fp-006-false-positive
+ruleId: python-cmd-injection-1
+title: Command Injection with validated input
+severity: CRITICAL
+language: python
+code: "import subprocess\nimport re\nuser_host = request.form['host']\nif not re.match(r'^[\\w.-]+$', user_host):\n    abort(400)\nsubprocess.run([\"ping\", \"-c\", \"1\", user_host], check=True)"
+callChain: "pingHost() -> regex_validate() -> subprocess.run()"
+dataSource: "flask.request.form"
+reachable: true
+frameworkProtection: input_validation
+expectedVerdict: false_positive
+confidence: 0.85
+---
+id: fp-007-true-positive
+ruleId: go-xxe-1
+title: XML External Entity Injection
+severity: HIGH
+language: go
+code: "xmlBytes := []byte(r.Body)\nvar result map[string]interface{}\nxml.Unmarshal(xmlBytes, &result)"
+callChain: "parseXML() -> xml.Unmarshal()"
+dataSource: "http.Request.Body"
+reachable: true
+frameworkProtection: none
+expectedVerdict: true_positive
+confidence: 0.85
+---
+id: fp-008-false-positive
+ruleId: go-xxe-1
+title: XXE with disabled entity expansion
+severity: HIGH
+language: go
+code: "decoder := xml.NewDecoder(r.Body)\ndecoder.Strict = true\ndecoder.Entity = xml.HTMLEntity\nvar result map[string]interface{}\ndecoder.Decode(&result)"
+callChain: "parseXML() -> xml.NewDecoder() -> Decode()"
+dataSource: "http.Request.Body"
+reachable: true
+frameworkProtection: entity_expansion_disabled
+expectedVerdict: false_positive
+confidence: 0.82

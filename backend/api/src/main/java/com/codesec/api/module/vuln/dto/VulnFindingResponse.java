@@ -23,4 +23,8 @@ public class VulnFindingResponse {
     private String cve;
     private String engine;
     private LocalDateTime discoveredAt;
+    private String aiVerdict;
+    private Double aiConfidence;
+    private String aiExplanation;
+    private String aiGeneratedPatch;
 }

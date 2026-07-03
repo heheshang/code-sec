@@ -1,5 +1,6 @@
 package com.codesec.engine.judge;
 
+import com.codesec.engine.config.CpgConfiguration;
 import com.codesec.engine.parser.ParsedFile;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Builds a {@link ProjectCallGraph} from a list of parsed Java source files.
@@ -132,6 +134,34 @@ public final class CallGraphBuilder {
 
         log.info("Built call graph with {} methods and {} edges",
             graph.size(), graph.edgeCount());
+
+        return graph;
+    }
+
+    /**
+     * Builds a call graph and persists it to Neo4j asynchronously.
+     * Falls back to in-memory-only if Neo4j is unavailable or disabled.
+     *
+     * @param files     the list of parsed source files
+     * @param scanId    the scan ID for Neo4j scoping
+     * @param cpgConfig the CPG store configuration
+     * @return the in-memory ProjectCallGraph (always returned regardless of persistence)
+     */
+    public ProjectCallGraph buildAndPersist(List<ParsedFile> files, String scanId, CpgConfiguration cpgConfig) {
+        ProjectCallGraph graph = build(files);
+
+        if (cpgConfig != null && cpgConfig.isEnabled()) {
+            CpgService cpgService = new CpgService(cpgConfig);
+            try {
+                cpgService.clearScan(scanId);
+                cpgService.importGraph(graph, scanId);
+                log.info("CPG persisted to Neo4j for scan: {}", scanId);
+            } catch (Exception e) {
+                log.warn("CPG Neo4j persistence skipped: {}", e.getMessage());
+            }
+        } else {
+            log.info("CPG store is memory-only; skipping Neo4j persistence");
+        }
 
         return graph;
     }

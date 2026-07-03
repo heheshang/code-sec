@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, Download, Refresh, Document, Search } from '@element-plus/icons-vue'
+import { ArrowLeft, Download, Refresh, Document, Search, Connection } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/common/PageHeader.vue'
 import VulnLineMarker from '@/components/code/VulnLineMarker.vue'
@@ -28,6 +28,8 @@ import { STATUS_LABEL, LANGUAGE_TO_CM, vulnFromApi } from '@/types/vuln'
 import type { AuditAction, PocAttachment, AuditRecord } from '@/types/audit'
 import dayjs from 'dayjs'
 import type { RepoListItem } from '@/api/types'
+import AiAuditPanel from '@/ai-audit/components/AiAuditPanel.vue'
+import CallGraphView from '@/graph/components/CallGraphView.vue'
 
 /** Map file extension → Language for code viewer. */
 const EXT_TO_LANG: Record<string, Language> = {
@@ -68,6 +70,24 @@ const showCodeViewer = ref(false)
 /** Set to true when the fix-snippet Collapse.Panel is expanded, so we don't
  *  instantiate a second Monaco editor on every page load. */
 const fixPanelOpen = ref(false)
+
+const aiAnalyzing = ref(false)
+const showAiPanel = ref(false)
+
+async function runAiAnalysis() {
+  const id = route.params.vulnId
+  if (typeof id !== 'string') return
+  aiAnalyzing.value = true
+  showAiPanel.value = true
+  try {
+    await http.post(`/ai/analyze/${id}`)
+    await loadVuln(id)
+  } catch (e: unknown) {
+    ElMessage.error(errMsg(e))
+  } finally {
+    aiAnalyzing.value = false
+  }
+}
 
 const action = ref<AuditAction>('confirm')
 const exploitCondition = ref<string>('')
@@ -254,6 +274,9 @@ function onCollapseChange(keys: string[]): void {
         <el-space :size="8">
           <el-button @click="goBack"><el-icon><ArrowLeft /></el-icon> Queue</el-button>
           <el-button @click="downloadPdf"><el-icon><Download /></el-icon> PDF</el-button>
+          <el-button type="primary" :loading="aiAnalyzing" :disabled="vuln === null" @click="runAiAnalysis">
+            {{ aiAnalyzing ? 'Analyzing…' : 'AI Analyze' }}
+          </el-button>
           <el-button type="primary" :loading="auditStore.submitting" :disabled="!formValid" @click="handleSubmit">
             Submit audit
           </el-button>
@@ -365,6 +388,36 @@ function onCollapseChange(keys: string[]): void {
         </el-card>
       </el-col>
     </el-row>
+
+    <el-card v-if="showAiPanel" shadow="never" class="cs-workbench__aiCard">
+      <div v-if="aiAnalyzing" class="cs-workbench__aiLoading">
+        <el-skeleton :rows="3" animated />
+        <p style="color: var(--cs-text-tertiary); font-size: 12px; margin-top: 8px">AI analysis in progress…</p>
+      </div>
+      <AiAuditPanel
+        v-else-if="vuln?.aiVerdict"
+        :vuln-id="vuln.id"
+        :ai-verdict="vuln.aiVerdict as any"
+        :ai-confidence="vuln.aiConfidence"
+        :ai-explanation="vuln.aiExplanation"
+        :ai-generated-patch="vuln.aiGeneratedPatch"
+        :original-code="vuln?.codeSnippet"
+        :language="detectLanguage(vuln?.filePath)"
+      />
+      <div v-else class="cs-workbench__aiLoading">
+        <p style="color: var(--cs-text-tertiary)">Analysis returned no result</p>
+      </div>
+    </el-card>
+
+    <el-card shadow="never" class="cs-workbench__cpgCard">
+      <template #header>
+        <el-space :size="6">
+          <el-icon><Connection /></el-icon>
+          <span>Call Graph</span>
+        </el-space>
+      </template>
+      <CallGraphView v-if="vuln" :vuln-id="String(vuln.id)" />
+    </el-card>
 
     <el-card shadow="never" class="cs-workbench__historyCard" style="margin-top: var(--cs-space-4)" v-memo="[history, historyLoading]">
       <template #header>
@@ -539,7 +592,19 @@ function onCollapseChange(keys: string[]): void {
   border-radius: 0 0 var(--cs-radius-md) var(--cs-radius-md);
   background: var(--cs-bg-sunken);
 }
+.cs-workbench__cpgCard {
+  margin-top: var(--cs-space-4);
+  background: var(--cs-bg-elevated);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+}
 .cs-workbench__historyCard {
+  background: var(--cs-bg-elevated);
+  border: 1px solid var(--cs-border-light);
+  border-radius: var(--cs-radius-lg);
+}
+.cs-workbench__aiCard {
+  margin-top: var(--cs-space-4);
   background: var(--cs-bg-elevated);
   border: 1px solid var(--cs-border-light);
   border-radius: var(--cs-radius-lg);

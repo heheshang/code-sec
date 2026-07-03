@@ -1,0 +1,73 @@
+.cs-code-viewer {
+  position: relative;
+  font-family: var(--cs-font-mono);
+  font-size: var(--cs-font-size-sm);
+  line-height: 1.6;
+  background: #0F1117;
+  color: #D4D4D8;
+  border-radius: var(--cs-radius-md);
+  overflow: hidden;
+}
+
+.cs-code-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #1A1C24;
+  border-bottom: 1px solid #2A2D3A;
+}
+
+.cs-code-viewer-lang {
+  font-family: var(--cs-font-family);
+  font-size: var(--cs-font-size-xs);
+  font-weight: 600;
+  color: #8C8C8C;
+  text-transform: uppercase;
+}
+
+.cs-code-viewer-body {
+  display: flex;
+  overflow: auto;
+}
+
+.cs-code-viewer-gutter {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  background: #14161E;
+  border-right: 1px solid #2A2D3A;
+  user-select: none;
+  min-width: 44px;
+}
+
+.cs-code-viewer-line-num {
+  text-align: right;
+  padding: 0 10px;
+  color: #4A4D5C;
+  font-size: var(--cs-font-size-xs);
+}
+
+.cs-code-viewer-content {
+  flex: 1;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+.cs-code-viewer-line {
+  padding: 0 16px;
+  white-space: pre;
+}
+
+.cs-code-viewer-line.highlighted {
+  background: rgba(207, 19, 34, 0.15);
+  border-left: 3px solid var(--cs-severity-critical);
+}
+
+.cs-code-viewer-footer {
+  padding: 4px 12px;
+  background: #1A1C24;
+  border-top: 1px solid #2A2D3A;
+  font-size: var(--cs-font-size-xs);
+  color: #6A6D7C;
+}

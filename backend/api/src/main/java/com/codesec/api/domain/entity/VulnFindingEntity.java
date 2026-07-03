@@ -71,6 +71,18 @@ public class VulnFindingEntity {
     @Column(name = "dedup_key", length = 256)
     private String dedupKey;
 
+    @Column(name = "ai_verdict", length = 32)
+    private String aiVerdict;
+
+    @Column(name = "ai_confidence")
+    private Double aiConfidence;
+
+    @Column(name = "ai_explanation", columnDefinition = "TEXT")
+    private String aiExplanation;
+
+    @Column(name = "ai_generated_patch", columnDefinition = "TEXT")
+    private String aiGeneratedPatch;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

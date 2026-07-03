@@ -32,6 +32,22 @@ codesec:
   engine:
     sandbox: false
 
+  cpg:
+    enabled: true
+    uri: ${NEO4J_URI:bolt://localhost:7687}
+    username: ${NEO4J_USERNAME:neo4j}
+    password: ${NEO4J_PASSWORD:admin123}
+
+codex:
+  api-key: ${CODEX_API_KEY:sk-test-key}
+  model: ${CODEX_MODEL:gpt-4o}
+  code-model: ${CODEX_CODE_MODEL:gpt-4o}
+  llm-model: ${CODEX_LLM_MODEL:gpt-4o}
+  capabilities:
+    poc-generation: true
+    patch-generation: true
+    logic-vuln-mining: true
+
 logging:
   level:
     com.codesec: DEBUG

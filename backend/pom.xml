@@ -41,6 +41,7 @@
         <module>worker</module>
         <module>gitlab-integration</module>
         <module>es-integration</module>
+        <module>codex-integration</module>
     </modules>
 
     <dependencyManagement>
@@ -81,6 +82,11 @@
             <dependency>
                 <groupId>com.codesec</groupId>
                 <artifactId>code-sec-backend-es-integration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.codesec</groupId>
+                <artifactId>code-sec-backend-codex-integration</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -154,6 +160,13 @@
                 <groupId>com.github.librepdf</groupId>
                 <artifactId>openpdf</artifactId>
                 <version>${openpdf.version}</version>
+            </dependency>
+
+            <!-- Neo4j Java Driver -->
+            <dependency>
+                <groupId>org.neo4j.driver</groupId>
+                <artifactId>neo4j-java-driver</artifactId>
+                <version>6.0.5</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,0 +1,42 @@
+.cs-graph-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--cs-bg-elevated);
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-md);
+  overflow: hidden;
+}
+
+.cs-graph-node {
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.cs-graph-node:hover {
+  filter: brightness(1.1);
+}
+
+.cs-graph-node.selected {
+  filter: brightness(1.15);
+  stroke-width: 3;
+}
+
+.cs-graph-edge {
+  transition: stroke 0.15s ease;
+}
+
+.cs-graph-edge.highlighted {
+  stroke: var(--cs-color-primary);
+  stroke-width: 3;
+}
+
+.cs-graph-minimap {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  border: 1px solid var(--cs-border);
+  border-radius: var(--cs-radius-sm);
+  overflow: hidden;
+  box-shadow: var(--cs-shadow-2);
+}

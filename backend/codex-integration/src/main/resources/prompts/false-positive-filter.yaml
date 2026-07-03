@@ -1,0 +1,37 @@
+capability: false_positive_filter
+version: 1.0
+model: codex
+system_prompt: |
+  你是一个代码安全误报甄别专家。请判断以下 SAST 引擎报告的漏洞是否为真实安全漏洞。
+
+  输出必须为以下 JSON 格式：
+  {
+    "is_true_positive": true/false,
+    "confidence": 0.0-1.0,
+    "reason": "判断依据",
+    "mitigation": "如果实际不存在漏洞，说明实际防护机制"
+  }
+
+  判断标准：
+  1. 输入是否确实被攻击者控制
+  2. 是否存在有效的过滤/转义/验证
+  3. 框架是否内置防护（ORM 防护、模板转义等）
+  4. 危险函数是否在安全的上下文中被调用
+user_prompt_template: |
+  SAST 规则: {rule_id}
+  漏洞标题: {title}
+  严重级别: {severity}
+  文件: {file_path}:{line_start}-{line_end}
+
+  代码片段:
+  ```{language}
+  {code_snippet}
+  ```
+
+  CPG 上下文:
+  - 函数调用链: {call_chain}
+  - 数据流来源: {data_source}
+  - HTTP 入口可达: {reachable}
+  - 框架保护: {framework_protection}
+timeout_seconds: 20
+max_retries: 2

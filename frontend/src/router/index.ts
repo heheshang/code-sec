@@ -31,6 +31,13 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Audit workbench' },
   },
   {
+    path: '/workbench/:vulnId',
+    name: 'audit-workbench',
+    component: () => import('@/workbench/components/AuditWorkbench.vue'),
+    props: true,
+    meta: { title: 'Advanced workbench' },
+  },
+  {
     path: '/reports',
     name: 'reports',
     component: () => import('@/views/ReportsView.vue'),
@@ -65,6 +72,12 @@ const routes: RouteRecordRaw[] = [
     name: 'rules',
     component: () => import('@/views/RulesView.vue'),
     meta: { title: 'Rule Management' },
+  },
+  {
+    path: '/ai/benchmark',
+    name: 'ai-benchmark',
+    component: () => import('@/views/BenchmarkDashboardView.vue'),
+    meta: { title: 'AI Benchmark' },
   },
   {
     path: '/settings',

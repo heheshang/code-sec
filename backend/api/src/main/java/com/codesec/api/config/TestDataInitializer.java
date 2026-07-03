@@ -1,42 +1,30 @@
 package com.codesec.api.config;
 
-import com.codesec.api.domain.entity.*;
-import com.codesec.api.domain.repository.*;
+import com.codesec.api.domain.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.LongStream;
 
 /**
  * Seeds test data for the "test" profile.
- * Uses EntityManager.persist() for role_permission inserts
- * to bypass JPA merge semantics (the entity @Id is on role_id only,
- * so saveAll() would overwrite with each entity having the same roleId=1).
+ * Uses native SQL INSERT to bypass Hibernate 7's rejection of
+ * explicit IDs on IDENTITY-strategy entities (both persist and merge fail).
  */
 @Component
 @Profile("test")
 public class TestDataInitializer implements CommandLineRunner {
     private final UserRepository userRepo;
-    private final RoleRepository roleRepo;
-    private final PermissionRepository permRepo;
-    private final UserRoleRepository userRoleRepo;
-    private final RolePermissionRepository rolePermissionRepo;
     private final PasswordEncoder encoder;
 
-    public TestDataInitializer(UserRepository userRepo, RoleRepository roleRepo,
-                                PermissionRepository permRepo,
-                                UserRoleRepository userRoleRepo,
-                                RolePermissionRepository rolePermissionRepo,
-                                PasswordEncoder encoder) {
+    @PersistenceContext
+    private EntityManager em;
+
+    public TestDataInitializer(UserRepository userRepo, PasswordEncoder encoder) {
         this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
-        this.permRepo = permRepo;
-        this.userRoleRepo = userRoleRepo;
-        this.rolePermissionRepo = rolePermissionRepo;
         this.encoder = encoder;
     }
 
@@ -45,17 +33,14 @@ public class TestDataInitializer implements CommandLineRunner {
     public void run(String... args) {
         if (userRepo.count() > 0) return;
 
+        String now = "NOW()";
+
         // Create roles
-        for (int i = 1; i <= 5; i++) {
-            String name = switch (i) {
-                case 1 -> "SUPER_ADMIN";
-                case 2 -> "SECURITY_AUDITOR";
-                case 3 -> "PROJECT_OWNER";
-                case 4 -> "DEVELOPER";
-                default -> "READONLY_VIEWER";
-            };
-            roleRepo.save(RoleEntity.builder().id((long) i).name(name).build());
-        }
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (1, 'SUPER_ADMIN', " + now + ")").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (2, 'SECURITY_AUDITOR', " + now + ")").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (3, 'PROJECT_OWNER', " + now + ")").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (4, 'DEVELOPER', " + now + ")").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (5, 'READONLY_VIEWER', " + now + ")").executeUpdate();
 
         // Seed 26 permissions
         String[][] perms = {
@@ -70,26 +55,21 @@ public class TestDataInitializer implements CommandLineRunner {
             {"report:read","report","read"},{"webhook:receive","webhook","receive"},{"internal:vuln-index","internal","vuln-index"}
         };
         for (int i = 0; i < perms.length; i++) {
-            permRepo.save(PermissionEntity.builder().id((long)(i+1)).name(perms[i][0]).resource(perms[i][1]).action(perms[i][2]).build());
+            em.createNativeQuery("INSERT INTO permission (id, name, resource, action) VALUES (" + (i + 1) + ", '" + perms[i][0] + "', '" + perms[i][1] + "', '" + perms[i][2] + "')")
+                .executeUpdate();
         }
 
         // Assign SUPER_ADMIN (role_id=1) -> all 26 permissions
-        // With auto-generated ID on RolePermissionEntity, saveAll() works correctly
-        List<RolePermissionEntity> rpList = LongStream.rangeClosed(1, 26)
-            .mapToObj(pid -> RolePermissionEntity.builder()
-                .roleId(1L).permissionId(pid).build())
-            .toList();
-        rolePermissionRepo.saveAll(rpList);
+        for (long pid = 1; pid <= 26; pid++) {
+            em.createNativeQuery("INSERT INTO role_permission (role_id, permission_id) VALUES (1, " + pid + ")").executeUpdate();
+        }
 
         // Create admin user
-        userRepo.save(UserEntity.builder()
-            .id(1L).username("admin").email("admin@codesec.io")
-            .passwordHash(encoder.encode("admin123"))
-            .status("active").createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
-            .build());
+        String hash = encoder.encode("admin123");
+        em.createNativeQuery("INSERT INTO \"user\" (id, username, email, password_hash, status, created_at, updated_at) VALUES (1, 'admin', 'admin@codesec.io', '" + hash + "', 'active', " + now + ", " + now + ")")
+            .executeUpdate();
 
         // Assign admin -> SUPER_ADMIN
-        userRoleRepo.save(UserRoleEntity.builder().userId(1L).roleId(1L)
-            .grantedAt(LocalDateTime.now()).grantedBy(1L).build());
+        em.createNativeQuery("INSERT INTO user_role (user_id, role_id, granted_at, granted_by) VALUES (1, 1, " + now + ", 1)").executeUpdate();
     }
 }

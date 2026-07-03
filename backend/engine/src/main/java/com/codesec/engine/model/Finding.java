@@ -1,6 +1,7 @@
 package com.codesec.engine.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.time.Instant;
 import java.util.List;
@@ -13,7 +14,8 @@ import java.util.UUID;
     "vuln_id", "project_id", "scan_id", "engine", "rule_id",
     "title", "severity", "file_path", "line_start", "line_end",
     "code_snippet", "description", "fix_suggestion", "cwe", "cve",
-    "exploitability", "exploit_reason", "engine_raw", "discovered_at"
+    "exploitability", "exploit_reason", "engine_raw", "discovered_at",
+    "ai_verdict", "ai_confidence", "ai_explanation", "ai_generated_patch"
 })
 public record Finding(
     String vulnId,
@@ -34,7 +36,11 @@ public record Finding(
     String exploitability,
     String exploitReason,
     Map<String, Object> engineRaw,
-    Instant discoveredAt
+    Instant discoveredAt,
+    @JsonProperty("ai_verdict") String aiVerdict,
+    @JsonProperty("ai_confidence") Double aiConfidence,
+    @JsonProperty("ai_explanation") String aiExplanation,
+    @JsonProperty("ai_generated_patch") String aiGeneratedPatch
 ) {
     public static Builder builder() {
         return new Builder();
@@ -60,6 +66,10 @@ public record Finding(
         private String exploitReason;
         private Map<String, Object> engineRaw;
         private Instant discoveredAt = Instant.now();
+        private String aiVerdict;
+        private Double aiConfidence;
+        private String aiExplanation;
+        private String aiGeneratedPatch;
 
         public Builder vulnId(String vulnId) { this.vulnId = vulnId; return this; }
         public Builder projectId(Integer projectId) { this.projectId = projectId; return this; }
@@ -80,13 +90,18 @@ public record Finding(
         public Builder exploitReason(String exploitReason) { this.exploitReason = exploitReason; return this; }
         public Builder engineRaw(Map<String, Object> engineRaw) { this.engineRaw = engineRaw; return this; }
         public Builder discoveredAt(Instant discoveredAt) { this.discoveredAt = discoveredAt; return this; }
+        public Builder aiVerdict(String aiVerdict) { this.aiVerdict = aiVerdict; return this; }
+        public Builder aiConfidence(Double aiConfidence) { this.aiConfidence = aiConfidence; return this; }
+        public Builder aiExplanation(String aiExplanation) { this.aiExplanation = aiExplanation; return this; }
+        public Builder aiGeneratedPatch(String aiGeneratedPatch) { this.aiGeneratedPatch = aiGeneratedPatch; return this; }
 
         public Finding build() {
             return new Finding(
                 vulnId, projectId, scanId, engine, ruleId, title, severity,
                 filePath, lineStart, lineEnd, codeSnippet, description,
                 fixSuggestion, cwe, cve, exploitability, exploitReason,
-                engineRaw, discoveredAt
+                engineRaw, discoveredAt,
+                aiVerdict, aiConfidence, aiExplanation, aiGeneratedPatch
             );
         }
     }
