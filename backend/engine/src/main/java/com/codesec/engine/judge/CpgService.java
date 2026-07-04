@@ -217,6 +217,10 @@ public class CpgService {
         return driver != null;
     }
 
+    public Driver getDriver() {
+        return driver;
+    }
+
     public void close() {
         config.close();
     }
