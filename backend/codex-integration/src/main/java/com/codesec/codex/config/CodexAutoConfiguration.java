@@ -8,7 +8,8 @@ import com.codesec.codex.client.AstCompiler;
 import com.codesec.codex.client.CodexClient;
 import com.codesec.codex.client.SandboxVerifier;
 import com.codesec.codex.client.SimulatedSandboxVerifier;
-import com.codesec.codex.pipeline.*;
+import com.codesec.codex.pipeline.CodexAdapterImpl;
+import com.codesec.codex.pipeline.CodexHealthIndicator;
 import com.codesec.codex.prompt.PromptLoader;
 import com.codesec.codex.prompt.PromptRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -92,37 +93,16 @@ public class CodexAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public FallbackStrategy fallbackStrategy() {
-        return new FallbackStrategy();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    public AnalysisPipeline analysisPipeline(
-            VulnAnalysisCapability vulnAnalysis,
-            FalsePositiveFilterCapability fpFilter,
-            LogicVulnMiningCapability logicVulnMining,
-            PocGenerationCapability pocGeneration,
-            PatchGenerationCapability patchGeneration,
-            FallbackStrategy fallbackStrategy) {
-        return new AnalysisPipeline(vulnAnalysis, fpFilter, logicVulnMining,
-            pocGeneration, patchGeneration, fallbackStrategy);
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
     public CodexAdapter codexAdapter(
             VulnAnalysisCapability vulnAnalysis,
             FalsePositiveFilterCapability fpFilter,
             LogicVulnMiningCapability logicVulnMining,
             PocGenerationCapability pocGeneration,
             PatchGenerationCapability patchGeneration,
-            AnalysisPipeline pipeline,
             CodexClient codeModelClient,
             CodexClient llmModelClient) {
         return new CodexAdapterImpl(vulnAnalysis, fpFilter, logicVulnMining,
-            pocGeneration, patchGeneration,
-            pipeline, codeModelClient, llmModelClient);
+            pocGeneration, patchGeneration, codeModelClient, llmModelClient);
     }
 
     @Bean

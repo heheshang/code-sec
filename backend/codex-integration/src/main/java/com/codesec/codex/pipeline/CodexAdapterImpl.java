@@ -7,7 +7,6 @@ import com.codesec.codex.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
 import java.util.List;
 
 public class CodexAdapterImpl implements CodexAdapter {
@@ -18,7 +17,6 @@ public class CodexAdapterImpl implements CodexAdapter {
     private final LogicVulnMiningCapability logicVulnMining;
     private final PocGenerationCapability pocGeneration;
     private final PatchGenerationCapability patchGeneration;
-    private final AnalysisPipeline pipeline;
     private final CodexClient codeModelClient;
     private final CodexClient llmModelClient;
 
@@ -27,7 +25,6 @@ public class CodexAdapterImpl implements CodexAdapter {
                             LogicVulnMiningCapability logicVulnMining,
                             PocGenerationCapability pocGeneration,
                             PatchGenerationCapability patchGeneration,
-                            AnalysisPipeline pipeline,
                             CodexClient codeModelClient,
                             CodexClient llmModelClient) {
         this.vulnAnalysis = vulnAnalysis;
@@ -35,7 +32,6 @@ public class CodexAdapterImpl implements CodexAdapter {
         this.logicVulnMining = logicVulnMining;
         this.pocGeneration = pocGeneration;
         this.patchGeneration = patchGeneration;
-        this.pipeline = pipeline;
         this.codeModelClient = codeModelClient;
         this.llmModelClient = llmModelClient;
     }
@@ -49,9 +45,42 @@ public class CodexAdapterImpl implements CodexAdapter {
     public CodexResponse<List<CodexVerdict>> batchFilter(CodexRequest request) {
         CodexResponse<String> raw = fpFilter.execute(request);
         if (!raw.isSuccess() || raw.getData() == null) {
-            return CodexResponse.failure(raw.getErrorMessage(), raw.getFallbackLevel());
+            return CodexResponse.failure(
+                raw.getErrorMessage() != null ? raw.getErrorMessage() : "no data",
+                raw.getFallbackLevel());
         }
-        return CodexResponse.success(Collections.emptyList(), raw.getDuration(), raw.getModelVersion());
+        return CodexResponse.success(
+            List.of(parseVerdict(request.getVulnId(), raw.getData())),
+            raw.getDuration(), raw.getModelVersion());
+    }
+
+    private CodexVerdict parseVerdict(String vulnId, String analysis) {
+        if (analysis == null) {
+            return new CodexVerdict(vulnId, "suspicious", 0.0, "empty response");
+        }
+        String lower = analysis.toLowerCase();
+        String verdict;
+        if (lower.contains("false positive") || lower.contains("false_positive")
+            || lower.contains("\"is_true_positive\": false")) {
+            verdict = "false_positive";
+        } else if (lower.contains("\"is_true_positive\": true")
+            || lower.contains("true positive")) {
+            verdict = "exploitable";
+        } else {
+            verdict = "suspicious";
+        }
+        return new CodexVerdict(vulnId, verdict, extractConfidence(analysis), analysis);
+    }
+
+    private double extractConfidence(String analysis) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("(?:confidence\"?\\s*[:=]\\s*)([0-9]*\\.?[0-9]+)")
+            .matcher(analysis);
+        if (m.find()) {
+            try { return Double.parseDouble(m.group(1)); }
+            catch (NumberFormatException ignored) {}
+        }
+        return 0.5;
     }
 
     @Override

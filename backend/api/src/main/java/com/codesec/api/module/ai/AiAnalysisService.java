@@ -34,14 +34,15 @@ public class AiAnalysisService {
 
         AiAnalysisResult result = new AiAnalysisResult();
         result.setVulnId(String.valueOf(vulnId));
-        result.setAnalyzedAt(Instant.now().toString());
-        result.setModelVersion(analysisResp.getModelVersion() != null ? analysisResp.getModelVersion() : "gpt-4o");
+       result.setAnalyzedAt(Instant.now().toString());
+        result.setModelVersion(analysisResp.getModelVersion() != null ? analysisResp.getModelVersion() : "unknown");
         result.setDurationMs(analysisResp.getDuration() != null ? analysisResp.getDuration().toMillis() : 0);
         result.setFallbackLevel(analysisResp.getFallbackLevel() != null ? analysisResp.getFallbackLevel().name() : "NONE");
 
         if (analysisResp.isSuccess() && analysisResp.getData() != null) {
-            result.setAiVerdict(extractVerdict(analysisResp.getData()));
-            result.setAiConfidence(extractConfidence(analysisResp.getData()));
+            String verdict = extractVerdict(analysisResp.getData());
+            result.setAiVerdict(verdict);
+            result.setAiConfidence(extractConfidence(analysisResp.getData(), verdict));
             result.setAiExplanation(analysisResp.getData());
         } else {
             result.setAiVerdict("suspicious");
@@ -84,7 +85,9 @@ public class AiAnalysisService {
 
     private String detectLanguage(String filePath) {
         if (filePath == null) return "java";
-        String ext = filePath.substring(filePath.lastIndexOf('.'));
+        int dot = filePath.lastIndexOf('.');
+        if (dot < 0) return "java";
+        String ext = filePath.substring(dot);
         return switch (ext) {
             case ".java" -> "java";
             case ".kt" -> "java";
@@ -112,7 +115,7 @@ public class AiAnalysisService {
         return "suspicious";
     }
 
-    private double extractConfidence(String analysis) {
+    private double extractConfidence(String analysis, String verdict) {
         if (analysis == null) return 0.0;
         if (analysis.contains("confidence")) {
             try {
@@ -122,6 +125,6 @@ public class AiAnalysisService {
                 if (m.find()) return Double.parseDouble(m.group(1));
             } catch (Exception ignored) {}
         }
-        return "exploitable".equals(extractVerdict(analysis)) ? 0.85 : 0.5;
+        return "exploitable".equals(verdict) ? 0.85 : 0.5;
     }
 }

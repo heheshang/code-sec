@@ -120,10 +120,8 @@ public class VulnAnalysisBenchmark {
     }
 
     private CodexContext buildContext() {
-        CodexProperties.ApiModelConfig cfg = props.getApi().getCodeModel();
+        CodexProperties.ApiModelConfig cfg = props.getCodeModel();
         CodexContext ctx = new CodexContext();
-        ctx.setApiKey(cfg.getApiKey());
-        ctx.setEndpoint(cfg.getEndpoint());
         ctx.setModel(cfg.getModel());
         ctx.setTimeoutSeconds(cfg.getTimeoutSeconds());
         return ctx;

@@ -11,10 +11,12 @@ class AstCompilerTest {
     private final AstCompiler compiler = new AstCompiler();
 
     @Test
-    void validJavaCodeReturnsPass() {
+    void validJavaCodeReturnsPending() {
         String code = "public class Test {\n    public void foo() {\n        int x = 1;\n    }\n}";
         PatchResult result = compiler.validate(code, "java");
-        assertEquals("PASS", result.getCompilationStatus());
+        // Bracket-balance is a coarse sanity check, not real compilation,
+        // so valid-looking code is reported PENDING (unverified), not PASS.
+        assertEquals("PENDING", result.getCompilationStatus());
     }
 
     @Test
@@ -39,9 +41,9 @@ class AstCompilerTest {
     }
 
     @Test
-    void validGoCodeReturnsPass() {
+    void validGoCodeReturnsPending() {
         String code = "package main\nfunc main() {\n    println(\"hello\")\n}";
         PatchResult result = compiler.validate(code, "go");
-        assertEquals("PASS", result.getCompilationStatus());
+        assertEquals("PENDING", result.getCompilationStatus());
     }
 }

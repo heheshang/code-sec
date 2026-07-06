@@ -7,15 +7,7 @@ import org.slf4j.LoggerFactory;
 public class SimulatedSandboxVerifier implements SandboxVerifier {
     private static final Logger log = LoggerFactory.getLogger(SimulatedSandboxVerifier.class);
 
-    private final boolean alwaysPass;
-
-    public SimulatedSandboxVerifier() {
-        this(true);
-    }
-
-    public SimulatedSandboxVerifier(boolean alwaysPass) {
-        this.alwaysPass = alwaysPass;
-    }
+    public SimulatedSandboxVerifier() {}
 
     @Override
     public SandboxResult verify(PocResult poc) {
@@ -23,8 +15,9 @@ public class SimulatedSandboxVerifier implements SandboxVerifier {
             log.warn("Sandbox verification skipped: incomplete POC data");
             return SandboxResult.PENDING;
         }
-        SandboxResult result = alwaysPass ? SandboxResult.PASS : SandboxResult.FAIL;
-        log.info("Sandbox verification result: {} for POC type: {}", result, poc.getPocType());
-        return result;
+        // No real sandbox backend is wired; report PENDING so the UI does not
+        // present an unverified PoC as verified.
+        log.info("Sandbox verification unavailable (no backend): PENDING for POC type: {}", poc.getPocType());
+        return SandboxResult.PENDING;
     }
 }

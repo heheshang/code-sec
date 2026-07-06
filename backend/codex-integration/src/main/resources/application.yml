@@ -2,29 +2,16 @@ codex:
   enabled: true
   max-concurrency: 20
   per-request-timeout-seconds: 30
-  api:
-    code-model:
-      endpoint: https://api.openai.com/v1/chat/completions
-      apiKey: ${CODE_MODEL_API_KEY:}
-      model: gpt-4o
-      max-tokens: 4096
-      temperature: 0.1
-      timeout-seconds: 60
-    llm-model:
-      endpoint: https://api.openai.com/v1/chat/completions
-      apiKey: ${LLM_MODEL_API_KEY:}
-      model: gpt-4o
-      max-tokens: 8192
-      temperature: 0.3
-      timeout-seconds: 90
-  api-strategy:
-    retry:
-      max-attempts: 3
-      backoff: exponential
-      initial-delay-ms: 1000
-    circuit-breaker:
-      failure-threshold: 5
-      reset-timeout-ms: 60000
+  code-model:
+    model: gpt-4o
+    max-tokens: 4096
+    temperature: 0.1
+    timeout-seconds: 60
+  llm-model:
+    model: gpt-4o
+    max-tokens: 8192
+    temperature: 0.3
+    timeout-seconds: 90
   capabilities:
     vuln-analysis: true
     false-positive-filter: true

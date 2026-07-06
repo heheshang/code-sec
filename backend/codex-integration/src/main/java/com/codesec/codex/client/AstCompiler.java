@@ -25,7 +25,9 @@ public class AstCompiler {
         }
 
         if (errors.isEmpty()) {
-            result.setCompilationStatus("PASS");
+            // Bracket-balance is a coarse sanity check, not real compilation.
+            // Do not claim PASS; report PENDING so callers know it is unverified.
+            result.setCompilationStatus("PENDING");
         } else {
             result.setCompilationStatus("FAIL");
             result.setErrors(errors);
@@ -34,7 +36,8 @@ public class AstCompiler {
     }
 
     private void validateJavaSyntax(String code, List<String> errors) {
-        if (!code.contains(";") && !code.contains("{") && !code.contains("}")) {
+        if (!code.contains(";") && !code.contains("{") && !code.contains("}")
+            && !code.contains("//") && !code.contains("/*")) {
             errors.add("Not valid Java code: missing statements, braces, or semicolons");
         }
         if (countChar(code, '{') != countChar(code, '}')) {
@@ -62,13 +65,9 @@ public class AstCompiler {
     }
 
     private void validatePythonSyntax(String code, List<String> errors) {
-        if (code.contains("def ") && code.contains(":")) {
-            int indent = 0;
-            for (String line : code.split("\n")) {
-                if (line.trim().isEmpty() || line.trim().startsWith("#")) continue;
-                int leading = line.length() - line.stripLeading().length();
-                if (leading > 0 && indent == 0) indent = leading;
-            }
+        // Python uses no braces; only flag obviously empty patches.
+        if (code.lines().filter(l -> !l.trim().isEmpty() && !l.trim().startsWith("#")).toList().isEmpty()) {
+            errors.add("No executable Python statements found");
         }
     }
 

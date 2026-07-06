@@ -42,7 +42,8 @@ public class VulnAnalysisCapability implements Capability<String> {
             PromptTemplate template = promptRepo.findByCapability(CodexCapability.VULN_ANALYSIS, request.getLanguage());
             CodexContext ctx = buildContext(request);
             CodexClient client = codeModelClient.isAvailable() ? codeModelClient : llmModelClient;
-            String response = client.execute(ctx, template.getSystemPrompt(), template.getUserPromptTemplate());
+            String userPrompt = fillPrompt(template.getUserPromptTemplate(), request);
+            String response = client.execute(ctx, template.getSystemPrompt(), userPrompt);
             Duration duration = Duration.ofMillis(System.currentTimeMillis() - start);
             return CodexResponse.success(response, duration, ctx.getModel());
         } catch (Exception e) {
@@ -53,13 +54,26 @@ public class VulnAnalysisCapability implements Capability<String> {
     }
 
     private CodexContext buildContext(CodexRequest request) {
-        CodexProperties.ApiModelConfig cfg = props.getApi().getCodeModel();
+        CodexProperties.ApiModelConfig cfg = props.getCodeModel();
         CodexContext ctx = new CodexContext();
-        ctx.setApiKey(cfg.getApiKey());
-        ctx.setEndpoint(cfg.getEndpoint());
         ctx.setModel(cfg.getModel());
         ctx.setTimeoutSeconds(request.getTimeout() != null
             ? (int) request.getTimeout().getSeconds() : cfg.getTimeoutSeconds());
         return ctx;
+    }
+
+    private String fillPrompt(String template, CodexRequest req) {
+        String frameworkProtection = (req.getExtra() != null && req.getExtra().containsKey("frameworkProtection"))
+            ? req.getExtra().get("frameworkProtection") : "N/A";
+        return template
+            .replace("{language}", req.getLanguage() != null ? req.getLanguage() : "unknown")
+            .replace("{file_path}", req.getFilePath() != null ? req.getFilePath() : "unknown")
+            .replace("{line_start}", String.valueOf(req.getLineStart()))
+            .replace("{line_end}", String.valueOf(req.getLineEnd()))
+            .replace("{code_snippet}", req.getCodeSnippet() != null ? req.getCodeSnippet() : "")
+            .replace("{call_chain}", req.getCallChain() != null ? req.getCallChain() : "N/A")
+            .replace("{data_source}", req.getDataSource() != null ? req.getDataSource() : "N/A")
+            .replace("{reachable}", String.valueOf(req.isReachable()))
+            .replace("{framework_protection}", frameworkProtection);
     }
 }

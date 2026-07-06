@@ -104,10 +104,8 @@ public class FalsePositiveBenchmark {
     }
 
     private CodexContext buildContext() {
-        CodexProperties.ApiModelConfig cfg = props.getApi().getLlmModel();
+        CodexProperties.ApiModelConfig cfg = props.getLlmModel();
         CodexContext ctx = new CodexContext();
-        ctx.setApiKey(cfg.getApiKey());
-        ctx.setEndpoint(cfg.getEndpoint());
         ctx.setModel(cfg.getModel());
         ctx.setTimeoutSeconds(cfg.getTimeoutSeconds());
         return ctx;

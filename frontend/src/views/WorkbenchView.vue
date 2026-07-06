@@ -403,6 +403,7 @@ function onCollapseChange(keys: string[]): void {
         :ai-generated-patch="vuln.aiGeneratedPatch"
         :original-code="vuln?.codeSnippet"
         :language="detectLanguage(vuln?.filePath)"
+        @retry="runAiAnalysis"
       />
       <div v-else class="cs-workbench__aiLoading">
         <p style="color: var(--cs-text-tertiary)">Analysis returned no result</p>

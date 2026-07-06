@@ -33,7 +33,7 @@ class PocGenerationCapabilityTest {
         PromptRepository repo = new PromptRepository(loader);
         props = new CodexProperties();
         props.getCapabilities().setPocGeneration(true);
-        SandboxVerifier verifier = new SimulatedSandboxVerifier(true);
+        SandboxVerifier verifier = new SimulatedSandboxVerifier();
         capability = new PocGenerationCapability(mockClient, repo, props, verifier);
     }
 

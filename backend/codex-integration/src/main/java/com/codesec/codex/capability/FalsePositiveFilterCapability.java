@@ -42,7 +42,8 @@ public class FalsePositiveFilterCapability implements Capability<String> {
             PromptTemplate template = promptRepo.findByCapability(CodexCapability.FALSE_POSITIVE_FILTER);
             CodexContext ctx = buildContext(request);
             CodexClient client = codeModelClient.isAvailable() ? codeModelClient : llmModelClient;
-            String response = client.execute(ctx, template.getSystemPrompt(), template.getUserPromptTemplate());
+            String userPrompt = fillPrompt(template.getUserPromptTemplate(), request);
+            String response = client.execute(ctx, template.getSystemPrompt(), userPrompt);
             Duration duration = Duration.ofMillis(System.currentTimeMillis() - start);
             return CodexResponse.success(response, duration, ctx.getModel());
         } catch (Exception e) {
@@ -53,12 +54,34 @@ public class FalsePositiveFilterCapability implements Capability<String> {
     }
 
     private CodexContext buildContext(CodexRequest request) {
-        CodexProperties.ApiModelConfig cfg = props.getApi().getCodeModel();
+        CodexProperties.ApiModelConfig cfg = props.getCodeModel();
         CodexContext ctx = new CodexContext();
-        ctx.setApiKey(cfg.getApiKey());
-        ctx.setEndpoint(cfg.getEndpoint());
         ctx.setModel(cfg.getModel());
         ctx.setTimeoutSeconds(cfg.getTimeoutSeconds());
         return ctx;
+    }
+
+    private String fillPrompt(String template, CodexRequest req) {
+        String frameworkProtection = (req.getExtra() != null && req.getExtra().containsKey("frameworkProtection"))
+            ? req.getExtra().get("frameworkProtection") : "N/A";
+        String ruleId = (req.getExtra() != null && req.getExtra().containsKey("ruleId"))
+            ? req.getExtra().get("ruleId") : "";
+        String title = (req.getExtra() != null && req.getExtra().containsKey("title"))
+            ? req.getExtra().get("title") : "";
+        String severity = (req.getExtra() != null && req.getExtra().containsKey("severity"))
+            ? req.getExtra().get("severity") : "";
+        return template
+            .replace("{rule_id}", ruleId)
+            .replace("{title}", title)
+            .replace("{severity}", severity)
+            .replace("{file_path}", req.getFilePath() != null ? req.getFilePath() : "unknown")
+            .replace("{line_start}", String.valueOf(req.getLineStart()))
+            .replace("{line_end}", String.valueOf(req.getLineEnd()))
+            .replace("{language}", req.getLanguage() != null ? req.getLanguage() : "unknown")
+            .replace("{code_snippet}", req.getCodeSnippet() != null ? req.getCodeSnippet() : "")
+            .replace("{call_chain}", req.getCallChain() != null ? req.getCallChain() : "N/A")
+            .replace("{data_source}", req.getDataSource() != null ? req.getDataSource() : "N/A")
+            .replace("{reachable}", String.valueOf(req.isReachable()))
+            .replace("{framework_protection}", frameworkProtection);
     }
 }
