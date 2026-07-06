@@ -1,7 +1,8 @@
 package com.codesec.api.module.repo;
 
-import com.codesec.api.module.repo.dto.*;
-import com.codesec.api.interfaces.dto.PaginatedResult;
+import com.codesec.domain.dto.*;
+import com.codesec.domain.dto.PaginatedResult;
+import com.codesec.domain.service.repo.RepoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -1,7 +1,7 @@
 package com.codesec.api.module.admin;
 
-import com.codesec.api.domain.entity.RepoEntity;
-import com.codesec.api.domain.repository.RepoRepository;
+import com.codesec.domain.entity.RepoEntity;
+import com.codesec.domain.repository.RepoRepository;
 import com.codesec.common.crypto.CryptoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

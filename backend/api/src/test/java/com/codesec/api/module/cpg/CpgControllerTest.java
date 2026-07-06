@@ -1,7 +1,7 @@
 package com.codesec.api.module.cpg;
 
-import com.codesec.api.domain.entity.VulnFindingEntity;
-import com.codesec.api.domain.repository.VulnFindingRepository;
+import com.codesec.domain.entity.VulnFindingEntity;
+import com.codesec.domain.repository.VulnFindingRepository;
 import com.codesec.api.module.cpg.dto.CpgResponse;
 import com.codesec.engine.judge.CpgService;
 import org.junit.jupiter.api.Test;

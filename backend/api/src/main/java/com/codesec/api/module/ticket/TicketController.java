@@ -1,7 +1,8 @@
 package com.codesec.api.module.ticket;
 
-import com.codesec.api.module.ticket.dto.*;
-import com.codesec.api.interfaces.dto.PaginatedResult;
+import com.codesec.domain.dto.*;
+import com.codesec.domain.dto.PaginatedResult;
+import com.codesec.domain.service.ticket.TicketService;
 import com.codesec.api.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

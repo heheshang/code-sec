@@ -1,7 +1,7 @@
 package com.codesec.api.e2e;
 
-import com.codesec.api.domain.entity.*;
-import com.codesec.api.domain.repository.*;
+import com.codesec.domain.entity.*;
+import com.codesec.domain.repository.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

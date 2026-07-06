@@ -1,14 +1,14 @@
 package com.codesec.api.security;
 
-import com.codesec.api.domain.entity.PermissionEntity;
-import com.codesec.api.domain.entity.RoleEntity;
-import com.codesec.api.domain.entity.UserEntity;
-import com.codesec.api.domain.entity.UserRoleEntity;
-import com.codesec.api.domain.repository.PermissionRepository;
-import com.codesec.api.domain.repository.RolePermissionRepository;
-import com.codesec.api.domain.repository.RoleRepository;
-import com.codesec.api.domain.repository.UserRepository;
-import com.codesec.api.domain.repository.UserRoleRepository;
+import com.codesec.domain.entity.PermissionEntity;
+import com.codesec.domain.entity.RoleEntity;
+import com.codesec.domain.entity.UserEntity;
+import com.codesec.domain.entity.UserRoleEntity;
+import com.codesec.domain.repository.PermissionRepository;
+import com.codesec.domain.repository.RolePermissionRepository;
+import com.codesec.domain.repository.RoleRepository;
+import com.codesec.domain.repository.UserRepository;
+import com.codesec.domain.repository.UserRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;

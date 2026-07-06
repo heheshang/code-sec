@@ -1,6 +1,6 @@
 package com.codesec.api.config;
 
-import com.codesec.api.domain.repository.UserRepository;
+import com.codesec.domain.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
@@ -52,15 +52,17 @@ public class TestDataInitializer implements CommandLineRunner {
             {"ticket:close","ticket","close"},{"ticket:retest","ticket","retest"},{"ticket:waive","ticket","waive"},
             {"rule:read","rule","read"},{"rule:create","rule","create"},{"rule:update","rule","update"},
             {"rule:delete","rule","delete"},{"rule:gray_release","rule","gray_release"},
-            {"report:read","report","read"},{"webhook:receive","webhook","receive"},{"internal:vuln-index","internal","vuln-index"}
+            {"report:read","report","read"},{"webhook:receive","webhook","receive"},{"internal:vuln-index","internal","vuln-index"},
+            {"admin:crypto","admin","crypto"},{"admin:benchmark","admin","benchmark"},
+            {"dashboard:read","dashboard","read"},{"cpg:read","cpg","read"}
         };
         for (int i = 0; i < perms.length; i++) {
             em.createNativeQuery("INSERT INTO permission (id, name, resource, action) VALUES (" + (i + 1) + ", '" + perms[i][0] + "', '" + perms[i][1] + "', '" + perms[i][2] + "')")
                 .executeUpdate();
         }
 
-        // Assign SUPER_ADMIN (role_id=1) -> all 26 permissions
-        for (long pid = 1; pid <= 26; pid++) {
+        // Assign SUPER_ADMIN (role_id=1) -> all 30 permissions
+        for (long pid = 1; pid <= 30; pid++) {
             em.createNativeQuery("INSERT INTO role_permission (role_id, permission_id) VALUES (1, " + pid + ")").executeUpdate();
         }
 

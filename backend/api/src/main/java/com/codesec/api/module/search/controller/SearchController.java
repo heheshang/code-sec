@@ -1,11 +1,11 @@
 package com.codesec.api.module.search.controller;
 
-import com.codesec.api.module.search.dto.SearchRequest;
-import com.codesec.api.module.search.dto.SearchResponse;
-import com.codesec.api.module.search.model.SnippetDocument;
-import com.codesec.api.module.search.model.VulnDocument;
-import com.codesec.api.module.search.service.SnippetSearchService;
-import com.codesec.api.module.search.service.VulnSearchService;
+import com.codesec.domain.dto.SearchRequest;
+import com.codesec.domain.dto.SearchResponse;
+import com.codesec.domain.model.SnippetDocument;
+import com.codesec.domain.model.VulnDocument;
+import com.codesec.domain.service.search.SnippetSearchService;
+import com.codesec.domain.service.search.VulnSearchService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

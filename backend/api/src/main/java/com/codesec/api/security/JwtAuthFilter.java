@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.*;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -39,7 +41,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Set<String> permissions = permList != null ? new HashSet<>(permList) : Set.of();
 
             UserPrincipal principal = new UserPrincipal(userId, username, role, permissions);
-            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            // Map role + permissions into Spring authorities so both
+            // hasAuthority('perm:action') and hasRole('ROLE_X') work.
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+            authorities.addAll(permissions.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList()));
 
             UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(principal, null, authorities);

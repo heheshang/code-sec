@@ -4,16 +4,19 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "codex")
 public class CodexProperties {
-    private boolean enabled = true;
-    private int maxConcurrency = 20;
-    private int perRequestTimeoutSeconds = 30;
-    private ApiModelConfig codeModel = new ApiModelConfig();
-    private ApiModelConfig llmModel = new ApiModelConfig();
-    private CapabilitiesConfig capabilities = new CapabilitiesConfig();
+   private boolean enabled = true;
+   private boolean benchmarksEnabled = false;
+   private int maxConcurrency = 20;
+   private int perRequestTimeoutSeconds = 30;
+   private ApiModelConfig codeModel = new ApiModelConfig();
+   private ApiModelConfig llmModel = new ApiModelConfig();
+   private CapabilitiesConfig capabilities = new CapabilitiesConfig();
 
-    public boolean isEnabled() { return enabled; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public int getMaxConcurrency() { return maxConcurrency; }
+   public boolean isEnabled() { return enabled; }
+   public void setEnabled(boolean enabled) { this.enabled = enabled; }
+   public boolean isBenchmarksEnabled() { return benchmarksEnabled; }
+   public void setBenchmarksEnabled(boolean benchmarksEnabled) { this.benchmarksEnabled = benchmarksEnabled; }
+   public int getMaxConcurrency() { return maxConcurrency; }
     public void setMaxConcurrency(int maxConcurrency) { this.maxConcurrency = maxConcurrency; }
     public int getPerRequestTimeoutSeconds() { return perRequestTimeoutSeconds; }
     public void setPerRequestTimeoutSeconds(int perRequestTimeoutSeconds) { this.perRequestTimeoutSeconds = perRequestTimeoutSeconds; }

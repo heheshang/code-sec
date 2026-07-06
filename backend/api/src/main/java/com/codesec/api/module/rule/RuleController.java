@@ -1,7 +1,8 @@
 package com.codesec.api.module.rule;
 
-import com.codesec.api.interfaces.dto.PaginatedResult;
-import com.codesec.api.module.rule.dto.*;
+import com.codesec.domain.dto.PaginatedResult;
+import com.codesec.domain.dto.*;
+import com.codesec.domain.service.rule.RuleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;

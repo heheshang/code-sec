@@ -1,5 +1,7 @@
 package com.codesec.api.module.ai;
 
+import com.codesec.domain.service.ai.AiAnalysisResult;
+import com.codesec.domain.service.ai.AiAnalysisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

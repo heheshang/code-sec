@@ -1,7 +1,7 @@
 package com.codesec.api.module.cpg;
 
-import com.codesec.api.domain.entity.VulnFindingEntity;
-import com.codesec.api.domain.repository.VulnFindingRepository;
+import com.codesec.domain.entity.VulnFindingEntity;
+import com.codesec.domain.repository.VulnFindingRepository;
 import com.codesec.api.module.cpg.dto.CpgResponse;
 import com.codesec.api.module.cpg.dto.CpgResponse.CpgNode;
 import com.codesec.api.module.cpg.dto.CpgResponse.CpgEdge;
@@ -13,6 +13,7 @@ import org.neo4j.driver.Values;
 import org.neo4j.driver.types.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +23,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/cpg")
+@PreAuthorize("@perm.check('cpg:read')")
 public class CpgController {
 
     private static final Logger log = LoggerFactory.getLogger(CpgController.class);

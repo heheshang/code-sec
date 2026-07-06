@@ -1,10 +1,10 @@
 package com.codesec.worker;
 
-import com.codesec.api.domain.entity.RepoEntity;
-import com.codesec.api.domain.entity.ScanTaskEntity;
-import com.codesec.api.domain.repository.RepoRepository;
-import com.codesec.api.domain.repository.ScanTaskRepository;
-import com.codesec.api.module.vuln.VulnService;
+import com.codesec.domain.entity.RepoEntity;
+import com.codesec.domain.entity.ScanTaskEntity;
+import com.codesec.domain.repository.RepoRepository;
+import com.codesec.domain.repository.ScanTaskRepository;
+import com.codesec.domain.service.VulnService;
 import com.codesec.engine.model.Finding;
 import com.codesec.engineadapter.EngineAdapter;
 import com.codesec.engineadapter.EngineScanResult;

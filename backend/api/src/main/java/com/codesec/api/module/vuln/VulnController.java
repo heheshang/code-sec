@@ -1,7 +1,8 @@
 package com.codesec.api.module.vuln;
 
-import com.codesec.api.module.vuln.dto.*;
-import com.codesec.api.interfaces.dto.PaginatedResult;
+import com.codesec.domain.dto.*;
+import com.codesec.domain.dto.PaginatedResult;
+import com.codesec.domain.service.VulnService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

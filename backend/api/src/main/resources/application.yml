@@ -31,6 +31,8 @@ codesec:
     expiration: 86400000  # 24h in ms
   engine:
     sandbox: false
+  internal:
+    secret: ${CODESEC_INTERNAL_SECRET:}  # shared secret for /api/v1/internal/** endpoints
 
   cpg:
     enabled: true
@@ -40,6 +42,7 @@ codesec:
 
 codex:
   enabled: true
+  benchmarks-enabled: false  # benchmark endpoints require explicit opt-in
   max-concurrency: 20
   per-request-timeout-seconds: 120
   code-model:

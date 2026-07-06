@@ -1,6 +1,6 @@
 package com.codesec.api.config;
 
-import com.codesec.api.module.ticket.statemachine.IllegalStateTransitionException;
+import com.codesec.domain.service.ticket.statemachine.IllegalStateTransitionException;
 import com.codesec.common.crypto.CryptoException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

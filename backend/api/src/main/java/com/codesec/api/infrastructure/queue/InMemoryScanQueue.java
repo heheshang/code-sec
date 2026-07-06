@@ -1,6 +1,6 @@
 package com.codesec.api.infrastructure.queue;
 
-import com.codesec.api.domain.entity.ScanTaskEntity;
+import com.codesec.domain.entity.ScanTaskEntity;
 import org.springframework.stereotype.Component;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

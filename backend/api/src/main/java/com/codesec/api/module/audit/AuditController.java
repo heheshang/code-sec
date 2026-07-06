@@ -1,6 +1,7 @@
 package com.codesec.api.module.audit;
 
-import com.codesec.api.module.audit.dto.*;
+import com.codesec.domain.dto.*;
+import com.codesec.domain.service.audit.AuditService;
 import com.codesec.api.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

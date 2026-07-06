@@ -1,9 +1,9 @@
 package com.codesec.api.security;
 
-import com.codesec.api.domain.entity.OperationLogEntity;
-import com.codesec.api.domain.repository.OperationLogRepository;
-import com.codesec.api.domain.repository.PermissionRepository;
-import com.codesec.api.domain.repository.UserRepository;
+import com.codesec.domain.entity.OperationLogEntity;
+import com.codesec.domain.repository.OperationLogRepository;
+import com.codesec.domain.repository.PermissionRepository;
+import com.codesec.domain.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;

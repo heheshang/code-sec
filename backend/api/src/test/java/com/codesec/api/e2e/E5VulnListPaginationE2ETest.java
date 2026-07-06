@@ -1,7 +1,7 @@
 package com.codesec.api.e2e;
 
-import com.codesec.api.domain.entity.VulnFindingEntity;
-import com.codesec.api.domain.repository.VulnFindingRepository;
+import com.codesec.domain.entity.VulnFindingEntity;
+import com.codesec.domain.repository.VulnFindingRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
