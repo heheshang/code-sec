@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@SpringBootApplication(scanBasePackages = {"com.codesec.api", "com.codesec.common", "com.codesec.search"})
+@SpringBootApplication(scanBasePackages = {"com.codesec.api", "com.codesec.common"})
 @EnableAspectJAutoProxy
 @EnableAsync
 public class ApiApplication {

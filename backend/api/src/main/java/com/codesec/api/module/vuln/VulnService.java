@@ -4,11 +4,10 @@ import com.codesec.api.domain.entity.*;
 import com.codesec.api.domain.repository.*;
 import com.codesec.api.interfaces.dto.PaginatedResult;
 import com.codesec.api.module.vuln.dto.*;
-import com.codesec.api.application.event.VulnIndexedEvent;
 import com.codesec.engine.model.Finding;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +21,6 @@ import java.util.*;
 public class VulnService {
     private final VulnFindingRepository vulnRepo;
     private final VulnTicketRepository ticketRepo;
-    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Batch-persist findings from engine scan. Called synchronously by EngineAdapterImpl.
@@ -30,9 +28,8 @@ public class VulnService {
      * Internal steps:
      * 1. Map Finding → VulnFindingEntity
      * 2. Deduplicate by dedup_key
-     * 3. Insert vuln_finding rows
+     * 3. Insert vuln_finding rows (tsvector auto-maintained by PG trigger)
      * 4. Auto-create vuln_ticket for each (status=PENDING_AUDIT)
-     * 5. Publish VulnIndexedEvent for ES indexing
      *
      * @return list of persisted VulnFindingEntity records
      */
@@ -86,9 +83,6 @@ public class VulnService {
         }
 
         log.info("Persisted {} new findings ({} deduplicated)", saved.size(), findings.size() - saved.size());
-
-        // Publish event for ES indexing (in-process, synchronous)
-        eventPublisher.publishEvent(new VulnIndexedEvent(this, findings));
 
         return saved;
     }

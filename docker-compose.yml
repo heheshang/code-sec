@@ -16,30 +16,6 @@ services:
       retries: 10
     restart: unless-stopped
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
-    container_name: codesec-es
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms1g -Xmx2g"
-      - cluster.name=codesec-cluster
-      - bootstrap.memory_lock=true
-    ulimits:
-      memlock: { soft: -1, hard: -1 }
-      nofile: { soft: 65536, hard: 65536 }
-    ports:
-      - "9200:9200"
-    volumes:
-      - es-data:/usr/share/elasticsearch/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'green\\|yellow'"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 60s
-    restart: unless-stopped
-
   backend-api:
     build:
       context: .
@@ -51,10 +27,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-codesec}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-codesec123}
       JWT_SECRET: ${JWT_SECRET:-codesec-demo-secret-key-2026}
-      ES_HOST: elasticsearch:9200
     depends_on:
       postgres: { condition: service_healthy }
-      elasticsearch: { condition: service_healthy }
 
   backend-worker:
     build:
@@ -67,7 +41,6 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-codesec}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-codesec123}
       JWT_SECRET: ${JWT_SECRET:-codesec-demo-secret-key-2026}
-      ES_HOST: elasticsearch:9200
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -82,4 +55,3 @@ services:
 
 volumes:
   postgres-data:
-  es-data:

@@ -26,7 +26,7 @@
 
         <!-- dependency versions (explicit overrides for non-BOM-managed deps) -->
         <jjwt.version>0.12.6</jjwt.version>
-        <springdoc.version>2.8.6</springdoc.version>
+        <springdoc.version>3.0.3</springdoc.version>
         <flyway.version>11.6.0</flyway.version>
         <testcontainers.version>1.20.6</testcontainers.version>
         <wiremock.version>3.9.2</wiremock.version>
@@ -40,7 +40,6 @@
         <module>engine-adapter</module>
         <module>worker</module>
         <module>gitlab-integration</module>
-        <module>es-integration</module>
         <module>codex-integration</module>
     </modules>
 
@@ -77,11 +76,6 @@
             <dependency>
                 <groupId>com.codesec</groupId>
                 <artifactId>gitlab-integration</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.codesec</groupId>
-                <artifactId>code-sec-backend-es-integration</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -142,12 +136,6 @@
                 <artifactId>junit-jupiter</artifactId>
                 <version>${testcontainers.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>elasticsearch</artifactId>
-                <version>${testcontainers.version}</version>
-            </dependency>
-
             <!-- WireMock -->
             <dependency>
                 <groupId>org.wiremock</groupId>

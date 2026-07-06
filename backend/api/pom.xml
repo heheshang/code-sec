@@ -26,10 +26,6 @@
         </dependency>
         <dependency>
             <groupId>com.codesec</groupId>
-            <artifactId>code-sec-backend-es-integration</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.codesec</groupId>
             <artifactId>code-sec-backend-codex-integration</artifactId>
         </dependency>
 
