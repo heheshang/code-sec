@@ -43,12 +43,12 @@ codex:
   max-concurrency: 20
   per-request-timeout-seconds: 120
   code-model:
-    model: ${CODEX_CODE_MODEL:gpt-4o}
+    model: ${CODEX_CODE_MODEL:qwen3-coder-plus}
     max-tokens: 4096
     temperature: 0.1
     timeout-seconds: 120
   llm-model:
-    model: ${CODEX_LLM_MODEL:gpt-4o}
+    model: ${CODEX_LLM_MODEL:qwen3-coder-plus}
     max-tokens: 8192
     temperature: 0.3
     timeout-seconds: 120

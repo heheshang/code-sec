@@ -25,10 +25,10 @@ public class CodexProperties {
     public void setCapabilities(CapabilitiesConfig capabilities) { this.capabilities = capabilities; }
 
     public static class ApiModelConfig {
-        private String model = "gpt-4o";
+        private String model = "qwen3-coder-plus";
         private int maxTokens = 4096;
         private double temperature = 0.1;
-        private int timeoutSeconds = 60;
+        private int timeoutSeconds = 120;
 
         public String getModel() { return model; }
         public void setModel(String model) { this.model = model; }

@@ -1,6 +1,6 @@
 # CodeSec — Code Security Audit Platform
 
-CodeSec is an automated SAST (Static Application Security Testing) platform that scans source code for security vulnerabilities, judges exploitability via call-graph analysis, and provides a human-in-the-loop audit workbench for triage, remediation, and tracking.
+CodeSec is an automated SAST (Static Application Security Testing) platform that scans source code for security vulnerabilities, judges exploitability via call-graph analysis (BFS reachability, taint tracking, framework protection detection), and provides a human-in-the-loop audit workbench for triage, remediation, and tracking. CPG visualization is optional via Neo4j.
 
 ## Architecture
 
@@ -79,18 +79,25 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
 │              GitLab Integration                       │
 │  Webhook Receiver → MR Diff Scan → Comment Reporter  │
 └──────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────┐
+│              Neo4j (Optional)                         │
+│  CPG visualization storage — bolt://localhost:7687    │
+│  Populated manually via POST /api/v1/cpg/demo/{id}   │
+└──────────────────────────────────────────────────────┘
 ```
 
 ### Module Map
 
 | Module | Responsibility | Tech Stack |
 |--------|---------------|------------|
-| **`backend/api`** | REST API — 11 domain modules: auth, repo, scan, vuln, ticket, audit, webhook, rule, dashboard, export, admin | Spring Boot 3 / JPA / Flyway / PostgreSQL |
-| **`backend/engine`** | SAST scan engine — AST parsing, rule-based detection, call-graph analysis, exploitability judgment, multi-language extension (Go, Python) | Java 17, JavaParser, tree-sitter |
+| **`backend/api`** | REST API (port 8080) — 11 domain modules + CPG visualization endpoint | Spring Boot 3 / JPA / Flyway / PostgreSQL / Neo4j driver |
+| **`backend/engine`** | SAST scan engine — AST parsing, rule-based detection, call-graph analysis, exploitability judgment, multi-language (Go, Python) | Java 17, JavaParser, tree-sitter, Neo4j driver |
 | **`backend/engine-adapter`** | Abstraction layer decoupling `api` from `engine` — configurable engine routing | Spring |
 | **`backend/es-integration`** | Elasticsearch integration — vuln finding indexing, code snippet indexing, full-text search | Spring Data ES |
 | **`backend/gitlab-integration`** | GitLab webhook receiver, MR diff scanning, comment/note reporter | GitLab REST API |
-| **`backend/worker`** | Async scan queue consumer — processes scan tasks from the queue with improved error handling and tests | Spring Boot / ForkJoinPool |
+| **`backend/worker`** | Async scan queue consumer (port 8081) — processes scan tasks, exploitability judgment, CPG built in-memory only | Spring Boot / ForkJoinPool |
 | **`backend/common`** | Shared library — encryption (AES-GCM, KMS), base types, common utilities | Spring |
 | **`frontend`** | SPA audit workbench — 11 views, 20+ components, 7 Pinia stores, full-text search UI | Vue 3.4 / TypeScript / Vite / Element Plus / Pinia / CodeMirror 6 / ECharts |
 
@@ -100,6 +107,7 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
 backend/api/src/main/java/com/codesec/api/module/
 ├── admin/          — Admin operations
 ├── audit/          — Audit log queries & export
+├── cpg/            — Call graph visualization (Neo4j-backed, optional)
 ├── dashboard/      — Aggregated statistics (vuln distribution, fix rate, severity breakdown)
 ├── export/         — PDF report generation (OpenPDF)
 ├── internal/       — Internal/health endpoints
@@ -141,21 +149,22 @@ frontend/src/
 - Maven 3.8+
 - PostgreSQL 16
 - Elasticsearch 8.x (optional, search features degrade gracefully)
+- Neo4j 5.x (optional, CPG visualization only; exploitability judgment works in-memory without it)
 - Node.js 18+ (for frontend)
 
 ### Backend
 
 ```bash
 # Start infrastructure
-docker compose up -d postgres elasticsearch
+docker compose up -d postgres elasticsearch neo4j
 
 # Build all modules
 mvn clean install -f backend/pom.xml
 
-# Run API server
+# Run API server (terminal 1)
 mvn spring-boot:run -f backend/api/pom.xml
 
-# Run worker (separate terminal)
+# Run worker (terminal 2)
 mvn spring-boot:run -f backend/worker/pom.xml
 ```
 
@@ -182,6 +191,11 @@ docker compose up --build
 | `SPRING_DATASOURCE_PASSWORD` | `codesec123` | Database password |
 | `JWT_SECRET` | *(auto-generated)* | JWT signing key |
 | `ES_HOST` | `localhost:9200` | Elasticsearch host |
+| `NEO4J_URI` | `bolt://localhost:7687` | Neo4j bolt URI (CPG visualization) |
+| `NEO4J_USERNAME` | `neo4j` | Neo4j user |
+| `NEO4J_PASSWORD` | `admin123` | Neo4j password |
+| `CODEX_CODE_MODEL` | `gpt-4o` | LLM model for code analysis |
+| `CODEX_LLM_MODEL` | `gpt-4o` | LLM model for reasoning |
 
 ## Scan Pipeline
 
@@ -194,6 +208,8 @@ flowchart LR
     C --> D[Report]
     B -.-> E[Multi-Language]
     E -.-> B
+    C -.-> F[CPG Persist<br>Neo4j - Optional]
+    F -.-> G[Frontend<br>Visualization]
 ```
 
 ### 1. Parse
@@ -216,6 +232,8 @@ Rule-based detectors match vulnerability patterns across supported languages:
 - **Taint tracking** — user-controllable input propagation through method parameters
 - **Framework protection detection** — Spring Security annotations, ESAPI wrappers
 - **Input controllability scoring** — `exploitable` / `potentially_exploitable` / `not_exploitable`
+
+The call graph is built **in-memory** by `CallGraphBuilder` and shared across all three analyzers. Neo4j persistence (`buildAndPersist`) is available but not wired into the scan pipeline — CPG visualization data is populated manually via `POST /api/v1/cpg/demo/{vulnId}`.
 
 ### 4. Report
 Structured findings with: CWE/CVE identifiers, severity (Critical/High/Medium/Low), exploitability level, code snippet with line range, fix suggestion, and engine raw trace.
