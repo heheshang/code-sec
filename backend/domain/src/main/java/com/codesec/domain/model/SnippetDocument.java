@@ -19,6 +19,21 @@ public class SnippetDocument {
     @JsonProperty("line_start")
     private Integer lineStart;
 
+    @JsonProperty("line_end")
+    private Integer lineEnd;
+
+    @JsonProperty("severity")
+    private String severity;
+
+    @JsonProperty("cwe")
+    private String cwe;
+
+    @JsonProperty("exploitability")
+    private String exploitability;
+
+    @JsonProperty("title")
+    private String title;
+
     @JsonProperty("indexed_at")
     private String indexedAt;
 
@@ -39,6 +54,21 @@ public class SnippetDocument {
     public Integer getLineStart() { return lineStart; }
     public void setLineStart(Integer lineStart) { this.lineStart = lineStart; }
 
+    public Integer getLineEnd() { return lineEnd; }
+    public void setLineEnd(Integer lineEnd) { this.lineEnd = lineEnd; }
+
+    public String getSeverity() { return severity; }
+    public void setSeverity(String severity) { this.severity = severity; }
+
+    public String getCwe() { return cwe; }
+    public void setCwe(String cwe) { this.cwe = cwe; }
+
+    public String getExploitability() { return exploitability; }
+    public void setExploitability(String exploitability) { this.exploitability = exploitability; }
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+
     public String getIndexedAt() { return indexedAt; }
     public void setIndexedAt(String indexedAt) { this.indexedAt = indexedAt; }
 
@@ -51,6 +81,11 @@ public class SnippetDocument {
         public Builder language(String v) { doc.setLanguage(v); return this; }
         public Builder codeSnippet(String v) { doc.setCodeSnippet(v); return this; }
         public Builder lineStart(Integer v) { doc.setLineStart(v); return this; }
+        public Builder lineEnd(Integer v) { doc.setLineEnd(v); return this; }
+        public Builder severity(String v) { doc.setSeverity(v); return this; }
+        public Builder cwe(String v) { doc.setCwe(v); return this; }
+        public Builder exploitability(String v) { doc.setExploitability(v); return this; }
+        public Builder title(String v) { doc.setTitle(v); return this; }
         public Builder indexedAt(String v) { doc.setIndexedAt(v); return this; }
         public SnippetDocument build() { return doc; }
     }

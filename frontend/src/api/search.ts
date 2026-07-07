@@ -22,6 +22,11 @@ export interface SnippetSearchResult {
   language: string
   codeSnippet?: string
   lineStart?: number
+  lineEnd?: number
+  severity?: string
+  cwe?: string
+  exploitability?: string
+  title?: string
   indexedAt: string
 }
 

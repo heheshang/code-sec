@@ -56,6 +56,19 @@ export const useSearchStore = defineStore('search', () => {
 
   async function search(tab?: SearchTab): Promise<void> {
     const target = tab ?? activeTab.value
+    if (!query.value && !hasActiveFilters.value) {
+      if (target === 'vulns') {
+        vulnResults.value = []
+        vulnTotal.value = 0
+        vulnHighlights.value = {}
+        vulnTookMs.value = 0
+      } else {
+        snippetResults.value = []
+        snippetTotal.value = 0
+      }
+      return
+    }
+
     loading.value = true
     error.value = null
 

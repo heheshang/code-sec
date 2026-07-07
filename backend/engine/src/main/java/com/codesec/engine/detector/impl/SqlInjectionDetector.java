@@ -41,11 +41,12 @@ public final class SqlInjectionDetector extends AstDetector {
                 if (isSqlMethod(call)) {
                     for (Expression argExpr : call.getArguments()) {
                         if (isRiskySqlArg(argExpr, taintedVars)) {
-                            int line = call.getBegin().map(p -> p.line).orElse(0);
+                            int startLine = call.getBegin().map(p -> p.line).orElse(0);
+                            int endLine = call.getEnd().map(p -> p.line).orElse(startLine);
                             String snippet = call.toString();
                             String reason = "SQL method " + call.getNameAsString()
                                 + "() receives potentially untrusted input via string concatenation";
-                            matches.add(new AstMatch(line, line, snippet,
+                            matches.add(new AstMatch(startLine, endLine, snippet,
                                 rule.name(), reason));
                             break;
                         }

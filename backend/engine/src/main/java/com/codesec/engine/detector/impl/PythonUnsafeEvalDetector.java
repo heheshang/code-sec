@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -96,11 +97,17 @@ public final class PythonUnsafeEvalDetector implements Detector {
         return line;
     }
 
+    private static final int CONTEXT_LINES = 5;
+
+    private static String extractSnippetWithContext(String source, int lineNum) {
+        String[] lines = source.split("\n", -1);
+        int startIdx = Math.max(0, lineNum - 1 - CONTEXT_LINES);
+        int endIdx = Math.min(lines.length, lineNum + CONTEXT_LINES);
+        return String.join("\n", Arrays.copyOfRange(lines, startIdx, endIdx));
+    }
+
     private static String extractLine(String source, int position) {
-        int lineStart = position;
-        while (lineStart > 0 && source.charAt(lineStart - 1) != '\n') lineStart--;
-        int lineEnd = position;
-        while (lineEnd < source.length() && source.charAt(lineEnd) != '\n') lineEnd++;
-        return source.substring(lineStart, lineEnd).trim();
+        int lineNum = lineNumberOf(source, position);
+        return extractSnippetWithContext(source, lineNum);
     }
 }

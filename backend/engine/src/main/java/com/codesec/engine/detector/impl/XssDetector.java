@@ -39,11 +39,12 @@ public final class XssDetector extends AstDetector {
                 }
 
                 if (isXssSink(call) && hasTaintedInput(call, taintedVars)) {
-                    int line = call.getBegin().map(p -> p.line).orElse(0);
+                    int startLine = call.getBegin().map(p -> p.line).orElse(0);
+                    int endLine = call.getEnd().map(p -> p.line).orElse(startLine);
                     String snippet = call.toString();
                     String reason = "Untrusted input flows to HTTP response sink ("
                         + call.getNameAsString() + ") without sanitization";
-                    matches.add(new AstMatch(line, line, snippet, rule.name(), reason));
+                    matches.add(new AstMatch(startLine, endLine, snippet, rule.name(), reason));
                 }
 
                 super.visit(call, arg);

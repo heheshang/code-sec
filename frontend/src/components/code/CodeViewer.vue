@@ -2,7 +2,7 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { EditorView, basicSetup } from 'codemirror'
 import { EditorState, StateEffect, StateField } from '@codemirror/state'
-import { Decoration, type DecorationSet } from '@codemirror/view'
+import { Decoration, type DecorationSet, lineNumbers } from '@codemirror/view'
 import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { getLanguageExt } from '@/cm-setup'
@@ -26,6 +26,20 @@ const props = withDefaults(defineProps<Props>(), {
 const containerRef = ref<HTMLDivElement | null>(null)
 let view: EditorView | null = null
 
+/** Number of context lines above the vulnerable range the backend includes. */
+const CONTEXT_LINES = 5
+
+/**
+ * First file line number present in the current code snippet.
+ * The backend extracts lineStart-5 .. lineEnd+5, so the snippet starts at
+ * max(1, lineStart - CONTEXT_LINES). CodeMirror uses 0-indexed lines from
+ * the snippet start, so file line N corresponds to CM line N - snippetStartLine.
+ */
+const snippetStartLine = computed(() => {
+  if (props.vuln === null) return 1
+  return Math.max(1, props.vuln.lineStart - CONTEXT_LINES)
+})
+
 // --- Decoration infrastructure ---
 
 const addDeco = StateEffect.define<DecorationSet>()
@@ -46,11 +60,12 @@ const decoField = StateField.define<DecorationSet>({
 function buildDecoSet(vuln: Vuln): DecorationSet {
   const startLine = vuln.lineStart
   const endLine = vuln.lineEnd
+  const offset = snippetStartLine.value
   const decos: import('@codemirror/state').Range<Decoration>[] = []
 
   for (let line = startLine; line <= endLine; line++) {
     decos.push(
-      Decoration.line({ class: 'cs-cm-vuln-line' }).range(line - 1),
+      Decoration.line({ class: 'cs-cm-vuln-line' }).range(line - offset),
     )
   }
 
@@ -66,9 +81,10 @@ function applyDecos(): void {
   const decos = buildDecoSet(props.vuln)
   view.dispatch({ effects: addDeco.of(decos) })
 
-  // Scroll to first affected line
+  // Scroll to first affected line (CM line = file line - snippetStartLine)
+  const offset = snippetStartLine.value
   view.dispatch({
-    effects: EditorView.scrollIntoView(props.vuln.lineStart - 1, { y: 'center' }),
+    effects: EditorView.scrollIntoView(props.vuln.lineStart - offset, { y: 'center' }),
   })
 }
 
@@ -83,6 +99,7 @@ function buildExtensions(): import('@codemirror/state').Extension[] {
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     langExt.value,
     EditorView.editable.of(false),
+    lineNumbers({ formatNumber: (n) => String(snippetStartLine.value + n - 1) }),
     EditorView.theme({
       '&': {
         fontSize: '13px',

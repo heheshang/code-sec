@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,6 +17,9 @@ import java.util.regex.Pattern;
 
 public class RegexDetector implements Detector {
     private static final Logger log = LoggerFactory.getLogger(RegexDetector.class);
+
+    /** Number of surrounding lines to include in code snippet for context. */
+    protected static final int CONTEXT_LINES = 5;
 
     @Override
     public List<Finding> detect(ParsedFile file, Rule rule) {
@@ -77,14 +81,22 @@ public class RegexDetector implements Detector {
     }
 
     protected static String extractSnippet(String source, int start, int end) {
-        int lineStart = start;
-        while (lineStart > 0 && source.charAt(lineStart - 1) != '\n') {
-            lineStart--;
-        }
-        int lineEnd = end;
-        while (lineEnd < source.length() && source.charAt(lineEnd) != '\n') {
-            lineEnd++;
-        }
-        return source.substring(lineStart, lineEnd).trim();
+        int lineNum = lineNumberOf(source, start);
+        return extractSnippetWithContext(source, lineNum, lineNum, CONTEXT_LINES);
+    }
+
+    /**
+     * Extract a code snippet centered on the given line range with surrounding context lines.
+     *
+     * @param source       full file source code
+     * @param lineStart    1-based start line of the finding
+     * @param lineEnd      1-based end line of the finding
+     * @param contextLines number of extra lines to include above and below
+     */
+    protected static String extractSnippetWithContext(String source, int lineStart, int lineEnd, int contextLines) {
+        String[] lines = source.split("\n", -1);
+        int startIdx = Math.max(0, lineStart - 1 - contextLines);
+        int endIdx = Math.min(lines.length, lineEnd + contextLines);
+        return String.join("\n", Arrays.copyOfRange(lines, startIdx, endIdx));
     }
 }

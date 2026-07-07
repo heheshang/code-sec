@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { SnippetSearchResult } from '@/api/search'
+import SeverityTag from '@/components/vuln/SeverityTag.vue'
 
-defineProps<{
+const props = defineProps<{
   item: SnippetSearchResult
 }>()
 
@@ -14,6 +16,29 @@ const languageType: Record<string, string> = {
   php: 'danger',
   csharp: 'success',
 }
+
+const severity = computed(() => {
+  const s = props.item.severity
+  if (s === 'critical' || s === 'high' || s === 'medium' || s === 'low' || s === 'info') return s
+  return undefined
+})
+
+const lineLabel = computed(() => {
+  if (props.item.lineEnd && props.item.lineEnd !== props.item.lineStart) {
+    return `L${props.item.lineStart}–L${props.item.lineEnd}`
+  }
+  if (props.item.lineStart != null) return `L${props.item.lineStart}`
+  return ''
+})
+
+const exploitTag = computed(() => {
+  switch (props.item.exploitability) {
+    case 'exploitable': return { type: 'danger' as const, label: 'Exploitable' }
+    case 'not_exploitable': return { type: 'info' as const, label: 'Not exploitable' }
+    case 'potentially_exploitable': return { type: 'warning' as const, label: 'Potentially' }
+    default: return null
+  }
+})
 </script>
 
 <template>
@@ -22,7 +47,15 @@ const languageType: Record<string, string> = {
       <el-tag :type="(languageType[item.language] as any) ?? ''" size="small">
         {{ item.language }}
       </el-tag>
-      <span v-if="item.lineStart != null" class="cs-snippet-result__line">Line {{ item.lineStart }}</span>
+      <SeverityTag v-if="severity" :severity="severity" size="sm" />
+      <el-tag v-if="item.cwe" type="danger" size="small">{{ item.cwe }}</el-tag>
+      <el-tag v-if="exploitTag" :type="exploitTag.type" size="small" effect="plain">
+        {{ exploitTag.label }}
+      </el-tag>
+      <span class="cs-snippet-result__line">{{ lineLabel }}</span>
+    </div>
+    <div v-if="item.title" class="cs-snippet-result__title">
+      {{ item.title }}
     </div>
     <div class="cs-snippet-result__path">
       <code>{{ item.filePath }}</code>
@@ -48,10 +81,18 @@ const languageType: Record<string, string> = {
   border-color: var(--cs-color-primary);
 }
 .cs-snippet-result__header {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cs-snippet-result__title {
+  font-size: var(--cs-font-size-sm);
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
 }
 .cs-snippet-result__line {
   font-size: var(--cs-font-size-xs);

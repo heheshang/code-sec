@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   code?: string
   language?: string
   highlightLines?: [number, number]
-}>()
+  /** Actual file line number where this snippet starts (for correct gutter numbering). */
+  startLine?: number
+}>(), { startLine: 1 })
 
 const editorRef = ref<HTMLDivElement | null>(null)
 const codeLines = ref<string[]>([])
@@ -31,7 +33,7 @@ watch(
     <div ref="editorRef" class="cs-code-panel-editor">
       <div class="cs-code-gutter">
         <div v-for="(_, i) in codeLines" :key="i" class="cs-code-line-num">
-          {{ i + 1 }}
+          {{ startLine + i }}
         </div>
       </div>
       <div class="cs-code-content">
@@ -42,8 +44,8 @@ watch(
           :class="{
             highlight:
               highlightLines &&
-              i + 1 >= highlightLines[0] &&
-              i + 1 <= highlightLines[1],
+              startLine + i >= highlightLines[0] &&
+              startLine + i <= highlightLines[1],
           }"
         >
           {{ line || ' ' }}
@@ -53,9 +55,9 @@ watch(
 
     <div class="cs-code-panel-footer">
       <span class="cs-code-panel-info">
-        {{ codeLines.length }} lines
+        L{{ startLine }}–L{{ startLine + codeLines.length - 1 }}
         <template v-if="highlightLines">
-          · L{{ highlightLines[0] }}-L{{ highlightLines[1] }}
+          · vulnerable L{{ highlightLines[0] }}–L{{ highlightLines[1] }}
         </template>
       </span>
     </div>

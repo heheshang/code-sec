@@ -5,6 +5,8 @@ import VulnListSidebar from './VulnListSidebar.vue'
 import CodeMainPanel from './CodeMainPanel.vue'
 import ActionRightPanel from './ActionRightPanel.vue'
 
+const CONTEXT_LINES = 5
+
 const props = withDefaults(defineProps<{
   vulns?: Array<{
     id: string
@@ -13,6 +15,8 @@ const props = withDefaults(defineProps<{
     filePath: string
     codeSnippet?: string
     language?: string
+    lineStart?: number
+    lineEnd?: number
     status?: string
     aiVerdict?: string
     aiConfidence?: number
@@ -31,6 +35,18 @@ const layout = useWorkbenchLayout()
 const selectedVuln = computed(() =>
   props.vulns.find((v) => v.id === props.selectedVulnId)
 )
+
+const snippetStartLine = computed(() => {
+  const v = selectedVuln.value
+  if (!v?.lineStart) return 1
+  return Math.max(1, v.lineStart - CONTEXT_LINES)
+})
+
+const highlightLines = computed<[number, number] | undefined>(() => {
+  const v = selectedVuln.value
+  if (!v?.lineStart) return undefined
+  return [v.lineStart, v.lineEnd ?? v.lineStart]
+})
 </script>
 
 <template>
@@ -55,6 +71,8 @@ const selectedVuln = computed(() =>
         v-if="selectedVuln"
         :code="selectedVuln.codeSnippet"
         :language="selectedVuln.language"
+        :start-line="snippetStartLine"
+        :highlight-lines="highlightLines"
       />
       <el-empty v-else description="Select a vulnerability to review" />
     </div>

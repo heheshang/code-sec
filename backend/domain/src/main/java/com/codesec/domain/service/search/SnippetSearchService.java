@@ -103,12 +103,12 @@ public class SnippetSearchService {
         int offset = (request.getPage() - 1) * pageSize;
         paramIdx = params.size();
 
-        String headlineExpr;
+        String snippetExpr;
         if (contentSearch) {
             int hlPos = 1;
-            headlineExpr = ", ts_headline('codesec_cfg', v.code_snippet, plainto_tsquery('codesec_cfg', ?" + hlPos + "), 'MaxWords=30,MinWords=15,StartSel=<em>,StopSel=</em>') as snippet_headline";
+            snippetExpr = ", COALESCE(ts_headline('codesec_cfg', v.code_snippet, plainto_tsquery('codesec_cfg', ?" + hlPos + "), 'MaxWords=30,MinWords=15,StartSel=<em>,StopSel=</em>'), v.code_snippet) as snippet_content";
         } else {
-            headlineExpr = ", NULL::text as snippet_headline";
+            snippetExpr = ", v.code_snippet as snippet_content";
         }
 
         String langCase = "CASE" +
@@ -140,11 +140,12 @@ public class SnippetSearchService {
         params.add(offset);
 
         String dataSql = "SELECT DISTINCT v.file_path, v.project_id," +
-                        langCase + " as language, v.line_start" +
-                        headlineExpr +
+                        langCase + " as language, v.line_start, v.line_end," +
+                        " v.severity, v.cwe, v.exploitability, v.title" +
+                        snippetExpr +
                         ", to_char(v.discovered_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as indexed_at" +
                         " FROM vuln_finding v" + where +
-                        " ORDER BY v.file_path" +
+                        " ORDER BY v.severity DESC, v.file_path" +
                         " LIMIT ?" + limitPos + " OFFSET ?" + offsetPos;
 
         Query dataQuery = entityManager.createNativeQuery(dataSql);
@@ -178,6 +179,11 @@ public class SnippetSearchService {
         doc.setProjectId(row[i] != null ? row[i].toString() : null); i++;
         doc.setLanguage((String) row[i++]);
         doc.setLineStart(row[i] != null ? ((Number) row[i]).intValue() : null); i++;
+        doc.setLineEnd(row[i] != null ? ((Number) row[i]).intValue() : null); i++;
+        doc.setSeverity((String) row[i++]);
+        doc.setCwe((String) row[i++]);
+        doc.setExploitability((String) row[i++]);
+        doc.setTitle((String) row[i++]);
         doc.setCodeSnippet((String) row[i++]);
         doc.setIndexedAt(row[i] != null ? row[i].toString() : java.time.LocalDateTime.now().toString());
         return doc;
