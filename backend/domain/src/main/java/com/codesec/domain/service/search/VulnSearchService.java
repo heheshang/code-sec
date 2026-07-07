@@ -17,6 +17,9 @@ public class VulnSearchService {
 
     private static final Logger log = LoggerFactory.getLogger(VulnSearchService.class);
 
+    private static final Set<String> ALLOWED_SORT_BYS = Set.of("_score", "discovered_at");
+    private static final Set<String> ALLOWED_SORT_ORDERS = Set.of("asc", "desc");
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -45,10 +48,10 @@ public class VulnSearchService {
                          " OR v.tsv_code_snippet @@ plainto_tsquery('codesec_cfg', ?" + qPos + "))");
         }
 
-        paramIdx = addInCondition(params, conditions, "v.severity", request.getSeverity(), paramIdx);
-        paramIdx = addInCondition(params, conditions, "v.exploitability", request.getExploitability(), paramIdx);
-        paramIdx = addInCondition(params, conditions, "v.project_id", request.getProjectId(), paramIdx);
-        paramIdx = addInCondition(params, conditions, "v.engine", request.getEngine(), paramIdx);
+        paramIdx = expandInParams(params, conditions, "v.severity", request.getSeverity(), paramIdx);
+        paramIdx = expandInParams(params, conditions, "v.exploitability", request.getExploitability(), paramIdx);
+        paramIdx = expandInParams(params, conditions, "v.project_id", request.getProjectId(), paramIdx);
+        paramIdx = expandInParams(params, conditions, "v.engine", request.getEngine(), paramIdx);
 
         if (request.getDiscoveredAtFrom() != null || request.getDiscoveredAtTo() != null) {
             paramIdx = buildDateRange(request, params, conditions, paramIdx);
@@ -63,9 +66,17 @@ public class VulnSearchService {
         }
         long total = ((Number) countQuery.getSingleResult()).longValue();
 
+        String sortBy = request.getSortBy();
+        String sortOrder = request.getSortOrder();
+        if (!ALLOWED_SORT_BYS.contains(sortBy)) {
+            sortBy = "_score";
+        }
+        if (!ALLOWED_SORT_ORDERS.contains(sortOrder)) {
+            sortOrder = "desc";
+        }
         String orderBy;
-        if ("discovered_at".equals(request.getSortBy())) {
-            orderBy = "v.discovered_at " + ("asc".equals(request.getSortOrder()) ? "ASC" : "DESC");
+        if ("discovered_at".equals(sortBy)) {
+            orderBy = "v.discovered_at " + ("asc".equals(sortOrder) ? "ASC" : "DESC");
         } else if (hasQuery) {
             orderBy = "ts_rank(v.tsv_title_desc, plainto_tsquery('codesec_cfg', ?" + qPos + ")) DESC, v.discovered_at DESC";
         } else {
@@ -158,12 +169,17 @@ public class VulnSearchService {
         }
     }
 
-    private int addInCondition(List<Object> params, List<String> conditions,
+    private int expandInParams(List<Object> params, List<String> conditions,
                                 String column, List<String> values, int pos) {
         if (values != null && !values.isEmpty()) {
-            params.add(values);
-            conditions.add(column + " IN (?" + pos + ")");
-            return pos + 1;
+            List<String> placeholders = new ArrayList<>();
+            for (String v : values) {
+                params.add(v);
+                placeholders.add("?" + pos);
+                pos++;
+            }
+            conditions.add(column + " IN (" + String.join(", ", placeholders) + ")");
+            return pos;
         }
         return pos;
     }
@@ -184,7 +200,7 @@ public class VulnSearchService {
 
     private String sanitizeQuery(String raw) {
         if (raw == null) return null;
-        String sanitized = raw.replaceAll("[+\\-=&|><!(){}\\[\\]^\"~*?/:\\\\]", " ")
+        String sanitized = raw.replaceAll("[+=&|><!(){}\\[\\]^\"~*?/:\\\\]", " ")
                 .replaceAll("\\s+", " ").trim();
         if (sanitized.isEmpty()) return null;
         return sanitized.length() > 200 ? sanitized.substring(0, 200) : sanitized;

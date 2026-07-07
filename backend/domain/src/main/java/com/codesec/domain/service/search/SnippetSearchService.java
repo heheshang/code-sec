@@ -39,8 +39,8 @@ public class SnippetSearchService {
         String q = request.getQ();
         if (q != null && !q.isBlank()) {
             int qPos = paramIdx++;
-            params.add(q);
-            conditions.add("v.file_path LIKE ?" + qPos + " || '%'");
+            params.add(escapeLike(q));
+            conditions.add("v.file_path LIKE ?" + qPos + " || '%' ESCAPE '\\'");
         }
 
         if (request.getProjectId() != null && !request.getProjectId().isEmpty()) {
@@ -64,7 +64,31 @@ public class SnippetSearchService {
         int offsetPos = paramIdx++;
         params.add(offset);
 
-        String dataSql = "SELECT DISTINCT v.file_path, v.project_id, v.engine as language" +
+        String dataSql = "SELECT DISTINCT v.file_path, v.project_id," +
+                        " CASE" +
+                        " WHEN v.file_path LIKE '%.java' THEN 'java'" +
+                        " WHEN v.file_path LIKE '%.kt' THEN 'kotlin'" +
+                        " WHEN v.file_path LIKE '%.py' THEN 'python'" +
+                        " WHEN v.file_path LIKE '%.js' THEN 'javascript'" +
+                        " WHEN v.file_path LIKE '%.ts' THEN 'typescript'" +
+                        " WHEN v.file_path LIKE '%.go' THEN 'go'" +
+                        " WHEN v.file_path LIKE '%.rs' THEN 'rust'" +
+                        " WHEN v.file_path LIKE '%.rb' THEN 'ruby'" +
+                        " WHEN v.file_path LIKE '%.php' THEN 'php'" +
+                        " WHEN v.file_path LIKE '%.c' OR v.file_path LIKE '%.h' THEN 'c'" +
+                        " WHEN v.file_path LIKE '%.cpp' OR v.file_path LIKE '%.hpp' THEN 'cpp'" +
+                        " WHEN v.file_path LIKE '%.cs' THEN 'csharp'" +
+                        " WHEN v.file_path LIKE '%.swift' THEN 'swift'" +
+                        " WHEN v.file_path LIKE '%.scala' THEN 'scala'" +
+                        " WHEN v.file_path LIKE '%.sql' THEN 'sql'" +
+                        " WHEN v.file_path LIKE '%.sh' THEN 'shell'" +
+                        " WHEN v.file_path LIKE '%.yaml' OR v.file_path LIKE '%.yml' THEN 'yaml'" +
+                        " WHEN v.file_path LIKE '%.xml' THEN 'xml'" +
+                        " WHEN v.file_path LIKE '%.json' THEN 'json'" +
+                        " WHEN v.file_path LIKE '%.html' OR v.file_path LIKE '%.htm' THEN 'html'" +
+                        " ELSE 'unknown'" +
+                        " END as language," +
+                        " to_char(v.discovered_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as indexed_at" +
                         " FROM vuln_finding v" + where +
                         " ORDER BY v.file_path" +
                         " LIMIT ?" + limitPos + " OFFSET ?" + offsetPos;
@@ -88,6 +112,7 @@ public class SnippetSearchService {
                 .pageSize(pageSize)
                 .tookMs(tookMs)
                 .items(items)
+                .warnings(warnings.isEmpty() ? null : warnings)
                 .build();
     }
 
@@ -96,8 +121,12 @@ public class SnippetSearchService {
         doc.setFilePath((String) row[0]);
         doc.setProjectId((String) row[1]);
         doc.setLanguage((String) row[2]);
-        doc.setIndexedAt(java.time.LocalDateTime.now().toString());
+        doc.setIndexedAt(row[3] != null ? row[3].toString() : java.time.LocalDateTime.now().toString());
         return doc;
+    }
+
+    private String escapeLike(String raw) {
+        return raw.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     private void validateRequest(SearchRequest request) {
