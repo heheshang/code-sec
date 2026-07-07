@@ -1,14 +1,11 @@
 package com.codesec.api.security;
 
-import com.codesec.domain.entity.OperationLogEntity;
-import com.codesec.domain.repository.OperationLogRepository;
-import com.codesec.domain.repository.PermissionRepository;
-import com.codesec.domain.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -19,37 +16,35 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @RequiredArgsConstructor
 @org.springframework.context.annotation.Profile("!test")
 public class OperationLogAspect {
-    private final OperationLogRepository logRepo;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Around("@within(org.springframework.web.bind.annotation.RestController) || " +
             "@annotation(org.springframework.web.bind.annotation.RequestMapping)")
     public Object logOperation(ProceedingJoinPoint joinPoint) throws Throwable {
-        OperationLogEntity log = new OperationLogEntity();
-        log.setAction(joinPoint.getSignature().getName());
-        log.setResourceType("api");
-        log.setResourceId(0L);
+        String action = joinPoint.getSignature().getName();
+        Long userId = null;
 
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof UserPrincipal p) {
-            log.setUserId(p.getUserId());
+            userId = p.getUserId();
         }
 
+        String ipAddress = null;
+        String userAgent = null;
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attrs != null) {
             HttpServletRequest request = attrs.getRequest();
-            log.setIpAddress(request.getRemoteAddr());
-            log.setUserAgent(request.getHeader("User-Agent"));
+            ipAddress = request.getRemoteAddr();
+            userAgent = request.getHeader("User-Agent");
         }
 
         try {
             Object result = joinPoint.proceed();
-            log.setResponseStatus(200);
+            eventPublisher.publishEvent(new OperationLogEvent(action, userId, ipAddress, userAgent, 200));
             return result;
         } catch (Throwable e) {
-            log.setResponseStatus(500);
+            eventPublisher.publishEvent(new OperationLogEvent(action, userId, ipAddress, userAgent, 500));
             throw e;
-        } finally {
-            logRepo.save(log);
         }
     }
 }

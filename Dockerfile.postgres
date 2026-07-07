@@ -1,0 +1,32 @@
+FROM postgres:16
+
+RUN set -eux \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+        libpq-dev \
+        postgresql-server-dev-16 \
+        ca-certificates \
+    && git clone --branch v1.1.0 --depth 1 https://github.com/amutu/zhparser.git /tmp/zhparser \
+    && cd /tmp/zhparser \
+    && make \
+    && make install \
+    && cd /tmp \
+    && rm -rf /tmp/zhparser \
+    && apt-get remove -y build-essential git postgresql-server-dev-16 ca-certificates \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        postgresql-16-pgvector \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY postgres/init.sql /docker-entrypoint-initdb.d/
+
+HEALTHCHECK --interval=5s --timeout=3s --retries=10 \
+    CMD pg_isready -U "${POSTGRES_USER:-codesec}" -d "${POSTGRES_DB:-codesec}"

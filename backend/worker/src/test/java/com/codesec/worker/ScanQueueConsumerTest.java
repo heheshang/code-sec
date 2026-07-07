@@ -6,7 +6,7 @@ import com.codesec.domain.entity.ScanTaskEntity;
 import com.codesec.domain.repository.RepoRepository;
 import com.codesec.domain.repository.ScanTaskRepository;
 import com.codesec.domain.service.VulnService;
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import com.codesec.engineadapter.EngineAdapter;
 import com.codesec.engineadapter.EngineScanResult;
 import com.codesec.engineadapter.ScanRequest;

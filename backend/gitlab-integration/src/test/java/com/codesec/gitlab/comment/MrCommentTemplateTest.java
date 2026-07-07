@@ -1,6 +1,6 @@
 package com.codesec.gitlab.comment;
 
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

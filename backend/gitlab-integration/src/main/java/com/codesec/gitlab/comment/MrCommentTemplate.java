@@ -1,6 +1,6 @@
 package com.codesec.gitlab.comment;
 
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;

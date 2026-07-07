@@ -1,5 +1,6 @@
 package com.codesec.engineadapter;
 
+import com.codesec.common.dto.FindingDto;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

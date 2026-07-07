@@ -157,7 +157,7 @@ codex:
 
 **验收标准**
 - [ ] `ai-gateway` Pod 可以访问公网 AI API（openai.com / anthropic.com 等）
-- [ ] 其他服务（后端 API、前端、Elasticsearch）不能出站（不变）
+- [ ] 其他服务（后端 API、前端）不能出站（不变）
 
 ### P1.3 更新 CI/CD · API Key 注入
 

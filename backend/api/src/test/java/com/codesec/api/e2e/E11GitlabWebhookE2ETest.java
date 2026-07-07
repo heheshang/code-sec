@@ -6,8 +6,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 public class E11GitlabWebhookE2ETest extends BaseE2ETest {
 
+    /**
+     * The API module's duplicate WebhookController was deleted (F-006).
+     * Webhook handling is now exclusively in the gitlab-integration module
+     * under the same path — this test asserts 404 in the api-only context.
+     */
     @Test
-    void shouldAcceptGitlabWebhook() throws Exception {
+    void webhookEndpointNoLongerInApiModule() throws Exception {
         mockMvc.perform(post("/api/v1/webhooks/gitlab")
                 .header("X-Gitlab-Token", "test-secret")
                 .contentType("application/json")
@@ -23,7 +28,6 @@ public class E11GitlabWebhookE2ETest extends BaseE2ETest {
                       }
                     }
                     """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("accepted"));
+                .andExpect(status().isNotFound());
     }
 }

@@ -42,8 +42,7 @@ public class TicketService {
 
     public TicketResponse getById(Long id) {
         return ticketRepo.findById(id).map(t -> {
-            String name = t.getAssigneeId() != null
-                ? userRepo.findById(t.getAssigneeId()).map(UserEntity::getUsername).orElse(null) : null;
+            String name = resolveAssigneeName(t.getAssigneeId());
             return toResponse(t, name);
         }).orElseThrow(() -> new NotFoundException("Ticket not found: " + id));
     }
@@ -77,12 +76,17 @@ public class TicketService {
         if ("closed".equals(req.getToStatus())) ticket.setClosedAt(LocalDateTime.now());
         ticket = ticketRepo.save(ticket);
 
-        String name = ticket.getAssigneeId() != null
-            ? userRepo.findById(ticket.getAssigneeId()).map(UserEntity::getUsername).orElse(null) : null;
+        String name = resolveAssigneeName(ticket.getAssigneeId());
         return toResponse(ticket, name);
     }
 
     public long countByStatus(String status) { return ticketRepo.countByStatus(status); }
+
+    private String resolveAssigneeName(Long assigneeId) {
+        if (assigneeId == null) return null;
+        return userRepo.findAllById(java.util.Set.of(assigneeId)).stream()
+            .findFirst().map(UserEntity::getUsername).orElse(null);
+    }
 
     private TicketResponse toResponse(VulnTicketEntity t, String assigneeName) {
         return TicketResponse.builder()

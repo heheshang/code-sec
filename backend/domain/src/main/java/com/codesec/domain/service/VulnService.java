@@ -5,7 +5,7 @@ import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.*;
 import com.codesec.common.dto.PaginatedResult;
 import com.codesec.common.dto.*;
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,7 +38,7 @@ public class VulnService {
     public List<VulnFindingEntity> persistBatch(List<FindingDto> findings) {
         if (findings == null || findings.isEmpty()) return List.of();
 
-        List<VulnFindingEntity> saved = new ArrayList<>();
+        List<VulnFindingEntity> toInsert = new ArrayList<>();
 
         for (FindingDto f : findings) {
             String dedupKey = buildDedupKey(f);
@@ -74,18 +74,20 @@ public class VulnService {
                 .dedupKey(dedupKey)
                 .build();
 
-            entity = vulnRepo.save(entity);
-            saved.add(entity);
-
-            // Auto-create ticket
-            VulnTicketEntity ticket = VulnTicketEntity.builder()
-                .vulnId(entity.getId())
-                .projectId(entity.getProjectId())
-                .status("pending_audit")
-                .severity(severity)
-                .build();
-            ticketRepo.save(ticket);
+            toInsert.add(entity);
         }
+
+        List<VulnFindingEntity> saved = vulnRepo.saveAll(toInsert);
+
+        List<VulnTicketEntity> tickets = saved.stream()
+            .map(e -> VulnTicketEntity.builder()
+                .vulnId(e.getId())
+                .projectId(e.getProjectId())
+                .status("pending_audit")
+                .severity(e.getSeverity())
+                .build())
+            .toList();
+        ticketRepo.saveAll(tickets);
 
         log.info("Persisted {} new findings ({} deduplicated)", saved.size(), findings.size() - saved.size());
 
@@ -119,7 +121,8 @@ public class VulnService {
     }
 
     private String buildDedupKey(FindingDto f) {
-        return f.scanId() + "/" + f.filePath() + "/" + f.lineStart() + "/" + f.ruleId();
+        String projectPart = f.projectId() != null ? String.valueOf(f.projectId()) : "0";
+        return projectPart + "/" + f.filePath() + "/" + f.lineStart() + "/" + f.ruleId();
     }
 
     private static Long parseLongOrNull(String s) {

@@ -20,6 +20,8 @@ export interface SnippetSearchResult {
   filePath: string
   projectId: string
   language: string
+  codeSnippet?: string
+  lineStart?: number
   indexedAt: string
 }
 
@@ -53,7 +55,7 @@ export interface SearchQuery {
 }
 
 /**
- * Search vulnerabilities via ES full-text search.
+ * Search vulnerabilities via PostgreSQL full-text search.
  */
 export async function searchVulns(query: SearchQuery): Promise<SearchResponse<VulnSearchResult>> {
   const params = buildParams(query)
@@ -62,7 +64,7 @@ export async function searchVulns(query: SearchQuery): Promise<SearchResponse<Vu
 }
 
 /**
- * Search code snippets via ES (v1: file_path prefix only).
+ * Search code snippets via PostgreSQL (v1: file_path prefix only).
  */
 export async function searchSnippets(query: SearchQuery): Promise<SearchResponse<SnippetSearchResult>> {
   const params = buildParams(query)

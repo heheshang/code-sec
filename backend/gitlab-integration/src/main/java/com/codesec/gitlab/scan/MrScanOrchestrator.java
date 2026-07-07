@@ -1,6 +1,6 @@
 package com.codesec.gitlab.scan;
 
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import com.codesec.engineadapter.EngineAdapter;
 import com.codesec.engineadapter.EngineScanResult;
 import com.codesec.domain.service.VulnService;

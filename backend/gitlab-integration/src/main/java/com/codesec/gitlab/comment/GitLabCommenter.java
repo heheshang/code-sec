@@ -1,6 +1,6 @@
 package com.codesec.gitlab.comment;
 
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import com.codesec.gitlab.GitLabClient;
 import com.codesec.gitlab.model.GitLabApiException;
 import org.slf4j.Logger;

@@ -214,15 +214,14 @@ services:
     memory_limit: "4Gi"
     storage: "20Gi"                # AOF 持久化
   
-  elasticsearch:
-    replicas: 3
-    cpu_request: "2"
-    cpu_limit: "4"
-    memory_request: "8Gi"
-    memory_limit: "16Gi"
-    storage: "500Gi"               # SSD，含索引 + 代码片段
-    heap: "-Xms6g -Xmx6g"         # ES 堆内存不超过物理 50%
-    notes: "3 节点数据 + 1 协调节点"
+  # elasticsearch:        deprecated — replaced by PG FTS
+  #   replicas: 3
+  #   cpu_request: "2"
+  #   cpu_limit: "4"
+  #   memory_request: "8Gi"
+  #   memory_limit: "16Gi"
+  #   storage: "500Gi"
+  #   notes: "Removed — full-text search now runs on PostgreSQL tsvector/tsquery"
   
   neo4j:
     replicas: 2                    # 主从 / Causal Cluster
@@ -258,7 +257,7 @@ node_pools:
       - scheduler
       - postgresql
       - redis
-      - elasticsearch
+      # - elasticsearch  deprecated — replaced by PG FTS
       - neo4j
       - minio
       - monitoring (prometheus/grafana/loki)
@@ -274,7 +273,7 @@ node_pools:
         value: "storage"
         effect: "NoSchedule"
     deployments:
-      - elasticsearch   # 数据节点打标签
+      # - elasticsearch   deprecated — replaced by PG FTS
       - minio
 ```
 
@@ -333,11 +332,11 @@ node_pools:
 | user_repo | 5K | ~2KB | 10MB | 静态 |
 | rule | 200 | ~5KB | 1MB | 静态 |
 
-#### Elasticsearch
+#### ~~Elasticsearch~~ (已迁移至 PostgreSQL FTS)
 
 | 索引 | 文档数 | 每文档 | 总大小 | 保留策略 |
 |------|--------|--------|--------|---------|
-| vuln-finding | 5M/月 | ~2KB | 10GB/月 | 12 个月 |
+| vuln (PG FTS) | 5M/月 | ~2KB | —（继承 PG 资源）| 12 个月 |
 | code-snippet | 5M/月 | ~1KB | 5GB/月 | 12 个月 |
 | audit-trail | 1M/月 | ~500B | 500MB/月 | 6 个月 |
 
@@ -362,10 +361,10 @@ retention:
     audit_log: "12 个月"           # 合规要求
     temp_data: "7 天"             # 临时缓存
 
-  elasticsearch:
-    vuln_finding: "12 个月"        # 热节点 3 月 + 冷节点 9 月
-    code_snippet: "12 个月"
-    audit_trail: "6 个月"
+  # elasticsearch:  deprecated — replaced by PG FTS
+  #   vuln_finding: "12 个月"
+  #   code_snippet: "12 个月"
+  #   audit_trail: "6 个月"
 
   neo4j:
     cpg_versions: "每个项目最近 10 次扫描"  # 或 30 天 TTL
@@ -488,7 +487,7 @@ ha_strategies:
 |------|---------|-----|-----|
 | PostgreSQL | Patroni + 异步流复制 | < 1min | < 30s |
 | Redis | Redis Sentinel / Cluster | 秒级 | < 10s |
-| Elasticsearch | 跨 3 AZ 副本分配（至少 2 副本）| 0 | < 1min |
+| PostgreSQL FTS | 继承 PG 高可用 | 继承 PG | 继承 PG |
 | Neo4j | Causal Cluster（主写从读）| < 1s | < 30s |
 | MinIO | 纠删码 4+2 或 8+4 | 0 | < 1min |
 

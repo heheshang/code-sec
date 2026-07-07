@@ -434,7 +434,7 @@
 
 - Redis：任务缓存、限流、临时数据
 
-- Elasticsearch：代码片段、日志、漏洞检索
+- PostgreSQL FTS (tsvector/tsquery)：代码片段、漏洞全文检索（替换 Elasticsearch）
 
 - MinIO：报告、POC、审计附件
 

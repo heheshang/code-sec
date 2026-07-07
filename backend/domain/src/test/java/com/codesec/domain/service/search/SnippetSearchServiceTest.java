@@ -42,7 +42,7 @@ class SnippetSearchServiceTest {
 
     private List<Object[]> snippetRows(String filePath, String projectId, String language, String indexedAt) {
         List<Object[]> rows = new ArrayList<>();
-        rows.add(new Object[]{filePath, projectId, language, indexedAt});
+        rows.add(new Object[]{filePath, projectId, language, null, null, indexedAt});
         return rows;
     }
 

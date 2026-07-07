@@ -130,7 +130,7 @@ C4Container
         Container(engineWorker, "Engine Worker", "Java 17 + Maven Shade (Fat JAR)", "在 K8s Job / Docker 沙箱内运行多引擎扫描，单任务单实例")
         ContainerDb(mysql, "MySQL 8", "MySQL 主从", "业务数据：项目、漏洞、工单、用户、规则、操作日志")
         ContainerDb(redis, "Redis 7", "Sentinel 模式", "缓存热点数据、分布式锁、限流计数、WebSocket Session")
-        ContainerDb(es, "Elasticsearch 8", "ES 三节点", "代码片段/漏洞/审计日志全文检索")
+        ContainerDb(pg, "PostgreSQL 16", "PG FTS (tsvector/tsquery)", "代码片段/漏洞全文检索")
         ContainerDb(minio, "MinIO", "纠删码 EC:4", "POC 截图、审计报告、扫描产物")
         ContainerDb(rabbit, "RabbitMQ 3.12", "镜像集群", "扫描任务队列、死信队列、延迟任务")
         ContainerDb(nas, "Rule/CVE Library", "Git + MySQL", "规则库（Git 版本化）+ 内部 CVE 扩展库")
@@ -149,7 +149,7 @@ C4Container
     Rel(gateway, coreApi, "转发路由", "HTTP/2")
     Rel(coreApi, mysql, "读写业务数据", "JDBC")
     Rel(coreApi, redis, "缓存/限流/Session", "RESP")
-    Rel(coreApi, es, "检索/聚合", "HTTP")
+    Rel(coreApi, pg, "全文检索", "JDBC / native SQL")
     Rel(coreApi, minio, "上传/下载文件", "S3 API")
     Rel(coreApi, rabbit, "发布扫描任务/消费结果", "AMQP")
     Rel(coreApi, nas, "读规则库", "JDBC + Git pull")
@@ -173,7 +173,7 @@ C4Container
 | **Engine Worker** | Java 17 + Maven Shade | 按需 (1-50) | 2 CPU / 4G | 多引擎扫描，每任务一实例 |
 | **MySQL** | MySQL 8.0 | 1 主 + 2 从 | 8 CPU / 16G / 500G SSD | 业务数据主存储 |
 | **Redis** | Redis 7 | 1 主 + 2 从 | 4 CPU / 8G | 缓存/限流/分布式锁 |
-| **Elasticsearch** | ES 8 | 3 节点 | 8 CPU / 16G / 1T×3 | 全文检索 |
+| **PostgreSQL FTS** | PG 16 (tsvector) | —（继承 PG） | — | 全文检索替代 ES |
 | **MinIO** | MinIO | 4 节点 | 4 CPU / 8G / 4T×4 | 对象存储 |
 | **RabbitMQ** | RabbitMQ 3.12 | 3 节点镜像 | 2 CPU / 4G | 任务队列 |
 | **Rule/CVE Library** | Git + MySQL | 主备 | 0.5 CPU / 1G | 规则库 + CVE 扩展 |
@@ -272,7 +272,7 @@ C4Component
     ContainerDb(mysql, "MySQL", "", "")
     ContainerDb(redis, "Redis", "", "")
     ContainerDb(rabbit, "RabbitMQ", "", "")
-    ContainerDb(es, "Elasticsearch", "", "")
+    ContainerDb(pg, "PostgreSQL FTS", "tsvector/tsquery", "")
     ContainerDb(minio, "MinIO", "", "")
 
     Container_Boundary(api, "Core API") {

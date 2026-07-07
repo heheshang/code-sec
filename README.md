@@ -42,9 +42,9 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
        │                │                │
        ▼                ▼                ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
-│   Worker     │ │ Engine-      │ │ ES-Integration   │
-│   Queue      │ │ Adapter      │ │ Vuln/Snippet     │
-│   Consumer   │ │ (Abstraction)│ │ Full-text Search │
+│   Worker     │ │ Engine-      │ │ PostgreSQL      │
+│   Queue      │ │ Adapter      │ │ Full-text Search │
+│   Consumer   │ │ (Abstraction)│ │ (PG FTS)        │
 └──────┬───────┘ └──────┬───────┘ └──────────────────┘
        │                │
        ▼                ▼
@@ -95,7 +95,6 @@ CodeSec is an automated SAST (Static Application Security Testing) platform that
 | **`backend/api`** | REST API (port 8080) — 11 domain modules + CPG visualization endpoint | Spring Boot 3 / JPA / Flyway / PostgreSQL / Neo4j driver |
 | **`backend/engine`** | SAST scan engine — AST parsing, rule-based detection, call-graph analysis, exploitability judgment, multi-language (Go, Python) | Java 17, JavaParser, tree-sitter, Neo4j driver |
 | **`backend/engine-adapter`** | Abstraction layer decoupling `api` from `engine` — configurable engine routing | Spring |
-| **`backend/es-integration`** | Elasticsearch integration — vuln finding indexing, code snippet indexing, full-text search | Spring Data ES |
 | **`backend/gitlab-integration`** | GitLab webhook receiver, MR diff scanning, comment/note reporter | GitLab REST API |
 | **`backend/worker`** | Async scan queue consumer (port 8081) — processes scan tasks, exploitability judgment, CPG built in-memory only | Spring Boot / ForkJoinPool |
 | **`backend/common`** | Shared library — encryption (AES-GCM, KMS), base types, common utilities | Spring |
@@ -148,7 +147,6 @@ frontend/src/
 - Java 17+
 - Maven 3.8+
 - PostgreSQL 16
-- Elasticsearch 8.x (optional, search features degrade gracefully)
 - Neo4j 5.x (optional, CPG visualization only; exploitability judgment works in-memory without it)
 - Node.js 18+ (for frontend)
 
@@ -156,7 +154,7 @@ frontend/src/
 
 ```bash
 # Start infrastructure
-docker compose up -d postgres elasticsearch neo4j
+docker compose up -d postgres neo4j
 
 # Build all modules
 mvn clean install -f backend/pom.xml
@@ -190,7 +188,6 @@ docker compose up --build
 | `SPRING_DATASOURCE_USERNAME` | `codesec` | Database user |
 | `SPRING_DATASOURCE_PASSWORD` | `codesec123` | Database password |
 | `JWT_SECRET` | *(auto-generated)* | JWT signing key |
-| `ES_HOST` | `localhost:9200` | Elasticsearch host |
 | `NEO4J_URI` | `bolt://localhost:7687` | Neo4j bolt URI (CPG visualization) |
 | `NEO4J_USERNAME` | `neo4j` | Neo4j user |
 | `NEO4J_PASSWORD` | `admin123` | Neo4j password |

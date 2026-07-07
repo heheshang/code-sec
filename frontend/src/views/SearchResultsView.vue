@@ -38,11 +38,17 @@ onMounted(() => {
   store.search()
 })
 
-watch(() => store.activeTab, () => store.search())
-watch(() => store.page, () => store.search())
-watch(() => store.pageSize, () => store.search())
-watch([() => store.severityFilter, () => store.exploitabilityFilter, () => store.sortBy, () => store.sortOrder],
-  () => store.search(), { deep: true }
+watch(
+  () => [
+    store.activeTab,
+    store.page,
+    store.pageSize,
+    store.severityFilter,
+    store.exploitabilityFilter,
+    store.sortBy,
+    store.sortOrder,
+  ],
+  () => store.search(),
 )
 
 function onTabChange(key: string | number): void {

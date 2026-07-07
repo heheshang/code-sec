@@ -144,7 +144,7 @@ graph TB
         MYSQL[(MySQL<br/>业务数据)]
         REDIS[(Redis<br/>缓存/限流)]
         MINIO[(MinIO<br/>对象存储)]
-        ES[(Elasticsearch<br/>全文检索)]
+        PG_FTS[(PostgreSQL<br/>全文检索)]
         CACHE[(CVE 库/规则库<br/>本地文件+MySQL)]
     end
 
@@ -1076,7 +1076,7 @@ graph TB
 |------|--------|-----|------|------|------|
 | MySQL | 1 主 + 2 从 | 8 | 16G | 500G SSD | 主从复制 |
 | Redis | 1 主 + 2 从 | 4 | 8G | 50G | Sentinel 监控 |
-| Elasticsearch | 3 节点 | 8 | 16G | 1T ×3 | 每节点独立 |
+| PostgreSQL FTS | —（继承 PG 资源） | — | — | — | 全文检索替代 ES |
 | MinIO | 4 节点 | 4 | 8G | 4T ×4 | 纠删码 EC:4 |
 | API 服务 | 3 副本 | 4 | 8G | - | HPA 自动扩缩 |
 | Worker 服务 | 3 副本 | 8 | 16G | - | 与沙箱解耦 |
@@ -1157,7 +1157,7 @@ spec:
 | 业务数据 | MySQL 8 | 强事务、外键约束 |
 | 缓存/限流 | Redis 7 | 高性能、TTL 原生 |
 | 对象存储 | MinIO | S3 兼容、私有化、纠删码 |
-| 全文检索 | Elasticsearch 8 | 漏洞/代码片段/日志检索 |
+| 全文检索 | PostgreSQL 16 (tsvector/tsquery) | 漏洞/代码片段检索 |
 | 规则库 | Git + MySQL | 版本化管理、灰度发布 |
 
 ### 11.4 前端技术栈

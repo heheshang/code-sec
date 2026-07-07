@@ -13,8 +13,7 @@ docker compose logs -f backend-api
 ```
 
 Show services coming up:
-- MySQL → healthcheck passing
-- Elasticsearch → cluster health green/yellow
+- PostgreSQL → healthcheck passing
 - Backend API → Flyway migrations, server started
 - Worker → connected, awaiting tasks
 - Frontend → Nginx serving static files
@@ -84,7 +83,7 @@ Navigate to **Search**
 - Results from vulnerability content + code snippets
 - Faceted filters: severity, file type, repository
 
-**Narrator note:** "Elasticsearch powers the search backend, indexing both findings and code snippets for sub-500ms queries."
+**Narrator note:** "PostgreSQL full-text search powers the search backend, indexing both findings and code snippets for sub-500ms queries."
 
 ---
 
@@ -106,7 +105,7 @@ Navigate to **Rules**
 1. **Exploitability-aware SAST** — Not just "you have a vulnerability" but "this one is actually exploitable"
 2. **Three-algorithm composition** — Reachability + Input Controllability + Framework Protection
 3. **End-to-end workflow** — Scan → Audit → Ticket → Fix → Re-scan
-4. **Async architecture** — API handles requests, Worker processes scans, ES indexes results
+4. **Async architecture** — API handles requests, Worker processes scans, PostgreSQL indexes results
 5. **One-command deployment** — `docker compose up --build` for the full stack
 
 **Q&A talking points:**

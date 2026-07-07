@@ -40,7 +40,7 @@ public class AuditRecordEntity {
     @Column(name = "fix_suggestion", columnDefinition = "TEXT")
     private String fixSuggestion;
 
-    @Column(name = "fix_code_snippet", columnDefinition = "MEDIUMTEXT")
+    @Column(name = "fix_code_snippet", columnDefinition = "TEXT")
     private String fixCodeSnippet;
 
     @Column(name = "audit_duration_seconds")

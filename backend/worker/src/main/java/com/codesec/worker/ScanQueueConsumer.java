@@ -1,6 +1,6 @@
 package com.codesec.worker;
 
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import com.codesec.engineadapter.EngineAdapter;
 import com.codesec.engineadapter.ScanRequest;
 import com.codesec.domain.entity.RepoEntity;
@@ -158,40 +158,51 @@ public class ScanQueueConsumer implements CommandLineRunner {
             "clone", "--depth=1", "--branch=" + branch, url, target.toString());
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        int exitCode = p.waitFor();
-        if (exitCode != 0) {
-            String output = new String(p.getInputStream().readAllBytes());
-            throw new RuntimeException("Git clone failed (exit=" + exitCode + "): " + output);
+        try {
+            int exitCode = p.waitFor();
+            if (exitCode != 0) {
+                String output = new String(p.getInputStream().readAllBytes());
+                throw new RuntimeException("Git clone failed (exit=" + exitCode + "): " + output);
+            }
+            log.info("Repo cloned to {}", target);
+        } finally {
+            p.destroyForcibly();
         }
-        log.info("Repo cloned to {}", target);
     }
 
     void checkoutCommit(Path repoDir, String commitSha, String token) throws Exception {
-        // Try shallow fetch of the specific SHA first
-        ProcessBuilder fetchPb = new ProcessBuilder(
-            "git", "-c", "http.extraHeader=Authorization: Bearer " + (token != null ? token : "anonymous"),
-            "fetch", "--depth=1", "origin", commitSha);
-        fetchPb.directory(repoDir.toFile());
-        fetchPb.redirectErrorStream(true);
-        Process fetchProc = fetchPb.start();
-        int fetchExit = fetchProc.waitFor();
-        if (fetchExit != 0) {
-            // SHA not available for shallow fetch; log and skip (scan proceeds at branch HEAD)
-            String output = new String(fetchProc.getInputStream().readAllBytes());
-            log.warn("Shallow fetch of commit {} failed (exit={}): {}. Scanning branch HEAD instead.", commitSha, fetchExit, output.trim());
-            return;
-        }
+        Process fetchProc = null;
+        Process checkoutProc = null;
+        try {
+            // Try shallow fetch of the specific SHA first
+            ProcessBuilder fetchPb = new ProcessBuilder(
+                "git", "-c", "http.extraHeader=Authorization: Bearer " + (token != null ? token : "anonymous"),
+                "fetch", "--depth=1", "origin", commitSha);
+            fetchPb.directory(repoDir.toFile());
+            fetchPb.redirectErrorStream(true);
+            fetchProc = fetchPb.start();
+            int fetchExit = fetchProc.waitFor();
+            if (fetchExit != 0) {
+                // SHA not available for shallow fetch; log and skip (scan proceeds at branch HEAD)
+                String output = new String(fetchProc.getInputStream().readAllBytes());
+                log.warn("Shallow fetch of commit {} failed (exit={}): {}. Scanning branch HEAD instead.", commitSha, fetchExit, output.trim());
+                return;
+            }
 
-        ProcessBuilder checkoutPb = new ProcessBuilder("git", "checkout", commitSha);
-        checkoutPb.directory(repoDir.toFile());
-        checkoutPb.redirectErrorStream(true);
-        Process checkoutProc = checkoutPb.start();
-        int checkoutExit = checkoutProc.waitFor();
-        if (checkoutExit != 0) {
-            String output = new String(checkoutProc.getInputStream().readAllBytes());
-            log.warn("Checkout of commit {} failed (exit={}): {}. Scanning branch HEAD instead.", commitSha, checkoutExit, output.trim());
-        } else {
-            log.info("Checked out commit {}", commitSha);
+            ProcessBuilder checkoutPb = new ProcessBuilder("git", "checkout", commitSha);
+            checkoutPb.directory(repoDir.toFile());
+            checkoutPb.redirectErrorStream(true);
+            checkoutProc = checkoutPb.start();
+            int checkoutExit = checkoutProc.waitFor();
+            if (checkoutExit != 0) {
+                String output = new String(checkoutProc.getInputStream().readAllBytes());
+                log.warn("Checkout of commit {} failed (exit={}): {}. Scanning branch HEAD instead.", commitSha, checkoutExit, output.trim());
+            } else {
+                log.info("Checked out commit {}", commitSha);
+            }
+        } finally {
+            if (fetchProc != null) fetchProc.destroyForcibly();
+            if (checkoutProc != null) checkoutProc.destroyForcibly();
         }
     }
 

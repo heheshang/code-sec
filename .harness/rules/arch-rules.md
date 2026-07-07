@@ -88,7 +88,6 @@ app → core → integration
 ### 模块依赖方向（严格单向）
 
 ```
-common ← es-integration
 common ← api ← worker
 common ← engine-adapter ← api
 common ← engine-adapter ← worker
@@ -97,9 +96,9 @@ common ← engine-adapter ← gitlab-integration
 
 **规则**：
 1. `common` 是基础模块，可被任何模块依赖，但不可依赖其他内部模块
-2. `api` 不可依赖 `worker`、`gitlab-integration`、`es-integration`
-3. `worker` 可依赖 `api`（暂允许，M2 需解耦为事件驱动），但不可依赖 `gitlab-integration`、`es-integration`
-4. `gitlab-integration` 和 `es-integration` 只能依赖 `common`、`engine-adapter` 和 `domain`
+2. `api` 不可依赖 `worker`、`gitlab-integration`
+3. `worker` 可依赖 `api`（暂允许，M2 需解耦为事件驱动），但不可依赖 `gitlab-integration`
+4. `gitlab-integration` 只能依赖 `common`、`engine-adapter` 和 `domain`
 5. `engine-adapter` 可依赖 `common` 和 `engine`（适配器模式，需包装 engine）
 
 ### api 模块包命名规则

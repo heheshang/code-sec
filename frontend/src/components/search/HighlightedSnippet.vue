@@ -7,7 +7,7 @@ const props = defineProps<{
 }>()
 
 /**
- * Renders ES highlight HTML safely.
+ * Renders PostgreSQL FTS highlight HTML safely.
  * Strips any script/event-handler attributes to prevent XSS.
  */
 const safeHtml = computed(() => {

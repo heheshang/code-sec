@@ -5,6 +5,8 @@ import com.codesec.common.crypto.CryptoException;
 import com.codesec.common.exception.NotFoundException;
 import com.codesec.common.exception.BadRequestException;
 import com.codesec.common.exception.BizException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +15,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(IllegalStateTransitionException.class)
     public ResponseEntity<Map<String, String>> handleIllegalTransition(IllegalStateTransitionException e) {
@@ -26,8 +30,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException e) {
-        String msg = e.getMessage() != null ? e.getMessage() : "Internal error";
-        return ResponseEntity.status(500).body(Map.of("message", msg));
+        log.error("Unexpected error", e);
+        return ResponseEntity.status(500).body(Map.of("message", "Internal server error"));
     }
 
     @ExceptionHandler(NotFoundException.class)

@@ -36,6 +36,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String username = claims.get("username", String.class);
             String role = claims.get("role", String.class);
 
+            if (role == null || role.isBlank()) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"Token missing role\"}");
+                return;
+            }
+
             @SuppressWarnings("unchecked")
             List<String> permList = claims.get("permissions", List.class);
             Set<String> permissions = permList != null ? new HashSet<>(permList) : Set.of();

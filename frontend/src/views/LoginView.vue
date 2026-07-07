@@ -23,7 +23,8 @@ async function handleLogin() {
       password: password.value,
     })
     setToken(resp.data.token)
-    const redirect = (route.query.redirect as string) || '/dashboard'
+    const redirectParam = route.query.redirect as string | undefined
+    const redirect = redirectParam?.startsWith('/') ? redirectParam : '/dashboard'
     await router.push(redirect)
   } catch (e) {
     ElMessage.error(e instanceof Error ? e.message : 'Login failed')

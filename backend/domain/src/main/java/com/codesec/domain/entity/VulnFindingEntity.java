@@ -41,7 +41,7 @@ public class VulnFindingEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "code_snippet", columnDefinition = "MEDIUMTEXT")
+    @Column(name = "code_snippet", columnDefinition = "TEXT")
     private String codeSnippet;
 
     @Column(name = "file_path", nullable = false, length = 1024)

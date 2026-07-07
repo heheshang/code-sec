@@ -29,7 +29,8 @@ COPY backend/pom.xml .
 COPY backend/common/ backend/common/
 COPY backend/api/pom.xml backend/api/pom.xml
 COPY backend/engine-adapter/ backend/engine-adapter/
-COPY backend/es-integration/ backend/es-integration/
+# Note: es-integration module was replaced by PostgreSQL FTS (tsvector/tsquery)
+# COPY backend/es-integration/ backend/es-integration/
 COPY backend/gitlab-integration/ backend/gitlab-integration/
 COPY backend/worker/ backend/worker/
 
@@ -184,7 +185,7 @@ MYSQL_DATABASE=codesec
 JWT_SECRET=codesec-demo-secret-key-2026
 
 # ES
-ES_HOST=elasticsearch:9200
+# ES_HOST=elasticsearch:9200  deprecated — replaced by PG FTS
 
 # GitLab (optional, for demo)
 GITLAB_URL=
@@ -210,9 +211,8 @@ services:
       timeout: 3s
       retries: 10
     restart: unless-stopped
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+  # elasticsearch:  # deprecated — replaced by PG FTS
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -225,7 +225,7 @@ services:
     ports:
       - "9200:9200"
     volumes:
-      - es-data:/usr/share/elasticsearch/data
+      # - es-data:/usr/share/elasticsearch/data
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q 'green\\|yellow'"]
       interval: 10s
@@ -245,11 +245,11 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
       JWT_SECRET: ${JWT_SECRET:-codesec-demo-secret-key-2026}
-      ES_HOST: elasticsearch:9200
+      # ES_HOST: elasticsearch:9200  deprecated — replaced by PG FTS
       SPRING_PROFILES_ACTIVE: test
     depends_on:
       mysql: { condition: service_healthy }
-      elasticsearch: { condition: service_healthy }
+      # elasticsearch: { condition: service_healthy }  deprecated
 
   backend-worker:
     build:
@@ -262,7 +262,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
       JWT_SECRET: ${JWT_SECRET:-codesec-demo-secret-key-2026}
-      ES_HOST: elasticsearch:9200
+      # ES_HOST: elasticsearch:9200  deprecated — replaced by PG FTS
     depends_on:
       mysql: { condition: service_healthy }
 
@@ -460,48 +460,14 @@ git commit -m "E-S4-PERF: replace fixed thread pool with ForkJoinPool for work-s
 
 ---
 
-### Task 7: ES Performance Baseline Test
+### Task 7: ES Performance Baseline Test (DEPRECATED — replaced by PG FTS)
+
+> **Note**: ES integration was replaced by PostgreSQL tsvector/tsquery full-text search.
+> The following tasks are retained for historical reference only.
 
 **Files:**
-- Check: `backend/es-integration/src/test/java/com/codesec/search/indexer/EsIndexListenerTest.java`
-- Create: `backend/es-integration/src/test/java/com/codesec/search/performance/EsSearchPerformanceTest.java`
-
-**Step 1: Create ES perf test**
-
-```java
-package com.codesec.search.performance;
-
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-/**
- * Performance benchmark for ES search queries.
- * Target: P99 < 500ms for typical search patterns.
- * Requires ES container running (docker compose).
- */
-@Disabled("Requires ES container — run manually after docker compose up")
-public class EsSearchPerformanceTest {
-
-    @Test
-    void searchByKeywordUnder500ms() {
-        // TODO: implement when ES test container available
-        assertTrue(true);
-    }
-
-    @Test
-    void searchBySeverityFilterUnder500ms() {
-        assertTrue(true);
-    }
-}
-```
-
-**Step 2: Commit**
-
-```bash
-git add backend/es-integration/src/test/java/com/codesec/search/performance/
-git commit -m "E-S4-TEST: add ES performance benchmark scaffold"
-```
+- ~~Check: `backend/es-integration/src/test/java/com/codesec/search/indexer/EsIndexListenerTest.java`~~ — module removed
+- ~~Create: `backend/es-integration/src/test/java/com/codesec/search/performance/EsSearchPerformanceTest.java`~~ — module removed
 
 ---
 

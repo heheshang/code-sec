@@ -33,14 +33,12 @@ public class TestDataInitializer implements CommandLineRunner {
     public void run(String... args) {
         if (userRepo.count() > 0) return;
 
-        String now = "NOW()";
-
         // Create roles
-        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (1, 'SUPER_ADMIN', " + now + ")").executeUpdate();
-        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (2, 'SECURITY_AUDITOR', " + now + ")").executeUpdate();
-        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (3, 'PROJECT_OWNER', " + now + ")").executeUpdate();
-        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (4, 'DEVELOPER', " + now + ")").executeUpdate();
-        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (5, 'READONLY_VIEWER', " + now + ")").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (1, 'SUPER_ADMIN', NOW())").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (2, 'SECURITY_AUDITOR', NOW())").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (3, 'PROJECT_OWNER', NOW())").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (4, 'DEVELOPER', NOW())").executeUpdate();
+        em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (5, 'READONLY_VIEWER', NOW())").executeUpdate();
 
         // Seed 30 permissions
         String[][] perms = {
@@ -57,21 +55,28 @@ public class TestDataInitializer implements CommandLineRunner {
             {"dashboard:read","dashboard","read"},{"cpg:read","cpg","read"}
         };
         for (int i = 0; i < perms.length; i++) {
-            em.createNativeQuery("INSERT INTO permission (id, name, resource, action) VALUES (" + (i + 1) + ", '" + perms[i][0] + "', '" + perms[i][1] + "', '" + perms[i][2] + "')")
+            em.createNativeQuery("INSERT INTO permission (id, name, resource, action) VALUES (?1, ?2, ?3, ?4)")
+                .setParameter(1, i + 1)
+                .setParameter(2, perms[i][0])
+                .setParameter(3, perms[i][1])
+                .setParameter(4, perms[i][2])
                 .executeUpdate();
         }
 
         // Assign SUPER_ADMIN (role_id=1) -> all 30 permissions
         for (long pid = 1; pid <= 30; pid++) {
-            em.createNativeQuery("INSERT INTO role_permission (role_id, permission_id) VALUES (1, " + pid + ")").executeUpdate();
+            em.createNativeQuery("INSERT INTO role_permission (role_id, permission_id) VALUES (1, ?1)")
+                .setParameter(1, pid)
+                .executeUpdate();
         }
 
         // Create admin user
         String hash = encoder.encode("admin123");
-        em.createNativeQuery("INSERT INTO \"user\" (id, username, email, password_hash, status, created_at, updated_at) VALUES (1, 'admin', 'admin@codesec.io', '" + hash + "', 'active', " + now + ", " + now + ")")
+        em.createNativeQuery("INSERT INTO \"user\" (id, username, email, password_hash, status, created_at, updated_at) VALUES (1, 'admin', 'admin@codesec.io', ?1, 'active', NOW(), NOW())")
+            .setParameter(1, hash)
             .executeUpdate();
 
         // Assign admin -> SUPER_ADMIN
-        em.createNativeQuery("INSERT INTO user_role (user_id, role_id, granted_at, granted_by) VALUES (1, 1, " + now + ", 1)").executeUpdate();
+        em.createNativeQuery("INSERT INTO user_role (user_id, role_id, granted_at, granted_by) VALUES (1, 1, NOW(), 1)").executeUpdate();
     }
 }

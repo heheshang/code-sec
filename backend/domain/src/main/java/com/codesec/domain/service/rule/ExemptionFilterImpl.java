@@ -3,7 +3,7 @@ package com.codesec.domain.service.rule;
 import com.codesec.domain.entity.RuleMetadataEntity;
 import com.codesec.domain.repository.ProjectExemptionRepository;
 import com.codesec.domain.repository.RuleMetadataRepository;
-import com.codesec.engineadapter.FindingDto;
+import com.codesec.common.dto.FindingDto;
 import com.codesec.engineadapter.ExemptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
