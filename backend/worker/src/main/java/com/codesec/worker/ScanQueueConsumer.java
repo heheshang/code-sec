@@ -1,10 +1,11 @@
 package com.codesec.worker;
 
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
 import com.codesec.engineadapter.EngineAdapter;
 import com.codesec.engineadapter.ScanRequest;
 import com.codesec.domain.entity.RepoEntity;
 import com.codesec.domain.entity.ScanTaskEntity;
+import com.codesec.common.crypto.CryptoService;
 import com.codesec.domain.repository.RepoRepository;
 import com.codesec.domain.repository.ScanTaskRepository;
 import com.codesec.domain.service.VulnService;
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
 
 @Component
 public class ScanQueueConsumer implements CommandLineRunner {
@@ -29,16 +31,19 @@ public class ScanQueueConsumer implements CommandLineRunner {
     private final ScanTaskRepository scanTaskRepo;
     private final RepoRepository repoRepo;
     private final TransactionTemplate transactionTemplate;
+    private final CryptoService cryptoService;
 
     public ScanQueueConsumer(EngineAdapter engineAdapter,
                               VulnService vulnService, ScanTaskRepository scanTaskRepo,
                               RepoRepository repoRepo,
-                              TransactionTemplate transactionTemplate) {
+                              TransactionTemplate transactionTemplate,
+                              CryptoService cryptoService) {
         this.engineAdapter = engineAdapter;
         this.vulnService = vulnService;
         this.scanTaskRepo = scanTaskRepo;
         this.repoRepo = repoRepo;
         this.transactionTemplate = transactionTemplate;
+        this.cryptoService = cryptoService;
     }
 
     @Override
@@ -93,10 +98,17 @@ public class ScanQueueConsumer implements CommandLineRunner {
         try {
             RepoEntity repo = repoRepo.findById(task.getRepoId())
                 .orElseThrow(() -> new RuntimeException("Repo not found: " + task.getRepoId()));
-            log.info("Cloning repo: {}", repo.getUrl());
+            log.info("Cloning repo: {} (branch={}, commitSha={})", repo.getUrl(), task.getBranch(), task.getCommitSha());
 
             sourceRoot = Path.of(System.getProperty("java.io.tmpdir"), "codesec-scan-" + task.getId());
-            cloneRepo(repo.getUrl(), task.getBranch() != null ? task.getBranch() : "main", sourceRoot);
+            String token = decryptToken(repo);
+            cloneRepo(repo.getUrl(), task.getBranch() != null ? task.getBranch() : "main", sourceRoot, token);
+
+            // Checkout specific commit if provided and not HEAD
+            String commitSha = task.getCommitSha();
+            if (commitSha != null && !commitSha.isBlank()) {
+                checkoutCommit(sourceRoot, commitSha, token);
+            }
 
             var request = ScanRequest.of(
                 task.getRepoId(), sourceRoot, task.getCommitSha());
@@ -104,29 +116,9 @@ public class ScanQueueConsumer implements CommandLineRunner {
             var result = engineAdapter.scan(request);
 
             if (!result.findings().isEmpty()) {
-                // Override scanId to the actual task ID before persisting
-                java.util.List<Finding> findings = result.findings().stream()
-                    .map(f -> Finding.builder()
-                        .vulnId(f.vulnId())
-                        .projectId(f.projectId())
-                        .scanId(String.valueOf(task.getId()))
-                        .engine(f.engine())
-                        .ruleId(f.ruleId())
-                        .title(f.title())
-                        .severity(f.severity())
-                        .filePath(f.filePath())
-                        .lineStart(f.lineStart())
-                        .lineEnd(f.lineEnd())
-                        .codeSnippet(f.codeSnippet())
-                        .description(f.description())
-                        .fixSuggestion(f.fixSuggestion())
-                        .cwe(f.cwe())
-                        .cve(f.cve())
-                        .exploitability(f.exploitability())
-                        .exploitReason(f.exploitReason())
-                        .engineRaw(f.engineRaw())
-                        .discoveredAt(f.discoveredAt())
-                        .build())
+                // Stamp scanId with the task ID, preserving all other fields (including AI)
+                List<FindingDto> findings = result.findings().stream()
+                    .map(f -> f.withScanId(String.valueOf(task.getId())))
                     .toList();
                 vulnService.persistBatch(findings);
             }
@@ -153,14 +145,17 @@ public class ScanQueueConsumer implements CommandLineRunner {
         }
     }
 
-    void cloneRepo(String url, String branch, Path target) throws Exception {
+    void cloneRepo(String url, String branch, Path target, String token) throws Exception {
         if (target.toFile().exists()) {
             deleteRecursively(target);
         }
         Files.createDirectories(target.getParent());
 
+        // Inject token via -c http.extraHeader for authenticated clone
+        // This avoids leaving credentials in git config or URL refs
         ProcessBuilder pb = new ProcessBuilder(
-            "git", "clone", "--depth=1", "--branch=" + branch, url, target.toString());
+            "git", "-c", "http.extraHeader=Authorization: Bearer " + (token != null ? token : "anonymous"),
+            "clone", "--depth=1", "--branch=" + branch, url, target.toString());
         pb.redirectErrorStream(true);
         Process p = pb.start();
         int exitCode = p.waitFor();
@@ -169,6 +164,49 @@ public class ScanQueueConsumer implements CommandLineRunner {
             throw new RuntimeException("Git clone failed (exit=" + exitCode + "): " + output);
         }
         log.info("Repo cloned to {}", target);
+    }
+
+    void checkoutCommit(Path repoDir, String commitSha, String token) throws Exception {
+        // Try shallow fetch of the specific SHA first
+        ProcessBuilder fetchPb = new ProcessBuilder(
+            "git", "-c", "http.extraHeader=Authorization: Bearer " + (token != null ? token : "anonymous"),
+            "fetch", "--depth=1", "origin", commitSha);
+        fetchPb.directory(repoDir.toFile());
+        fetchPb.redirectErrorStream(true);
+        Process fetchProc = fetchPb.start();
+        int fetchExit = fetchProc.waitFor();
+        if (fetchExit != 0) {
+            // SHA not available for shallow fetch; log and skip (scan proceeds at branch HEAD)
+            String output = new String(fetchProc.getInputStream().readAllBytes());
+            log.warn("Shallow fetch of commit {} failed (exit={}): {}. Scanning branch HEAD instead.", commitSha, fetchExit, output.trim());
+            return;
+        }
+
+        ProcessBuilder checkoutPb = new ProcessBuilder("git", "checkout", commitSha);
+        checkoutPb.directory(repoDir.toFile());
+        checkoutPb.redirectErrorStream(true);
+        Process checkoutProc = checkoutPb.start();
+        int checkoutExit = checkoutProc.waitFor();
+        if (checkoutExit != 0) {
+            String output = new String(checkoutProc.getInputStream().readAllBytes());
+            log.warn("Checkout of commit {} failed (exit={}): {}. Scanning branch HEAD instead.", commitSha, checkoutExit, output.trim());
+        } else {
+            log.info("Checked out commit {}", commitSha);
+        }
+    }
+
+    private String decryptToken(RepoEntity repo) {
+        String encrypted = repo.getAccessTokenEncrypted();
+        if (encrypted == null || encrypted.isBlank()) {
+            log.debug("No access token configured for repo {}, cloning without auth", repo.getId());
+            return null;
+        }
+        try {
+            return cryptoService.decrypt(encrypted);
+        } catch (Exception e) {
+            log.warn("Failed to decrypt access token for repo {}: {}", repo.getId(), e.getMessage());
+            return null;
+        }
     }
 
     private void deleteRecursively(Path path) throws Exception {

@@ -1,6 +1,7 @@
 package com.codesec.domain.service.rule;
 
-import com.codesec.domain.entity.ProjectExemptionEntity;
+import com.codesec.common.exception.NotFoundException;
+import com.codesec.common.exception.BadRequestException;import com.codesec.domain.entity.ProjectExemptionEntity;
 import com.codesec.domain.entity.RuleMetadataEntity;
 import com.codesec.domain.repository.ProjectExemptionRepository;
 import com.codesec.domain.repository.RuleMetadataRepository;
@@ -50,13 +51,13 @@ public class RuleService {
 
     public RuleResponse getRule(Long id) {
         return ruleRepo.findById(id).map(this::toRuleResponse)
-            .orElseThrow(() -> new RuntimeException("Rule not found: " + id));
+            .orElseThrow(() -> new NotFoundException("Rule not found: " + id));
     }
 
     @Transactional
     public RuleResponse updateRule(Long id, RuleUpdateRequest req) {
         var entity = ruleRepo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Rule not found: " + id));
+            .orElseThrow(() -> new NotFoundException("Rule not found: " + id));
         if (req.getEnabled() != null) entity.setEnabled(req.getEnabled());
         if (req.getSeverity() != null) entity.setSeverity(req.getSeverity());
         if (req.getDescription() != null) entity.setDescription(req.getDescription());
@@ -112,7 +113,7 @@ public class RuleService {
     @Transactional
     public ExemptionResponse addExemption(Long projectId, ExemptionRequest req) {
         if (exemptionRepo.existsByProjectIdAndRuleId(projectId, req.getRuleId())) {
-            throw new RuntimeException("Exemption already exists for this project and rule");
+            throw new BadRequestException("Exemption already exists for this project and rule");
         }
         var entity = ProjectExemptionEntity.builder()
             .projectId(projectId)
@@ -128,7 +129,7 @@ public class RuleService {
     @Transactional
     public void removeExemption(Long projectId, Long ruleId) {
         if (!exemptionRepo.existsByProjectIdAndRuleId(projectId, ruleId)) {
-            throw new RuntimeException("Exemption not found for project " + projectId + " and rule " + ruleId);
+            throw new NotFoundException("Exemption not found for project " + projectId + " and rule " + ruleId);
         }
         exemptionRepo.deleteByProjectIdAndRuleId(projectId, ruleId);
     }

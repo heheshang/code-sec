@@ -1,6 +1,5 @@
 package com.codesec.engineadapter;
 
-import com.codesec.engine.model.Finding;
 import java.nio.file.Path;
 import java.util.List;
 

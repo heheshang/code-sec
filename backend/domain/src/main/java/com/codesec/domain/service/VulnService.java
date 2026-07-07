@@ -1,10 +1,11 @@
 package com.codesec.domain.service;
 
+import com.codesec.common.exception.NotFoundException;
 import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.*;
 import com.codesec.domain.dto.PaginatedResult;
 import com.codesec.domain.dto.*;
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,10 +24,10 @@ public class VulnService {
     private final VulnTicketRepository ticketRepo;
 
     /**
-     * Batch-persist findings from engine scan. Called synchronously by EngineAdapterImpl.
+     * Batch-persist findings from engine scan. Called by worker after adapter maps to DTOs.
      *
      * Internal steps:
-     * 1. Map Finding → VulnFindingEntity
+     * 1. Map FindingDto → VulnFindingEntity
      * 2. Deduplicate by dedup_key
      * 3. Insert vuln_finding rows (tsvector auto-maintained by PG trigger)
      * 4. Auto-create vuln_ticket for each (status=PENDING_AUDIT)
@@ -34,12 +35,12 @@ public class VulnService {
      * @return list of persisted VulnFindingEntity records
      */
     @Transactional
-    public List<VulnFindingEntity> persistBatch(List<Finding> findings) {
+    public List<VulnFindingEntity> persistBatch(List<FindingDto> findings) {
         if (findings == null || findings.isEmpty()) return List.of();
 
         List<VulnFindingEntity> saved = new ArrayList<>();
 
-        for (Finding f : findings) {
+        for (FindingDto f : findings) {
             String dedupKey = buildDedupKey(f);
             if (vulnRepo.findByDedupKey(dedupKey).isPresent()) {
                 log.debug("Skipping duplicate finding: {}", dedupKey);
@@ -63,6 +64,10 @@ public class VulnService {
                 .cwe(f.cwe())
                 .cve(f.cve())
                 .engine(f.engine() != null ? f.engine() : "self_sast")
+                .aiVerdict(f.aiVerdict())
+                .aiConfidence(f.aiConfidence())
+                .aiExplanation(f.aiExplanation())
+                .aiGeneratedPatch(f.aiGeneratedPatch())
                 .discoveredAt(f.discoveredAt() != null ?
                     LocalDateTime.ofInstant(f.discoveredAt(), ZoneOffset.UTC) : LocalDateTime.now())
                 .discoveredBy("engine")
@@ -95,7 +100,7 @@ public class VulnService {
 
     public VulnFindingResponse getById(Long id) {
         return vulnRepo.findById(id).map(this::toResponse)
-            .orElseThrow(() -> new RuntimeException("Vuln finding not found: " + id));
+            .orElseThrow(() -> new NotFoundException("Vuln finding not found: " + id));
     }
 
     public long countBySeverity(String severity) { return vulnRepo.countBySeverity(severity); }
@@ -113,7 +118,7 @@ public class VulnService {
             .build();
     }
 
-    private String buildDedupKey(Finding f) {
+    private String buildDedupKey(FindingDto f) {
         return f.scanId() + "/" + f.filePath() + "/" + f.lineStart() + "/" + f.ruleId();
     }
 

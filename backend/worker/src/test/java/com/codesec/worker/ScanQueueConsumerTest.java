@@ -1,11 +1,12 @@
 package com.codesec.worker;
 
 import com.codesec.domain.entity.RepoEntity;
+import com.codesec.common.crypto.CryptoService;
 import com.codesec.domain.entity.ScanTaskEntity;
 import com.codesec.domain.repository.RepoRepository;
 import com.codesec.domain.repository.ScanTaskRepository;
 import com.codesec.domain.service.VulnService;
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
 import com.codesec.engineadapter.EngineAdapter;
 import com.codesec.engineadapter.EngineScanResult;
 import com.codesec.engineadapter.ScanRequest;
@@ -29,6 +30,7 @@ class ScanQueueConsumerTest {
     private VulnService vulnService;
     private ScanTaskRepository scanTaskRepo;
     private TransactionTemplate transactionTemplate;
+    private CryptoService cryptoService;
     private ScanQueueConsumer consumer;
 
     private static final String TEST_REPO_URL =
@@ -43,13 +45,14 @@ class ScanQueueConsumerTest {
         PlatformTransactionManager ptm = mock(PlatformTransactionManager.class);
         when(ptm.getTransaction(any())).thenReturn(mock(TransactionStatus.class));
         transactionTemplate = new TransactionTemplate(ptm);
+        cryptoService = mock(CryptoService.class);
 
         when(repoRepo.findById(anyLong())).thenReturn(Optional.of(
             RepoEntity.builder().id(1L).url(TEST_REPO_URL).build()
         ));
 
         consumer = new ScanQueueConsumer(engineAdapter, vulnService, scanTaskRepo,
-            repoRepo, transactionTemplate);
+            repoRepo, transactionTemplate, cryptoService);
     }
 
     @Test
@@ -81,22 +84,28 @@ class ScanQueueConsumerTest {
 
         when(scanTaskRepo.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Finding finding = Finding.builder()
-            .ruleId("java/sql-injection-001")
-            .title("SQL Injection")
-            .severity("high")
-            .filePath("VulnApp.java")
-            .build();
+        FindingDto finding = new FindingDto(
+            null, null, null, "self_sast",
+            "java/sql-injection-001", "SQL Injection", "high",
+            "VulnApp.java", 0, 0, null, null, null,
+            null, null, "potentially_exploitable", null, null, java.time.Instant.now(),
+            "exploitable", 0.95,
+            "User input reaches SQL sink without sanitization",
+            "PreparedStatement ps = conn.prepareStatement(sql)"
+        );
         EngineScanResult result = new EngineScanResult("scan-2", List.of(finding), 100L);
 
         when(engineAdapter.scan(any(ScanRequest.class))).thenReturn(result);
 
         consumer.processTask(task);
 
-        // processTask overrides scanId to match the task ID
+        // processTask overrides scanId to match the task ID and preserves AI fields
         verify(vulnService).persistBatch(argThat(list ->
             list.size() == 1 && "2".equals(list.get(0).scanId())
                 && "java/sql-injection-001".equals(list.get(0).ruleId())
+                && "exploitable".equals(list.get(0).aiVerdict())
+                && list.get(0).aiConfidence() == 0.95
+                && list.get(0).aiGeneratedPatch() != null
         ));
         verify(scanTaskRepo, atLeastOnce()).save(task);
     }

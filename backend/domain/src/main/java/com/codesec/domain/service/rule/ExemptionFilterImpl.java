@@ -3,7 +3,7 @@ package com.codesec.domain.service.rule;
 import com.codesec.domain.entity.RuleMetadataEntity;
 import com.codesec.domain.repository.ProjectExemptionRepository;
 import com.codesec.domain.repository.RuleMetadataRepository;
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
 import com.codesec.engineadapter.ExemptionFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,7 @@ public class ExemptionFilterImpl implements ExemptionFilter {
     private final ProjectExemptionRepository exemptionRepo;
 
     @Override
-    public List<Finding> filterExempted(List<Finding> findings, Long projectId) {
+    public List<FindingDto> filterExempted(List<FindingDto> findings, Long projectId) {
         if (findings == null || findings.isEmpty()) return findings;
 
         // Get all exempted rule IDs for this project

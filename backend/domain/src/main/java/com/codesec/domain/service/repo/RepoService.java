@@ -1,5 +1,6 @@
 package com.codesec.domain.service.repo;
 
+import com.codesec.common.exception.NotFoundException;
 import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.RepoRepository;
 import com.codesec.domain.dto.*;
@@ -106,7 +107,7 @@ public class RepoService {
 
     private RepoEntity findEntityOrThrow(Long id) {
         return repoRepo.findById(id)
-            .orElseThrow(() -> new RuntimeException("Repo not found: " + id));
+            .orElseThrow(() -> new NotFoundException("Repo not found: " + id));
     }
 
     private RepoListItem toListItem(RepoEntity e) {

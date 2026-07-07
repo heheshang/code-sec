@@ -40,10 +40,24 @@ public record Finding(
     @JsonProperty("ai_verdict") String aiVerdict,
     @JsonProperty("ai_confidence") Double aiConfidence,
     @JsonProperty("ai_explanation") String aiExplanation,
-    @JsonProperty("ai_generated_patch") String aiGeneratedPatch
+   @JsonProperty("ai_generated_patch") String aiGeneratedPatch
 ) {
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Returns a copy of this finding with the scanId replaced.
+     * Future-proof: any new fields added to Finding are automatically preserved.
+     */
+    public Finding withScanId(String newScanId) {
+        return new Finding(
+            vulnId, projectId, newScanId, engine, ruleId, title, severity,
+            filePath, lineStart, lineEnd, codeSnippet, description,
+            fixSuggestion, cwe, cve, exploitability, exploitReason,
+            engineRaw, discoveredAt,
+            aiVerdict, aiConfidence, aiExplanation, aiGeneratedPatch
+        );
     }
 
     public static final class Builder {

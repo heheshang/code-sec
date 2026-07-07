@@ -1,6 +1,5 @@
 package com.codesec.engineadapter;
 
-import com.codesec.engine.model.Finding;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,8 +13,10 @@ class EngineScanResultTest {
 
     @Test
     void constructorAndAccessors() {
-        List<Finding> findings = List.of(
-            Finding.builder().ruleId("test-rule").title("Test finding").build()
+        List<FindingDto> findings = List.of(
+            new FindingDto("vuln-1", null, null, "self_sast", "test-rule",
+                "Test finding", null, null, 0, 0, null, null, null,
+                null, null, null, null, null, null, null, null, null, null)
         );
         EngineScanResult result = new EngineScanResult("scan-1", findings, 150L);
 

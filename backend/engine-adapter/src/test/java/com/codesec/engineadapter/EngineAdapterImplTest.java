@@ -1,6 +1,5 @@
 package com.codesec.engineadapter;
 
-import com.codesec.engine.model.Finding;
 import com.codesec.engine.rule.Detection;
 import com.codesec.engine.rule.Rule;
 import com.codesec.engine.rule.RuleRegistry;

@@ -1,5 +1,6 @@
 package com.codesec.domain.service.ai;
 
+import com.codesec.common.exception.NotFoundException;
 import com.codesec.codex.CodexAdapter;
 import com.codesec.codex.model.*;
 import com.codesec.domain.entity.VulnFindingEntity;
@@ -26,7 +27,7 @@ public class AiAnalysisService {
 
     public AiAnalysisResult analyze(Long vulnId) {
         VulnFindingEntity vuln = vulnRepo.findById(vulnId)
-            .orElseThrow(() -> new RuntimeException("Vuln not found: " + vulnId));
+            .orElseThrow(() -> new NotFoundException("Vuln not found: " + vulnId));
 
         CodexRequest request = buildRequest(vuln);
 

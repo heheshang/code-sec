@@ -1,5 +1,6 @@
 package com.codesec.domain.service.ticket;
 
+import com.codesec.common.exception.NotFoundException;
 import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.*;
 import com.codesec.domain.dto.*;
@@ -44,7 +45,7 @@ public class TicketService {
             String name = t.getAssigneeId() != null
                 ? userRepo.findById(t.getAssigneeId()).map(UserEntity::getUsername).orElse(null) : null;
             return toResponse(t, name);
-        }).orElseThrow(() -> new RuntimeException("Ticket not found: " + id));
+        }).orElseThrow(() -> new NotFoundException("Ticket not found: " + id));
     }
 
     public List<TicketHistoryItem> getHistory(Long ticketId) {
@@ -58,7 +59,7 @@ public class TicketService {
     @Transactional
     public TicketResponse transition(Long ticketId, TicketTransitionRequest req, Long operatorId) {
         VulnTicketEntity ticket = ticketRepo.findById(ticketId)
-            .orElseThrow(() -> new RuntimeException("Ticket not found: " + ticketId));
+            .orElseThrow(() -> new NotFoundException("Ticket not found: " + ticketId));
 
         TicketStateMachine.assertValid(ticket.getStatus(), req.getToStatus(), "operator");
 

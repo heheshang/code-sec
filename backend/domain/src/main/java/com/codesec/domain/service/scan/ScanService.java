@@ -1,5 +1,6 @@
 package com.codesec.domain.service.scan;
 
+import com.codesec.common.exception.NotFoundException;
 import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.*;
 import com.codesec.domain.dto.*;
@@ -59,7 +60,7 @@ public class ScanService {
                 .findingsCount(count)
                 .startedAt(task.getStartedAt()).finishedAt(task.getFinishedAt())
                 .build();
-        }).orElseThrow(() -> new RuntimeException("Scan task not found: " + id));
+        }).orElseThrow(() -> new NotFoundException("Scan task not found: " + id));
     }
 
     public PaginatedResult<ScanListItem> list(Long repoId, int page, int size) {

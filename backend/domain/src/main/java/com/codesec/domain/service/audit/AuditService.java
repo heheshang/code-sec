@@ -1,6 +1,7 @@
 package com.codesec.domain.service.audit;
 
-import com.codesec.domain.entity.*;
+import com.codesec.common.exception.NotFoundException;
+import com.codesec.common.exception.BadRequestException;import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.*;
 import com.codesec.domain.dto.*;
 import com.codesec.domain.service.ticket.statemachine.TicketStateMachine;
@@ -22,7 +23,7 @@ public class AuditService {
     @Transactional
     public AuditResponse submitAudit(AuditSubmitRequest req, Long auditorId) {
         VulnFindingEntity vuln = vulnRepo.findById(req.getVulnId())
-            .orElseThrow(() -> new RuntimeException("Vuln not found"));
+            .orElseThrow(() -> new NotFoundException("Vuln not found"));
 
         List<VulnTicketEntity> tickets = ticketRepo.findByVulnId(req.getVulnId());
         VulnTicketEntity ticket = tickets.isEmpty() ? null : tickets.get(0);
@@ -31,7 +32,7 @@ public class AuditService {
             case "confirm" -> "confirmed";
             case "false_positive" -> "false_positive";
             case "need_retest" -> "pending_retest";
-            default -> throw new RuntimeException("Invalid audit action: " + req.getAction());
+            default -> throw new BadRequestException("Invalid audit action: " + req.getAction());
         };
 
         if (ticket != null) {

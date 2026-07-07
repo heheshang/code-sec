@@ -1,5 +1,6 @@
 package com.codesec.domain.service.export;
 
+import com.codesec.common.exception.NotFoundException;
 import com.codesec.domain.entity.AuditRecordEntity;
 import com.codesec.domain.entity.VulnFindingEntity;
 import com.codesec.domain.entity.VulnTicketEntity;
@@ -38,19 +39,19 @@ public class PdfExportService {
 
     public byte[] exportSingle(Long ticketId) {
         VulnTicketEntity ticket = ticketRepo.findById(ticketId)
-            .orElseThrow(() -> new RuntimeException("Ticket not found: " + ticketId));
+            .orElseThrow(() -> new NotFoundException("Ticket not found: " + ticketId));
         VulnFindingEntity vuln = vulnRepo.findById(ticket.getVulnId())
-            .orElseThrow(() -> new RuntimeException("Vuln finding not found: " + ticket.getVulnId()));
+            .orElseThrow(() -> new NotFoundException("Vuln finding not found: " + ticket.getVulnId()));
         List<AuditRecordEntity> audits = auditRepo.findByVulnIdOrderByAuditedAtDesc(vuln.getId());
         return generatePdf(ticket, vuln, audits);
     }
 
     public byte[] exportByVulnId(Long vulnId) {
         VulnFindingEntity vuln = vulnRepo.findById(vulnId)
-            .orElseThrow(() -> new RuntimeException("Vuln finding not found: " + vulnId));
+            .orElseThrow(() -> new NotFoundException("Vuln finding not found: " + vulnId));
         List<VulnTicketEntity> tickets = ticketRepo.findByVulnId(vulnId);
         if (tickets.isEmpty()) {
-            throw new RuntimeException("No ticket found for vuln: " + vulnId);
+            throw new NotFoundException("No ticket found for vuln: " + vulnId);
         }
         List<AuditRecordEntity> audits = auditRepo.findByVulnIdOrderByAuditedAtDesc(vulnId);
         return generatePdf(tickets.get(0), vuln, audits);
@@ -64,7 +65,7 @@ public class PdfExportService {
             for (Long ticketId : ticketIds) {
                 try {
                     VulnTicketEntity ticket = ticketRepo.findById(ticketId)
-                        .orElseThrow(() -> new RuntimeException("Ticket not found: " + ticketId));
+                        .orElseThrow(() -> new NotFoundException("Ticket not found: " + ticketId));
                     VulnFindingEntity vuln = vulnRepo.findById(ticket.getVulnId()).orElse(null);
                     List<AuditRecordEntity> audits = vuln != null
                         ? auditRepo.findByVulnIdOrderByAuditedAtDesc(vuln.getId())

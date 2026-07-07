@@ -1,23 +1,16 @@
 package com.codesec.api.module.cpg;
 
-import com.codesec.domain.entity.VulnFindingEntity;
-import com.codesec.domain.repository.VulnFindingRepository;
 import com.codesec.api.module.cpg.dto.CpgResponse;
-import com.codesec.api.module.cpg.dto.CpgResponse.CpgNode;
-import com.codesec.api.module.cpg.dto.CpgResponse.CpgEdge;
 import com.codesec.engine.judge.CpgService;
-import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Value;
 import org.neo4j.driver.Values;
-import org.neo4j.driver.types.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,30 +21,20 @@ public class CpgController {
 
     private static final Logger log = LoggerFactory.getLogger(CpgController.class);
     private final CpgService cpgService;
-    private final VulnFindingRepository vulnRepo;
+    private final CpgQueryService cpgQueryService;
 
-    public CpgController(CpgService cpgService, VulnFindingRepository vulnRepo) {
+    public CpgController(CpgService cpgService, CpgQueryService cpgQueryService) {
         this.cpgService = cpgService;
-        this.vulnRepo = vulnRepo;
+        this.cpgQueryService = cpgQueryService;
     }
 
     @GetMapping("/{vulnId}")
     public ResponseEntity<CpgResponse> getCpg(@PathVariable Long vulnId) {
-        if (!cpgService.isAvailable()) {
+        Optional<CpgResponse> response = cpgQueryService.getCpgForVuln(vulnId);
+        if (response.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-
-        Optional<VulnFindingEntity> vulnOpt = vulnRepo.findById(vulnId);
-        if (vulnOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        String scanId = vulnOpt.get().getScanTaskId().toString();
-        List<Record> methods = cpgService.findLatestByProjectId(scanId);
-        List<Record> paths = cpgService.findReachablePaths(scanId);
-
-        CpgResponse response = toResponse(methods, paths);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(response.get());
     }
 
     @PostMapping("/demo/{vulnId}")
@@ -60,12 +43,12 @@ public class CpgController {
             return ResponseEntity.status(503).body("Neo4j not available");
         }
 
-        Optional<VulnFindingEntity> vulnOpt = vulnRepo.findById(vulnId);
+        var vulnOpt = cpgQueryService.findVulnById(vulnId);
         if (vulnOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        VulnFindingEntity vuln = vulnOpt.get();
+        var vuln = vulnOpt.get();
         String scanId = vuln.getScanTaskId().toString();
         String filePath = vuln.getFilePath();
 
@@ -168,35 +151,4 @@ public class CpgController {
         );
     }
 
-    private CpgResponse toResponse(List<Record> methods, List<Record> paths) {
-        List<CpgNode> nodes = new ArrayList<>();
-        List<CpgEdge> edges = new ArrayList<>();
-
-        for (Record method : methods) {
-            Value n = method.get("n");
-            nodes.add(new CpgNode(
-                n.get("key").asString(),
-                n.get("name", ""),
-                n.get("className", ""),
-                n.get("signatureKey", ""),
-                n.get("startLine", 0)
-            ));
-        }
-
-        java.util.Set<String> seenEdges = new java.util.HashSet<>();
-
-        for (Record path : paths) {
-            Path p = path.get("path").asPath();
-            for (Path.Segment seg : p) {
-                String src = seg.start().get("key").asString();
-                String tgt = seg.end().get("key").asString();
-                String edgeKey = src + "->" + tgt;
-                if (seenEdges.add(edgeKey)) {
-                    edges.add(new CpgEdge(src, tgt, "CALLS"));
-                }
-            }
-        }
-
-        return new CpgResponse(nodes, edges);
-    }
 }

@@ -27,14 +27,16 @@ public class EngineAdapterImpl implements EngineAdapter {
         try {
             Engine engine = Engine.create(ruleRegistry);
             List<Finding> findings = engine.scan(request.sourceRoot());
+            // Map engine findings to DTOs before crossing the adapter boundary
+            List<FindingDto> dtos = findings.stream().map(FindingDto::from).toList();
             // Apply project-level exemption filter
             if (request.repoId() != null && exemptionFilter != null) {
-                findings = exemptionFilter.filterExempted(findings, request.repoId());
+                dtos = exemptionFilter.filterExempted(dtos, request.repoId());
             }
             long duration = System.currentTimeMillis() - start;
             scanCount++;
-            log.info("Full scan complete: {} findings in {}ms", findings.size(), duration);
-            return new EngineScanResult(UUID.randomUUID().toString(), findings, duration);
+            log.info("Full scan complete: {} findings in {}ms", dtos.size(), duration);
+            return new EngineScanResult(UUID.randomUUID().toString(), dtos, duration);
         } catch (Exception e) {
             log.error("Full scan failed for repo {}", request.repoId(), e);
             long duration = System.currentTimeMillis() - start;
@@ -52,8 +54,9 @@ public class EngineAdapterImpl implements EngineAdapter {
             Engine engine = Engine.create(ruleRegistry);
             List<Finding> allFindings = engine.scan(sourceRoot);
             // Filter findings to only those in relativeFiles
-            List<Finding> filtered = allFindings.stream()
+            List<FindingDto> filtered = allFindings.stream()
                 .filter(f -> relativeFiles.stream().anyMatch(rf -> f.filePath().contains(rf)))
+                .map(FindingDto::from)
                 .toList();
             long duration = System.currentTimeMillis() - start;
             scanCount++;
