@@ -1,6 +1,6 @@
 package com.codesec.gitlab.comment;
 
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class MrCommentTemplateTest {
         @Test
         @DisplayName("should render findings by severity")
         void renderWithFindings() {
-            List<Finding> findings = List.of(
+            List<FindingDto> findings = List.of(
                 createFinding("SQL Injection", "critical"),
                 createFinding("XSS", "high"),
                 createFinding("Hardcoded Password", "medium"),
@@ -55,7 +55,7 @@ class MrCommentTemplateTest {
         @Test
         @DisplayName("should show merge allowed for medium/low only")
         void renderMergeAllowed() {
-            List<Finding> findings = List.of(
+            List<FindingDto> findings = List.of(
                 createFinding("Minor Issue", "medium"),
                 createFinding("Info", "low")
             );
@@ -120,7 +120,7 @@ class MrCommentTemplateTest {
         @Test
         @DisplayName("should render correct emojis for each severity")
         void emojis() {
-            List<Finding> findings = List.of(
+            List<FindingDto> findings = List.of(
                 createFinding("Crit", "critical"),
                 createFinding("High", "high"),
                 createFinding("Med", "medium"),
@@ -136,22 +136,13 @@ class MrCommentTemplateTest {
         }
     }
 
-    private static Finding createFinding(String title, String severity) {
-        return Finding.builder()
-            .vulnId("vuln-" + java.util.UUID.randomUUID().toString().substring(0, 8))
-            .scanId("scan-test")
-            .ruleId("java/test-001")
-            .title(title)
-            .severity(severity)
-            .filePath("src/main/java/com/example/Test.java")
-            .lineStart(42)
-            .lineEnd(42)
-            .codeSnippet("some code")
-            .description("Test finding")
-            .fixSuggestion("Fix it")
-            .exploitability("exploitable")
-            .exploitReason("taint source reachable")
-            .discoveredAt(Instant.now())
-            .build();
+    private static FindingDto createFinding(String title, String severity) {
+        return new FindingDto(
+            "vuln-" + java.util.UUID.randomUUID().toString().substring(0, 8),
+            null, "scan-test", "self_sast", "java/test-001",
+            title, severity, "src/main/java/com/example/Test.java",
+            42, 42, "some code", "Test finding", "Fix it",
+            null, null, "exploitable", "taint source reachable",
+            null, Instant.now(), null, null, null, null);
     }
 }

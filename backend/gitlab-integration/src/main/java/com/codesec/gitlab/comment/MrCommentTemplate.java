@@ -1,7 +1,6 @@
 package com.codesec.gitlab.comment;
 
-import com.codesec.engine.model.Finding;
-import com.codesec.engine.model.Severity;
+import com.codesec.engineadapter.FindingDto;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -31,9 +30,9 @@ public final class MrCommentTemplate {
      * @param findings the list of findings from the engine scan
      * @return rendered Markdown comment body
      */
-    public static String render(String scanId, List<Finding> findings) {
+    public static String render(String scanId, List<FindingDto> findings) {
         Map<String, Long> severityCounts = findings.stream()
-            .collect(Collectors.groupingBy(Finding::severity, Collectors.counting()));
+            .collect(Collectors.groupingBy(FindingDto::severity, Collectors.counting()));
 
         long criticalCount = severityCounts.getOrDefault("critical", 0L);
         long highCount = severityCounts.getOrDefault("high", 0L);
@@ -68,7 +67,7 @@ public final class MrCommentTemplate {
         // Top findings list (up to 10)
         int listLimit = Math.min(findings.size(), 10);
         for (int i = 0; i < listLimit; i++) {
-            Finding f = findings.get(i);
+            FindingDto f = findings.get(i);
             String emoji = severityEmoji(f.severity());
             sb.append("- ").append(emoji).append(" [").append(f.title()).append("] ");
             sb.append("`").append(f.filePath()).append(":").append(f.lineStart()).append("`");

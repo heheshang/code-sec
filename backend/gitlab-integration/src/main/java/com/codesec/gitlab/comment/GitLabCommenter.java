@@ -1,6 +1,6 @@
 package com.codesec.gitlab.comment;
 
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
 import com.codesec.gitlab.GitLabClient;
 import com.codesec.gitlab.model.GitLabApiException;
 import org.slf4j.Logger;
@@ -35,7 +35,7 @@ public class GitLabCommenter {
      * @param scanId    the scan identifier
      * @param findings  the list of findings from the scan
      */
-    public void postScanSummary(long projectId, long mrIid, String scanId, List<Finding> findings) {
+    public void postScanSummary(long projectId, long mrIid, String scanId, List<FindingDto> findings) {
         String commentBody = MrCommentTemplate.render(scanId, findings);
         postComment(projectId, mrIid, commentBody);
     }

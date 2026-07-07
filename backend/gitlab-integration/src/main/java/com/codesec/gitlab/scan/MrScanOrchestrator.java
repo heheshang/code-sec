@@ -1,19 +1,23 @@
 package com.codesec.gitlab.scan;
 
-import com.codesec.engine.model.Finding;
+import com.codesec.engineadapter.FindingDto;
+import com.codesec.engineadapter.EngineAdapter;
+import com.codesec.engineadapter.EngineScanResult;
+import com.codesec.domain.service.VulnService;
 import com.codesec.gitlab.GitLabClient;
 import com.codesec.gitlab.comment.GitLabCommenter;
-import com.codesec.gitlab.dev.DevEngineAdapter;
-import com.codesec.gitlab.dev.DevRepoService;
-import com.codesec.gitlab.dev.DevVulnService;
 import com.codesec.gitlab.model.GitLabApiException;
 import com.codesec.gitlab.model.MrChangesResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Orchestrates the full MR scan pipeline.
@@ -30,19 +34,16 @@ public class MrScanOrchestrator {
     private static final Logger log = LoggerFactory.getLogger(MrScanOrchestrator.class);
 
     private final GitLabClient gitLabClient;
-    private final DevEngineAdapter engineAdapter;
-    private final DevRepoService repoService;
-    private final DevVulnService vulnService;
+    private final EngineAdapter engineAdapter;
+    private final VulnService vulnService;
     private final GitLabCommenter commenter;
 
     public MrScanOrchestrator(GitLabClient gitLabClient,
-                              DevEngineAdapter engineAdapter,
-                              DevRepoService repoService,
-                              DevVulnService vulnService,
+                              EngineAdapter engineAdapter,
+                              VulnService vulnService,
                               GitLabCommenter commenter) {
         this.gitLabClient = gitLabClient;
         this.engineAdapter = engineAdapter;
-        this.repoService = repoService;
         this.vulnService = vulnService;
         this.commenter = commenter;
     }
@@ -88,19 +89,28 @@ public class MrScanOrchestrator {
             log.info("Files to scan: {}", diffResult.relativeFiles().size());
 
             // Stage 3: Checkout + Engine scan
-            List<Finding> findings;
+            EngineScanResult scanResult;
             try {
-                findings = engineAdapter.scanFiles(diffResult.relativeFiles());
+                Path workDir = createTempWorkDir();
+                try {
+                    scanResult = engineAdapter.scanFiles(workDir, diffResult.relativeFiles());
+                } finally {
+                    cleanupWorkDir(workDir);
+                }
             } catch (Exception e) {
                 log.error("Engine scan failed: {}", e.getMessage(), e);
                 return;
             }
+            List<FindingDto> findings = scanResult.findings();
 
             // Stage 4: Persist findings
             int persistedCount = 0;
             if (!findings.isEmpty()) {
                 try {
-                    persistedCount = vulnService.persistBatch(scanId, findings);
+                    List<FindingDto> tagged = findings.stream()
+                        .map(f -> f.withScanId(scanId))
+                        .toList();
+                    persistedCount = vulnService.persistBatch(tagged).size();
                     log.info("Persisted {} findings for scanId={}", persistedCount, scanId);
                 } catch (Exception e) {
                     log.error("Failed to persist findings: {}", e.getMessage(), e);
@@ -119,6 +129,29 @@ public class MrScanOrchestrator {
 
         } catch (Exception e) {
             log.error("MR scan orchestration failed unexpectedly: {}", e.getMessage(), e);
+        }
+    }
+
+    private Path createTempWorkDir() {
+        try {
+            return Files.createTempDirectory("gitlab-scan-");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create temp work dir", e);
+        }
+    }
+
+    private void cleanupWorkDir(Path workDir) {
+        try {
+            if (Files.exists(workDir)) {
+                try (Stream<Path> walk = Files.walk(workDir)) {
+                    walk.sorted(java.util.Comparator.reverseOrder())
+                        .forEach(p -> {
+                            try { Files.deleteIfExists(p); } catch (IOException ignored) {}
+                        });
+                }
+            }
+        } catch (IOException e) {
+            log.warn("Failed to cleanup work dir: {}", workDir, e);
         }
     }
 }

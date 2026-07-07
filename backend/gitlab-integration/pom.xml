@@ -52,6 +52,14 @@
             <groupId>com.codesec</groupId>
             <artifactId>code-sec-backend-engine</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.codesec</groupId>
+            <artifactId>code-sec-backend-engine-adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.codesec</groupId>
+            <artifactId>code-sec-backend-domain</artifactId>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
