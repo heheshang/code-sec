@@ -130,9 +130,9 @@ public class VulnSearchService {
 
     private VulnDocument mapVulnDocument(Object[] row, Map<String, List<String>> highlights) {
         VulnDocument doc = new VulnDocument();
-        String id = (String) row[0];
+        String id = row[0] != null ? row[0].toString() : null;
         doc.setId(id);
-        doc.setProjectId((String) row[1]);
+        doc.setProjectId(row[1] != null ? row[1].toString() : null);
         doc.setRuleId((String) row[2]);
         doc.setSeverity((String) row[3]);
         doc.setExploitability((String) row[4]);
@@ -178,7 +178,8 @@ public class VulnSearchService {
                 placeholders.add("?" + pos);
                 pos++;
             }
-            conditions.add(column + " IN (" + String.join(", ", placeholders) + ")");
+            String col = column.contains("project_id") ? "CAST(" + column + " AS text)" : column;
+            conditions.add(col + " IN (" + String.join(", ", placeholders) + ")");
             return pos;
         }
         return pos;

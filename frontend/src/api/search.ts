@@ -82,8 +82,8 @@ function buildParams(query: SearchQuery): Record<string, unknown> {
   if (query.discoveredAtFrom) params.discoveredAtFrom = query.discoveredAtFrom
   if (query.discoveredAtTo) params.discoveredAtTo = query.discoveredAtTo
   if (query.page !== undefined) params.page = String(query.page)
-  if (query.pageSize !== undefined) params.page_size = String(query.pageSize)
-  if (query.sortBy) params.sort_by = query.sortBy
-  if (query.sortOrder) params.sort_order = query.sortOrder
+  if (query.pageSize !== undefined) params.pageSize = String(query.pageSize)
+  if (query.sortBy) params.sortBy = query.sortBy
+  if (query.sortOrder) params.sortOrder = query.sortOrder
   return params
 }

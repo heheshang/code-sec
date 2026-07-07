@@ -76,8 +76,8 @@ public class CpgQueryService {
             nodes.add(new CpgNode(
                 n.get("key").asString(),
                 n.get("name", ""),
+                n.get("annotations", ""),
                 n.get("className", ""),
-                n.get("signatureKey", ""),
                 n.get("startLine", 0)
             ));
         }

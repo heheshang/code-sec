@@ -35,7 +35,9 @@ onMounted(() => {
   if (tab === 'snippets') {
     store.setTab('snippets')
   }
-  store.search()
+  if (q || store.hasActiveFilters) {
+    store.search()
+  }
 })
 
 watch(

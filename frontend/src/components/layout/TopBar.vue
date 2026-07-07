@@ -14,6 +14,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useUiStore } from '@/stores/ui'
 import { useGlobalShortcut } from '@/composables/useGlobalShortcut'
+import { clearToken } from '@/api/client'
 import GlobalSearch from '@/components/search/GlobalSearch.vue'
 
 const ui = useUiStore()
@@ -36,6 +37,10 @@ useGlobalShortcut(
 
 function handleUserCommand(command: string): void {
   if (command === 'profile') router.push('/settings')
+  if (command === 'logout') {
+    clearToken()
+    router.push('/login')
+  }
 }
 </script>
 

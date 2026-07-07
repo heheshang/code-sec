@@ -117,10 +117,22 @@ public class ScanQueueConsumer implements CommandLineRunner {
 
             if (!result.findings().isEmpty()) {
                 // Stamp scanId with the task ID, preserving all other fields (including AI)
+                // Guard against stale FindingDto classes from prior builds on the classpath
                 List<FindingDto> findings = result.findings().stream()
+                    .filter(f -> {
+                        if (!(f instanceof FindingDto)) {
+                            log.warn("Ignoring finding with unexpected type: {} (expected {})",
+                                f.getClass().getName(), FindingDto.class.getName());
+                            return false;
+                        }
+                        return true;
+                    })
+                    .map(FindingDto.class::cast)
                     .map(f -> f.withScanId(String.valueOf(task.getId())))
                     .toList();
-                vulnService.persistBatch(findings);
+                if (!findings.isEmpty()) {
+                    vulnService.persistBatch(findings);
+                }
             }
 
             task.setStatus("completed");

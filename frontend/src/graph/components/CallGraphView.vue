@@ -3,9 +3,11 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { VueFlow, useVueFlow, ConnectionLineType, MarkerType, type Node, type Edge } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Controls } from '@vue-flow/controls'
+import { ElMessage } from 'element-plus'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import { useCallGraph } from '../composables/useCallGraph'
+import { http } from '@/api/client'
 import GraphToolbar from './GraphToolbar.vue'
 import dagre from 'dagre'
 
@@ -18,6 +20,7 @@ const emit = defineEmits<{
 const { data, loading, error, fetch } = useCallGraph(props.vulnId)
 
 const graphRef = ref<HTMLDivElement | null>(null)
+const seeding = ref(false)
 
 const { fitView, zoomIn, zoomOut } = useVueFlow({ id: 'cpg-flow' })
 
@@ -102,6 +105,23 @@ function handleExportPng() {
   })
 }
 
+async function handleRetry() {
+  await fetch()
+}
+
+async function handleLoadDemo() {
+  seeding.value = true
+  try {
+    await http.post(`/cpg/demo/${props.vulnId}`)
+    ElMessage.success('Demo call graph data loaded')
+    await fetch()
+  } catch (e: unknown) {
+    ElMessage.error(e instanceof Error ? e.message : 'Failed to load demo data')
+  } finally {
+    seeding.value = false
+  }
+}
+
 onMounted(() => { if (props.vulnId) fetch() })
 
 watch(() => props.vulnId, id => { if (id) fetch() })
@@ -115,11 +135,31 @@ watch(() => props.vulnId, id => { if (id) fetch() })
     </div>
 
     <div v-else-if="error" class="cs-call-graph-placeholder">
-      <el-empty description="Call graph not available" />
+      <el-empty description="Call graph not available">
+        <template #description>
+          <span class="cs-call-graph-error-desc">{{ error }}</span>
+        </template>
+        <template #default>
+          <div class="cs-call-graph-actions">
+            <el-button size="small" @click="handleRetry">
+              Retry
+            </el-button>
+            <el-button size="small" type="primary" :loading="seeding" @click="handleLoadDemo">
+              Load Demo Data
+            </el-button>
+          </div>
+        </template>
+      </el-empty>
     </div>
 
     <div v-else-if="!hasData" class="cs-call-graph-placeholder">
-      <el-empty description="No call graph data for this vulnerability" />
+      <el-empty description="No call graph data for this vulnerability">
+        <template #default>
+          <el-button size="small" type="primary" :loading="seeding" @click="handleLoadDemo">
+            Load Demo Data
+          </el-button>
+        </template>
+      </el-empty>
     </div>
 
     <template v-else>
@@ -185,6 +225,18 @@ watch(() => props.vulnId, id => { if (id) fetch() })
   border-top-color: var(--cs-primary);
   border-radius: 50%;
   animation: cs-spin 0.8s linear infinite;
+}
+
+.cs-call-graph-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cs-call-graph-error-desc {
+  font-size: 12px;
+  color: var(--cs-text-tertiary);
+  word-break: break-all;
 }
 
 @keyframes cs-spin {

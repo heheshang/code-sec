@@ -22,7 +22,7 @@ export interface CallGraphData {
 
 export function useCallGraph(vulnId: string) {
   const data = ref<CallGraphData | null>(null)
-  const loading = ref(false)
+  const loading = ref(true)
   const error = ref<string | null>(null)
 
   async function fetch() {
@@ -32,7 +32,7 @@ export function useCallGraph(vulnId: string) {
       const resp = await http.get<CallGraphData>(`/cpg/${vulnId}`)
       data.value = resp.data
     } catch (e: unknown) {
-      error.value = 'Failed to load call graph'
+      error.value = e instanceof Error ? e.message : 'Failed to load call graph'
       data.value = { nodes: [], edges: [] }
     } finally {
       loading.value = false

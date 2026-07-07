@@ -36,36 +36,77 @@ public class SnippetSearchService {
         boolean contentSearch = q != null && !q.isBlank() && q.contains(" ");
 
         List<String> conditions = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
         if (q != null && !q.isBlank()) {
+            params.add(contentSearch ? q : escapeLike(q));
             if (contentSearch) {
-                conditions.add("v.tsv_code_snippet @@ plainto_tsquery('codesec_cfg', ?1)");
+                conditions.add("v.tsv_code_snippet @@ plainto_tsquery('codesec_cfg', ?" + params.size() + ")");
             } else {
-                conditions.add("v.file_path LIKE ?1 || '%' ESCAPE '\\'");
+                conditions.add("v.file_path LIKE ?" + params.size() + " || '%' ESCAPE '\\'");
             }
         }
 
+        int paramIdx = params.size();
+
         if (request.getProjectId() != null && !request.getProjectId().isEmpty()) {
-            conditions.add("v.project_id IN (?2)");
+            List<String> inParams = new ArrayList<>();
+            for (String pid : request.getProjectId()) {
+                String trimmed = pid.trim();
+                if (!trimmed.isEmpty()) {
+                    params.add(trimmed);
+                    inParams.add("?" + (++paramIdx));
+                }
+            }
+            if (!inParams.isEmpty()) {
+                conditions.add("CAST(v.project_id AS text) IN (" + String.join(", ", inParams) + ")");
+            }
+        }
+
+        if (request.getSeverity() != null && !request.getSeverity().isEmpty()) {
+            List<String> inParams = new ArrayList<>();
+            for (String s : request.getSeverity()) {
+                String trimmed = s.trim();
+                if (!trimmed.isEmpty()) {
+                    params.add(trimmed);
+                    inParams.add("?" + (++paramIdx));
+                }
+            }
+            if (!inParams.isEmpty()) {
+                conditions.add("v.severity IN (" + String.join(", ", inParams) + ")");
+            }
+        }
+
+        if (request.getExploitability() != null && !request.getExploitability().isEmpty()) {
+            List<String> inParams = new ArrayList<>();
+            for (String e : request.getExploitability()) {
+                String trimmed = e.trim();
+                if (!trimmed.isEmpty()) {
+                    params.add(trimmed);
+                    inParams.add("?" + (++paramIdx));
+                }
+            }
+            if (!inParams.isEmpty()) {
+                conditions.add("v.exploitability IN (" + String.join(", ", inParams) + ")");
+            }
         }
 
         String where = conditions.isEmpty() ? "" : " WHERE " + String.join(" AND ", conditions);
 
         String countSql = "SELECT COUNT(*) FROM vuln_finding v" + where;
         Query countQuery = entityManager.createNativeQuery(countSql);
-        if (q != null && !q.isBlank()) {
-            countQuery.setParameter(1, contentSearch ? q : escapeLike(q));
-        }
-        if (request.getProjectId() != null && !request.getProjectId().isEmpty()) {
-            countQuery.setParameter(2, request.getProjectId());
+        for (int i = 0; i < params.size(); i++) {
+            countQuery.setParameter(i + 1, params.get(i));
         }
         long total = ((Number) countQuery.getSingleResult()).longValue();
 
         int offset = (request.getPage() - 1) * pageSize;
+        paramIdx = params.size();
 
         String headlineExpr;
         if (contentSearch) {
-            headlineExpr = ", ts_headline('codesec_cfg', v.code_snippet, plainto_tsquery('codesec_cfg', ?1), 'MaxWords=30,MinWords=15,StartSel=<em>,StopSel=</em>') as snippet_headline";
+            int hlPos = 1;
+            headlineExpr = ", ts_headline('codesec_cfg', v.code_snippet, plainto_tsquery('codesec_cfg', ?" + hlPos + "), 'MaxWords=30,MinWords=15,StartSel=<em>,StopSel=</em>') as snippet_headline";
         } else {
             headlineExpr = ", NULL::text as snippet_headline";
         }
@@ -93,23 +134,23 @@ public class SnippetSearchService {
             " WHEN v.file_path LIKE '%.html' OR v.file_path LIKE '%.htm' THEN 'html'" +
             " ELSE 'unknown' END";
 
+        int limitPos = ++paramIdx;
+        params.add(pageSize);
+        int offsetPos = ++paramIdx;
+        params.add(offset);
+
         String dataSql = "SELECT DISTINCT v.file_path, v.project_id," +
                         langCase + " as language, v.line_start" +
                         headlineExpr +
                         ", to_char(v.discovered_at, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as indexed_at" +
                         " FROM vuln_finding v" + where +
                         " ORDER BY v.file_path" +
-                        " LIMIT ?3 OFFSET ?4";
+                        " LIMIT ?" + limitPos + " OFFSET ?" + offsetPos;
 
         Query dataQuery = entityManager.createNativeQuery(dataSql);
-        if (q != null && !q.isBlank()) {
-            dataQuery.setParameter(1, contentSearch ? q : escapeLike(q));
+        for (int i = 0; i < params.size(); i++) {
+            dataQuery.setParameter(i + 1, params.get(i));
         }
-        if (request.getProjectId() != null && !request.getProjectId().isEmpty()) {
-            dataQuery.setParameter(2, request.getProjectId());
-        }
-        dataQuery.setParameter(3, pageSize);
-        dataQuery.setParameter(4, offset);
 
         List<Object[]> rows = dataQuery.getResultList();
         List<SnippetDocument> items = new ArrayList<>();
@@ -134,7 +175,7 @@ public class SnippetSearchService {
         int i = 0;
         SnippetDocument doc = new SnippetDocument();
         doc.setFilePath((String) row[i++]);
-        doc.setProjectId((String) row[i++]);
+        doc.setProjectId(row[i] != null ? row[i].toString() : null); i++;
         doc.setLanguage((String) row[i++]);
         doc.setLineStart(row[i] != null ? ((Number) row[i]).intValue() : null); i++;
         doc.setCodeSnippet((String) row[i++]);
@@ -147,9 +188,12 @@ public class SnippetSearchService {
     }
 
     private void validateRequest(SearchRequest request) {
-        if ((request.getQ() == null || request.getQ().isBlank())
-                && (request.getProjectId() == null || request.getProjectId().isEmpty())) {
-            throw new IllegalArgumentException("SEARCH_QUERY_EMPTY: provide q or project_id filter");
+        boolean hasQ = request.getQ() != null && !request.getQ().isBlank();
+        boolean hasProject = request.getProjectId() != null && !request.getProjectId().isEmpty();
+        boolean hasSeverity = request.getSeverity() != null && !request.getSeverity().isEmpty();
+        boolean hasExploit = request.getExploitability() != null && !request.getExploitability().isEmpty();
+        if (!hasQ && !hasProject && !hasSeverity && !hasExploit) {
+            throw new IllegalArgumentException("SEARCH_QUERY_EMPTY: provide q, project_id, severity, or exploitability filter");
         }
     }
 }
