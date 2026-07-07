@@ -1,7 +1,7 @@
 package com.codesec.domain.service.search;
 
-import com.codesec.domain.dto.SearchRequest;
-import com.codesec.domain.dto.SearchResponse;
+import com.codesec.common.dto.SearchRequest;
+import com.codesec.common.dto.SearchResponse;
 import com.codesec.domain.model.VulnDocument;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;

@@ -1,7 +1,7 @@
 package com.codesec.api.module.search.controller;
 
-import com.codesec.domain.dto.SearchRequest;
-import com.codesec.domain.dto.SearchResponse;
+import com.codesec.common.dto.SearchRequest;
+import com.codesec.common.dto.SearchResponse;
 import com.codesec.domain.model.SnippetDocument;
 import com.codesec.domain.model.VulnDocument;
 import com.codesec.domain.service.search.SnippetSearchService;

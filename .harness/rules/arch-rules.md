@@ -99,8 +99,8 @@ common ← engine-adapter ← gitlab-integration
 1. `common` 是基础模块，可被任何模块依赖，但不可依赖其他内部模块
 2. `api` 不可依赖 `worker`、`gitlab-integration`、`es-integration`
 3. `worker` 可依赖 `api`（暂允许，M2 需解耦为事件驱动），但不可依赖 `gitlab-integration`、`es-integration`
-4. `gitlab-integration` 和 `es-integration` 只能依赖 `common` 和 `engine-adapter`
-5. `engine-adapter` 只能依赖 `common`（无业务知识）
+4. `gitlab-integration` 和 `es-integration` 只能依赖 `common`、`engine-adapter` 和 `domain`
+5. `engine-adapter` 可依赖 `common` 和 `engine`（适配器模式，需包装 engine）
 
 ### api 模块包命名规则
 

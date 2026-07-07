@@ -47,11 +47,7 @@
             <version>${caffeine.version}</version>
         </dependency>
 
-        <!-- Engine core (reactor module) -->
-        <dependency>
-            <groupId>com.codesec</groupId>
-            <artifactId>code-sec-backend-engine</artifactId>
-        </dependency>
+        <!-- Internal dependencies -->
         <dependency>
             <groupId>com.codesec</groupId>
             <artifactId>code-sec-backend-engine-adapter</artifactId>

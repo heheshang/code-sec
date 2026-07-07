@@ -3,7 +3,7 @@ package com.codesec.domain.service.audit;
 import com.codesec.common.exception.NotFoundException;
 import com.codesec.common.exception.BadRequestException;import com.codesec.domain.entity.*;
 import com.codesec.domain.repository.*;
-import com.codesec.domain.dto.*;
+import com.codesec.common.dto.*;
 import com.codesec.domain.service.ticket.statemachine.TicketStateMachine;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

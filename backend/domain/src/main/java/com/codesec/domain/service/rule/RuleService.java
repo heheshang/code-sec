@@ -5,8 +5,8 @@ import com.codesec.common.exception.BadRequestException;import com.codesec.domai
 import com.codesec.domain.entity.RuleMetadataEntity;
 import com.codesec.domain.repository.ProjectExemptionRepository;
 import com.codesec.domain.repository.RuleMetadataRepository;
-import com.codesec.domain.dto.PaginatedResult;
-import com.codesec.domain.dto.*;
+import com.codesec.common.dto.PaginatedResult;
+import com.codesec.common.dto.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
