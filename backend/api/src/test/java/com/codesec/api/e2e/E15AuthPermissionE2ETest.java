@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * Verifies:
  * 1. Admin login returns dynamically resolved permissions (not the old hardcoded 23-item list)
- * 2. The permissions list matches the seeded role-permission assignments (26 items)
+ * 2. The permissions list matches the seeded role-permission assignments (30 items)
  * 3. The role name is correctly resolved from the user_role table
  */
 public class E15AuthPermissionE2ETest extends BaseE2ETest {
@@ -48,7 +48,7 @@ public class E15AuthPermissionE2ETest extends BaseE2ETest {
         assertEquals("SUPER_ADMIN", role,
             "Admin user should be assigned SUPER_ADMIN role, not fallback READONLY_VIEWER");
 
-        // Verify permissions are dynamically loaded from DB (26 perms for SUPER_ADMIN)
+        // Verify permissions are dynamically loaded from DB (all perms for SUPER_ADMIN)
         JsonNode permissions = user.get("permissions");
         assertNotNull(permissions, "permissions list should be present");
         assertTrue(permissions.isArray(), "permissions should be an array");
@@ -59,9 +59,10 @@ public class E15AuthPermissionE2ETest extends BaseE2ETest {
             permCount++;
         }
 
-        // SUPER_ADMIN should have all 26 permissions, NOT the old 23-item hardcoded list
-        assertEquals(26, permCount,
-            "SUPER_ADMIN should have 26 permissions (full set from seed data), not 23 (old hardcoded list)");
+        // SUPER_ADMIN should have all permissions from seed data
+        int expectedPermCount = 30;
+        assertEquals(expectedPermCount, permCount,
+            "SUPER_ADMIN should have " + expectedPermCount + " permissions (full set from seed data)");
 
         // Verify specific permissions are present
         List<String> permList = objectMapper.treeToValue(permissions, List.class);

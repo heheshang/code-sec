@@ -42,7 +42,7 @@ public class TestDataInitializer implements CommandLineRunner {
         em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (4, 'DEVELOPER', " + now + ")").executeUpdate();
         em.createNativeQuery("INSERT INTO role (id, name, created_at) VALUES (5, 'READONLY_VIEWER', " + now + ")").executeUpdate();
 
-        // Seed 26 permissions
+        // Seed 30 permissions
         String[][] perms = {
             {"repo:create","repo","create"},{"repo:read","repo","read"},{"repo:update","repo","update"},{"repo:delete","repo","delete"},
             {"scan:create","scan","create"},{"scan:read","scan","read"},{"scan:cancel","scan","cancel"},

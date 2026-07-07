@@ -1,5 +1,6 @@
 package com.codesec.api.module.cpg;
 
+import com.codesec.api.module.cpg.controller.CpgController;
 import com.codesec.api.module.cpg.dto.CpgResponse;
 import com.codesec.engine.judge.CpgService;
 import org.junit.jupiter.api.Test;
